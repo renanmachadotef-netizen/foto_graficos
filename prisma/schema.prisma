@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model CompanySettings {
+  id           String @id @default(cuid())
+  rent         Float  @default(0)
+  energy       Float  @default(0)
+  internet     Float  @default(0)
+  otherFixed   Float  @default(0)
+  workingCap   Float  @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+model Employee {
+  id                   String @id @default(cuid())
+  name                 String
+  contractType         String // "CLT_SIMPLES", "CLT_NORMAL", "PJ"
+  baseSalary           Float
+  benefits             Float
+  taxesPercentage      Float  // Ex: 40% (Simples), 70% (Lucro), 0% (PJ)
+  weeklyHours          Int    // Ex: 44
+  efficiencyPercentage Float  // Ex: 80% (Desconto de pausas, banheiro, etc)
+  hourlyCost           Float  // Custo Hora Real (Calculado)
+  steps                WorkflowStep[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Machine {
+  id               String @id @default(cuid())
+  name             String
+  acquisitionValue Float
+  usefulLifeMonths Int
+  maintenanceCost  Float
+  powerConsumption Float // Watts
+  kwhPrice         Float @default(0.95)
+  workingHours     Int   @default(120) // Expected usage hours per month
+  productivity     Float @default(0) // m2 por hora (para plotters)
+  hourlyCost       Float @default(0) // Custo hora final calculado
+  steps            WorkflowStep[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Material {
+  id           String @id @default(cuid())
+  name         String
+  unit         String // "m2", "ml", "un", "litro"
+  unitCost     Float  // Custo por unidade
+  width        Float? // Largura do rolo em metros (Ex: 1.60)
+  wasteMargin  Float  @default(0) // % de perda técnica/sangria
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ProductionWorkflow {
+  id           String @id @default(cuid())
+  name         String
+  steps        WorkflowStep[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model WorkflowStep {
+  id               String @id @default(cuid())
+  workflowId       String
+  workflow         ProductionWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  order            Int
+  machineId        String?
+  machine          Machine? @relation(fields: [machineId], references: [id])
+  employeeId       String?
+  employee         Employee? @relation(fields: [employeeId], references: [id])
+  setupTimeMinutes Float @default(0)
+  unitTimeMinutes  Float @default(0)
+}
+
+model Financing {
+  id               String @id @default(cuid())
+  description      String
+  totalValue       Float
+  installments     Int
+  installmentValue Float
+  startDate        DateTime
+  createdAt        DateTime @default(now())
+}
+
+model FinancialTransaction {
+  id           String @id @default(cuid())
+  date         DateTime
+  description  String
+  amount       Float
+  type         String // "INCOME" ou "EXPENSE"
+  category     String?
+  createdAt    DateTime @default(now())
+}
