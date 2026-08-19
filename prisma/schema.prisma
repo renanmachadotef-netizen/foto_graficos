@@ -4,16 +4,79 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model CompanySettings {
-  id           String @id @default(cuid())
-  rent         Float  @default(0)
-  energy       Float  @default(0)
-  internet     Float  @default(0)
-  otherFixed   Float  @default(0)
-  workingCap   Float  @default(0)
+  id          String   @id @default(cuid())
+  companyName String?
+  document    String?  // CNPJ
+  phone       String?
+  email       String?
+  address     String?
+  
+  rent        Float    @default(0)
+  energy      Float    @default(0)
+  internet    Float    @default(0)
+  otherFixed  Float    @default(0)
+  workingCap  Float    @default(0)
+  
+  taxRate     Float    @default(0)
+  cardFeeRate Float    @default(0)
+
+  updatedAt   DateTime @updatedAt
+}
+
+model Client {
+  id           String                 @id @default(cuid())
+  name         String
+  document     String? // CPF/CNPJ
+  phone        String?
+  email        String?
+  quotes       Quote[]
+  transactions FinancialTransaction[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+}
+
+model Quote {
+  id           String                 @id @default(cuid())
+  clientId     String
+  client       Client                 @relation(fields: [clientId], references: [id])
+  title        String
+  status       String                 @default("DRAFT") // DRAFT, SENT, APPROVED, REJECTED
+  totalCost    Float
+  markup       Float
+  finalPrice   Float
+  taxRate      Float                  @default(0)
+  cardFeeRate  Float                  @default(0)
+  netProfit    Float                  @default(0)
+  items        QuoteItem[]
+  serviceOrder ServiceOrder?
+  transactions FinancialTransaction[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+}
+
+model ServiceOrder {
+  id           String   @id @default(cuid())
+  quoteId      String   @unique
+  quote        Quote    @relation(fields: [quoteId], references: [id])
+  status       String   @default("WAITING") // WAITING, PREPRESS, PRINTING, FINISHING, READY
+  priority     String   @default("NORMAL")  // LOW, NORMAL, HIGH
+  deliveryDate DateTime?
+  createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model QuoteItem {
+  id          String  @id @default(cuid())
+  quoteId     String
+  quote       Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int
+  unitCost    Float
+  unitPrice   Float
 }
 
 model Employee {
@@ -90,11 +153,29 @@ model Financing {
 }
 
 model FinancialTransaction {
-  id           String @id @default(cuid())
-  date         DateTime
-  description  String
-  amount       Float
-  type         String // "INCOME" ou "EXPENSE"
-  category     String?
-  createdAt    DateTime @default(now())
+  id            String    @id @default(cuid())
+  date          DateTime  @default(now())
+  dueDate       DateTime  @default(now())
+  paymentDate   DateTime?
+  description   String
+  amount        Float
+  type          String    // "INCOME" (A Receber) ou "EXPENSE" (A Pagar)
+  status        String    @default("PENDING") // "PENDING", "PAID", "CANCELLED"
+  category      String?
+  paymentMethod String?   // "PIX", "BOLETO", "CARD_CREDIT", "CARD_DEBIT", "CASH", "TRANSFER", "OTHER"
+  clientId      String?
+  client        Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  quoteId       String?
+  quote         Quote?    @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model FixedCost {
+  id        String   @id @default(cuid())
+  name      String
+  amount    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

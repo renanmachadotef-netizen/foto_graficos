@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { MachineForm } from "./MachineForm";
 import { Trash2 } from "lucide-react";
 import { deleteMachine } from "./actions";
+import { EditMachineDialog } from "./EditMachineDialog";
 
 const prisma = new PrismaClient();
 
@@ -67,11 +68,14 @@ export default async function MachinesPage() {
                     <p className="text-[10px] tracking-wider text-slate-400 uppercase font-bold mb-1">Custo/Hora</p>
                     <p className="text-2xl font-black text-blue-600">R$ {mac.hourlyCost.toFixed(2)}</p>
                   </div>
-                  <form action={async () => { "use server"; await deleteMachine(mac.id); }}>
-                    <button type="submit" className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50">
-                      <Trash2 size={20}/>
-                    </button>
-                  </form>
+                  <div className="flex items-center">
+                    <EditMachineDialog machine={mac} />
+                    <form action={async () => { "use server"; await deleteMachine(mac.id); }}>
+                      <button type="submit" className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50">
+                        <Trash2 size={20}/>
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
             ))}

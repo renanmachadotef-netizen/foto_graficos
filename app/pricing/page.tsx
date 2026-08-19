@@ -7,6 +7,7 @@ export default async function PricingPage() {
   const materials = await prisma.material.findMany();
   const machines = await prisma.machine.findMany();
   const employees = await prisma.employee.findMany();
+  const clients = await prisma.client.findMany({ orderBy: { name: 'asc' } });
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
@@ -19,6 +20,7 @@ export default async function PricingPage() {
         materials={materials} 
         machines={machines} 
         employees={employees} 
+        clients={clients}
       />
     </div>
   );

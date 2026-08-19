@@ -13,3 +13,8 @@ export async function deleteMaterial(id: string) {
   await prisma.material.delete({ where: { id } });
   revalidatePath("/materials");
 }
+
+export async function updateMaterial(id: string, data: any) {
+  await prisma.material.update({ where: { id }, data });
+  revalidatePath("/materials");
+}

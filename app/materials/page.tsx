@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { MaterialForm } from "./MaterialForm";
 import { Trash2, Maximize2 } from "lucide-react";
 import { deleteMaterial } from "./actions";
+import { EditMaterialDialog } from "./EditMaterialDialog";
 
 const prisma = new PrismaClient();
 
@@ -59,7 +60,8 @@ export default async function MaterialsPage() {
                   </div>
                 </div>
                 
-                <div className="border-l pl-4 ml-4">
+                <div className="border-l pl-4 ml-4 flex items-center">
+                  <EditMaterialDialog material={mat} />
                   <form action={async () => { "use server"; await deleteMaterial(mat.id); }}>
                     <button type="submit" className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50">
                       <Trash2 size={20}/>

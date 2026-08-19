@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Settings, Users, PenTool, CircleDollarSign, Calculator, PackageSearch } from "lucide-react";
+import { Home, Calculator, Package, Cpu, Users, FileText, Settings, CircleDollarSign, PenTool, PackageSearch } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,13 +13,56 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Financeiro / Extratos", url: "/financial", icon: CircleDollarSign },
-  { title: "Calculadora de Preços", url: "/pricing", icon: Calculator },
-  { title: "Máquinas", url: "/machines", icon: PenTool },
-  { title: "Materiais", url: "/materials", icon: PackageSearch },
-  { title: "Funcionários", url: "/employees", icon: Users },
-  { title: "Configurações", url: "/settings", icon: Settings },
+  {
+    title: "Dashboard",
+    url: "/",
+    icon: Home,
+  },
+  {
+    title: "Clientes (CRM)",
+    url: "/clients",
+    icon: Users,
+  },
+  {
+    title: "Orçamentos",
+    url: "/quotes",
+    icon: FileText,
+  },
+  {
+    title: "Produção (PCP)",
+    url: "/pcp",
+    icon: PackageSearch,
+  },
+  {
+    title: "Calculadora de Preços",
+    url: "/pricing",
+    icon: Calculator,
+  },
+  {
+    title: "Insumos & Materiais",
+    url: "/materials",
+    icon: Package,
+  },
+  {
+    title: "Máquinas",
+    url: "/machines",
+    icon: Cpu,
+  },
+  {
+    title: "Funcionários",
+    url: "/employees",
+    icon: Users,
+  },
+  {
+    title: "Financeiro",
+    url: "/financial",
+    icon: CircleDollarSign,
+  },
+  {
+    title: "Configurações",
+    url: "/settings",
+    icon: Settings,
+  },
 ];
 
 export function AppSidebar() {
@@ -32,12 +75,10 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url} className="text-md">
-                      <item.icon className="mr-2 h-4 w-4" />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
+                  <a href={item.url} className="flex items-center gap-2 p-2 rounded-md hover:bg-slate-100 transition-colors w-full text-sm font-medium">
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </a>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

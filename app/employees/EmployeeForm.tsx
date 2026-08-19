@@ -20,7 +20,8 @@ export function EmployeeForm() {
   const [calculatedCost, setCalculatedCost] = useState(0);
 
   // Auto-atualizar os encargos baseado no tipo de contrato
-  const handleContractChange = (val: string) => {
+  const handleContractChange = (val: string | null) => {
+    if (!val) return;
     setContractType(val);
     if (val === "CLT_SIMPLES") setTaxesPercentage("40");
     if (val === "CLT_NORMAL") setTaxesPercentage("70");

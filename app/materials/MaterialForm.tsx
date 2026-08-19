@@ -45,7 +45,7 @@ export function MaterialForm() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Unidade de Medida</Label>
-              <Select value={unit} onValueChange={setUnit}>
+              <Select value={unit} onValueChange={(val) => { if (val) setUnit(val); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="m2">Metro Quadrado (m²)</SelectItem>
