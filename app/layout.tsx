@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SaasHeader } from "@/components/saas-header";
+import { getSession, ensureDefaultUsers } from "@/lib/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,31 +18,37 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Foto & Gráficos",
-  description: "Sistema interno de controle e precificação",
+  title: "Foto & Gráficos ERP Pro",
+  description: "Sistema SaaS de Gestão de Vendas, Estoque, Custos e PCP para Comunicação Visual",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await ensureDefaultUsers();
+  const session = await getSession();
+
   return (
     <html lang="pt-BR">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900`}>
         <TooltipProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="w-full flex flex-col min-h-screen">
-              <div className="flex h-12 items-center border-b px-4 bg-white shadow-sm">
-                <SidebarTrigger />
-                <span className="ml-4 font-medium text-slate-600">Sistema Gerencial</span>
-              </div>
-              <div className="flex-1 p-6">
-                {children}
-              </div>
-            </main>
-          </SidebarProvider>
+          {session ? (
+            <SidebarProvider>
+              <AppSidebar userRole={session.role} />
+              <main className="w-full flex flex-col min-h-screen">
+                <SaasHeader user={session} />
+                <div className="flex-1 p-4 sm:p-6 md:p-8">
+                  {children}
+                </div>
+              </main>
+            </SidebarProvider>
+          ) : (
+            <div className="min-h-screen">
+              {children}
+            </div>
+          )}
         </TooltipProvider>
       </body>
     </html>

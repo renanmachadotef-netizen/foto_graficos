@@ -27,6 +27,20 @@ model CompanySettings {
   updatedAt   DateTime @updatedAt
 }
 
+model User {
+  id             String          @id @default(cuid())
+  name           String
+  email          String          @unique
+  password       String
+  role           String          @default("SELLER") // "ADMIN", "MANAGER", "SELLER", "PRODUCTION"
+  avatar         String?
+  active         Boolean         @default(true)
+  quotes         Quote[]
+  stockMovements StockMovement[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
 model Client {
   id           String                 @id @default(cuid())
   name         String
@@ -43,6 +57,8 @@ model Quote {
   id           String                 @id @default(cuid())
   clientId     String
   client       Client                 @relation(fields: [clientId], references: [id])
+  sellerId     String?
+  seller       User?                  @relation(fields: [sellerId], references: [id])
   title        String
   status       String                 @default("DRAFT") // DRAFT, SENT, APPROVED, REJECTED
   totalCost    Float
@@ -111,14 +127,31 @@ model Machine {
 }
 
 model Material {
-  id           String @id @default(cuid())
+  id           String          @id @default(cuid())
   name         String
-  unit         String // "m2", "ml", "un", "litro"
-  unitCost     Float  // Custo por unidade
-  width        Float? // Largura do rolo em metros (Ex: 1.60)
-  wasteMargin  Float  @default(0) // % de perda técnica/sangria
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  category     String          @default("VINIL_LONA") // "VINIL_LONA", "RIGIDOS_CHAPAS", "TINTAS_QUIMICOS", "ACESSORIOS", "OUTROS"
+  unit         String          // "m2", "ml", "un", "litro"
+  unitCost     Float           // Custo por unidade
+  currentStock Float           @default(0) // Estoque atual
+  minStock     Float           @default(0) // Estoque de segurança/mínimo
+  width        Float?          // Largura do rolo em metros (Ex: 1.60)
+  wasteMargin  Float           @default(0) // % de perda técnica/sangria
+  movements    StockMovement[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model StockMovement {
+  id         String   @id @default(cuid())
+  materialId String
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  type       String   // "IN" (Entrada), "OUT" (Saída Manual), "OS_OUT" (Baixa Automática OS), "ADJUSTMENT" (Balanço)
+  quantity   Float
+  unitCost   Float?
+  notes      String?
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
 }
 
 model ProductionWorkflow {
