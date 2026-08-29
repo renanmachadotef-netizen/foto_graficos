@@ -409,36 +409,67 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
     }
   }
 
-  // 5. Ensure Clients
+  // 5. Ensure and Separate Clients by Tenant
+  // Migrate legacy cachaçaria clients from FOTOGRAFICOS to PURABRASIL if needed
+  await prisma.client.updateMany({
+    where: {
+      tenantId: "FOTOGRAFICOS",
+      code: { not: null },
+    },
+    data: {
+      tenantId: "PURABRASIL",
+    },
+  });
+
   const clientsCount = await prisma.client.count({
     where: { tenantId },
   });
 
   if (clientsCount === 0) {
-    if (tenantId === "FOTOGRAFICOS") {
+    if (tenantId === "PURABRASIL") {
       const { importLegacyClientsIntoDatabase } = await import("./import-clients-data");
-      await importLegacyClientsIntoDatabase("FOTOGRAFICOS");
+      await importLegacyClientsIntoDatabase("PURABRASIL");
     } else {
       await prisma.client.createMany({
         data: [
           {
-            tenantId: "PURABRASIL",
-            name: "Empório & Restaurante Sabor da Serra",
-            document: "12.345.678/0001-90",
-            phone: "48999887766",
-            email: "contato@sabordaserra.com.br",
-            birthDay: 15,
+            tenantId: "FOTOGRAFICOS",
+            name: "Studio Foto & Eventos Arte Digital",
+            document: "18.234.567/0001-88",
+            phone: "48991234567",
+            email: "contato@studioartedigital.com.br",
+            birthDay: 10,
+            birthMonth: 5,
+            status: "Ativo",
+          },
+          {
+            tenantId: "FOTOGRAFICOS",
+            name: "Agência Criativa Marketing & Comunicação",
+            document: "27.890.123/0001-44",
+            phone: "48984567890",
+            email: "atendimento@agenciacriativa.com.br",
+            birthDay: 20,
+            birthMonth: 7,
+            status: "Ativo",
+          },
+          {
+            tenantId: "FOTOGRAFICOS",
+            name: "Restaurante Bella Italia (Cardápios & Banners)",
+            document: "33.456.789/0001-22",
+            phone: "48998765432",
+            email: "pedidos@bellaitalia.com.br",
+            birthDay: 14,
             birthMonth: 8,
             status: "Ativo",
           },
           {
-            tenantId: "PURABRASIL",
-            name: "Rancho Tropeiro Bar & Grill",
-            document: "98.765.432/0001-10",
-            phone: "48988776655",
-            email: "pedidos@ranchotropeiro.com.br",
-            birthDay: 22,
-            birthMonth: 9,
+            tenantId: "FOTOGRAFICOS",
+            name: "Imobiliária Sol Nascente (Placas & Fachadas)",
+            document: "41.678.901/0001-11",
+            phone: "48991122334",
+            email: "comercial@solnascenteimoveis.com.br",
+            birthDay: 28,
+            birthMonth: 11,
             status: "Ativo",
           },
         ],

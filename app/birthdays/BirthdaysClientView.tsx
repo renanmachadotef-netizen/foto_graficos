@@ -239,21 +239,8 @@ export function BirthdaysClientView({
           </p>
         </div>
 
-        {/* Action buttons */}
+        {/* Action button for Raffle */}
         <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3">
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={async () => {
-              await importLegacyClientsAction();
-              window.location.reload();
-            }}
-            className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm text-xs font-bold gap-2 px-4 py-6 rounded-xl cursor-pointer"
-          >
-            <Download className="w-4 h-4 text-yellow-300" />
-            Sincronizar Banco (462 Clientes)
-          </Button>
-
           <Button
             size="lg"
             onClick={() => {
