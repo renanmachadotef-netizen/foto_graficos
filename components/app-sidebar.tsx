@@ -13,6 +13,7 @@ import {
   UserCog,
   Sparkles,
   Lock,
+  ShoppingBag,
 } from "lucide-react";
 import {
   Sidebar,
@@ -49,6 +50,13 @@ const menuGroups: MenuGroup[] = [
         url: "/",
         icon: Home,
         allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
+      },
+      {
+        title: "PDV (Balcão Rápido)",
+        url: "/pdv",
+        icon: ShoppingBag,
+        allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+        badge: "Rápido",
       },
       {
         title: "Clientes (CRM)",

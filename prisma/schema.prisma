@@ -14,6 +14,7 @@ model CompanySettings {
   phone       String?
   email       String?
   address     String?
+  pixKey      String?  // Chave Pix da empresa para o PDV
   
   rent        Float    @default(0)
   energy      Float    @default(0)
@@ -53,6 +54,19 @@ model Client {
   updatedAt    DateTime               @updatedAt
 }
 
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  category    String   @default("BALCAO") // "BALCAO", "IMPRESSAO", "FOTOS", "BRINDES", "ACABAMENTO", "OUTROS"
+  price       Float
+  cost        Float    @default(0)
+  unit        String   @default("un") // "un", "m2", "cento", "milheiro", "par"
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Quote {
   id           String                 @id @default(cuid())
   clientId     String
@@ -67,6 +81,7 @@ model Quote {
   taxRate      Float                  @default(0)
   cardFeeRate  Float                  @default(0)
   netProfit    Float                  @default(0)
+  isPosSale    Boolean                @default(false)
   items        QuoteItem[]
   serviceOrder ServiceOrder?
   transactions FinancialTransaction[]

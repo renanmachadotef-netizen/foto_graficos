@@ -17,6 +17,7 @@ export function SettingsForm({ settings }: { settings: any }) {
     phone: settings?.phone || "",
     email: settings?.email || "",
     address: settings?.address || "",
+    pixKey: settings?.pixKey || "",
   });
 
   const handleSave = async (e: React.FormEvent) => {
@@ -39,7 +40,7 @@ export function SettingsForm({ settings }: { settings: any }) {
           </div>
         </div>
         <CardDescription className="text-xs text-slate-500">
-          Estes dados serão utilizados para gerar o cabeçalho das propostas comerciais, orçamentos e relatórios.
+          Estes dados serão utilizados para gerar o cabeçalho das propostas comerciais, orçamentos, relatórios e chave PIX do PDV.
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
@@ -83,15 +84,26 @@ export function SettingsForm({ settings }: { settings: any }) {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-slate-700">E-mail Comercial</Label>
-            <Input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="contato@fotograficos.com.br"
-              className="text-sm"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700">E-mail Comercial</Label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="contato@fotograficos.com.br"
+                className="text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700">Chave PIX da Empresa (para o PDV)</Label>
+              <Input
+                value={formData.pixKey}
+                onChange={(e) => setFormData({ ...formData, pixKey: e.target.value })}
+                placeholder="CNPJ, E-mail, Celular ou Aleatória"
+                className="text-sm border-teal-300 font-mono"
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5">
