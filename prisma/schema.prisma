@@ -246,22 +246,131 @@ model FixedCost {
   updatedAt DateTime @updatedAt
 }
 
+// -------------------------------------------------------------
+// 1. MÓDULO AGRÍCOLA & MOAGEM (Plantation, Harvest & Milling)
+// -------------------------------------------------------------
+model PlantationField {
+  id               String             @id @default(cuid())
+  tenantId         String             @default("PURABRASIL")
+  name             String             // Ex: "Talhão 01 - Morro Alto"
+  variety          String             // Ex: "RB867515", "SP80-1842", "Caninha Rosa"
+  areaHectares     Float              // Ex: 3.5 ha
+  plantingDate     DateTime?
+  lastCutDate      DateTime?
+  estimatedTons    Float              // Produtividade estimada (Ton)
+  status           String             @default("GROWING") // "GROWING", "READY_TO_CUT", "CUT"
+  costs            AgriculturalCost[]
+  millingRuns      MillingRun[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model AgriculturalCost {
+  id               String           @id @default(cuid())
+  tenantId         String           @default("PURABRASIL")
+  fieldId          String?
+  field            PlantationField? @relation(fields: [fieldId], references: [id], onDelete: SetNull)
+  category         String           // "CORTE_TERCEIROS", "FROTA_TRATOR_DIESEL", "MANUTENCAO_CAMINHAO", "FERTILIZANTES", "DEFENSIVOS"
+  description      String           // Ex: "Diaristas corte manual de cana - 20 Toneladas"
+  amount           Float            // Valor total em R$
+  date             DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+}
+
+model MillingRun {
+  id                 String           @id @default(cuid())
+  tenantId           String           @default("PURABRASIL")
+  fieldId            String?
+  field              PlantationField? @relation(fields: [fieldId], references: [id], onDelete: SetNull)
+  date               DateTime         @default(now())
+  batchNumber        String           // Ex: "MOAGEM-2026/01"
+  caneTons           Float            // Toneladas de cana moídas (ex: 5.0 Ton)
+  millingHours       Float            // Horas de funcionamento da moenda (ex: 4.5h)
+  juiceLiters        Float            // Litros de garapa bruta obtida (ex: 3.200 L)
+  sugarBrix          Float            // °Brix da garapa fresca (ex: 19.5 °Brix)
+  yieldLitersPerTon  Float            // Rendimento (Litros / Tonelada)
+  operationalCost    Float            // Custo operacional da moagem (Diesel, energia, diaristas)
+  costPerLiterJuice  Float            // Custo por Litro de Garapa = operationalCost / juiceLiters
+  notes              String?
+  fermentations      FermentationBatch[]
+  createdAt          DateTime         @default(now())
+}
+
+// -------------------------------------------------------------
+// 2. MÓDULO DE FERMENTAÇÃO & DESTILAÇÃO (Cuts Fractioning)
+// -------------------------------------------------------------
+model FermentationBatch {
+  id                 String            @id @default(cuid())
+  tenantId           String            @default("PURABRASIL")
+  millingRunId       String?
+  millingRun         MillingRun?       @relation(fields: [millingRunId], references: [id], onDelete: SetNull)
+  vatNumber          String            // Ex: "DORNA-01 (Inox 1.500L)"
+  juiceVolumeLiters  Float             // Volume de garapa (ex: 1.000 L)
+  initialBrix        Float             // °Brix de entrada (ex: 16.0)
+  fermentationHours  Float             // Tempo em dorna (ex: 28h)
+  yeastType          String            // "LEVEDURA_SELVAGEM_CAIPIRA", "SACCHAROMYCES", "CAIPIRA_MILHO"
+  status             String            @default("FERMENTING") // "FERMENTING", "READY_TO_DISTILL", "DISTILLED"
+  finalBrix          Float?            // °Brix final (0.0 quando atinge o ponto de alambique)
+  distillations      DistillationRun[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model DistillationRun {
+  id                 String             @id @default(cuid())
+  tenantId           String             @default("PURABRASIL")
+  fermentationId     String?
+  fermentation       FermentationBatch? @relation(fields: [fermentationId], references: [id], onDelete: SetNull)
+  date               DateTime           @default(now())
+  batchNumber        String             // Ex: "ALAMB-2026/01"
+  stillNumber        String             // Ex: "Alambique de Cobre Capitel 1 (500L)"
+  washVolumeInput    Float              // Litros de mosto/vinho fermentado inseridos (ex: 1.000 L)
+  
+  // Fracionamento Exato de Cortes
+  headsLiters        Float              // Litros de Cabeça (Descarte tóxico: ~1.5% a 2%)
+  headsPercentage    Float              // % Cabeça (ex: 1.8%)
+  headsAbv           Float              @default(65.0) // % ABV Cabeça
+  
+  heartsLiters       Float              // Litros de Coração (Cachaça Nobre Aproveitável: ~16%)
+  heartsPercentage   Float              // % Coração (ex: 16.2%)
+  heartsAbv          Float              @default(44.0) // % ABV Coração
+  
+  tailsLiters        Float              // Litros de Cauda / Água Fraca (Descarte/Reciclagem: ~4%)
+  tailsPercentage    Float              // % Cauda (ex: 4.0%)
+  tailsAbv           Float              @default(15.0) // % ABV Cauda
+  
+  // Apropriação 100% dos Custos sobre o Coração
+  totalRunCost       Float              // Custo total da alambicada (garapa + lenha/caldeira + operador)
+  costPerLiterHeart  Float              // Custo real por Litro de Coração = totalRunCost / heartsLiters
+  
+  destinationBarrelId String?
+  notes              String?
+  createdAt          DateTime           @default(now())
+}
+
+// -------------------------------------------------------------
+// 3. ADEGA DE BARRIS & ANGEL'S SHARE (Evaporation)
+// -------------------------------------------------------------
 model Barrel {
-  id             String           @id @default(cuid())
-  tenantId       String           @default("PURABRASIL")
-  code           String           // Ex: "BARRIL-01", "DORNA-03"
-  woodType       String           // "CARVALHO_AMERICANO", "CARVALHO_FRANCES", "AMBURANA", "BALSAMO", "JEQUITIBA", "INOX"
-  capacityLiters Float            // Ex: 200.0
-  currentLiters  Float            // Ex: 185.0
-  abvPercentage  Float            // Ex: 42.0 (% Álcool)
-  fillDate       DateTime         // Data de início do envelhecimento
-  batchNumber    String           // Lote / Alambicada
-  status         String           @default("AGING") // "AGING", "READY", "EMPTY", "BOTTLING"
-  sensoryNotes   String?          // Notas sensoriais (baunilha, floral, especiarias)
-  location       String?          // Posição na adega
-  movements      BarrelMovement[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id                    String           @id @default(cuid())
+  tenantId              String           @default("PURABRASIL")
+  code                  String           // Ex: "BARRIL-01", "DORNA-03"
+  woodType              String           // "CARVALHO_AMERICANO", "CARVALHO_FRANCES", "AMBURANA", "BALSAMO", "JEQUITIBA", "INOX"
+  capacityLiters        Float            // Ex: 200.0
+  currentLiters         Float            // Ex: 185.0
+  costPerLiter          Float            @default(12.0) // Custo contábil atual por litro (sobe com o Angel's Share)
+  evaporationRateAnnual Float            @default(3.0)  // Taxa anual de Angel's Share (%)
+  lastEvaporationDate   DateTime?        // Data do último abate de evaporação
+  abvPercentage         Float            // Ex: 42.0 (% Álcool)
+  fillDate              DateTime         // Data de início do envelhecimento
+  batchNumber           String           // Lote / Alambicada
+  status                String           @default("AGING") // "AGING", "READY", "EMPTY", "BOTTLING", "BLENDING"
+  sensoryNotes          String?          // Notas sensoriais (baunilha, floral, especiarias)
+  location              String?          // Posição na adega
+  movements             BarrelMovement[]
+  blendItems            BlendItem[]
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 }
 
 model BarrelMovement {
@@ -269,48 +378,103 @@ model BarrelMovement {
   tenantId        String   @default("PURABRASIL")
   barrelId        String
   barrel          Barrel   @relation(fields: [barrelId], references: [id], onDelete: Cascade)
-  type            String   // "INPUT" (Alambicada/Entrada), "OUTPUT" (Envase), "TRANSFER" (Transferência/Blending), "LOSS" (Evaporação/Amostra)
+  type            String   // "INPUT" (Alambicada), "OUTPUT" (Envase), "TRANSFER" (Blending), "ANGELS_SHARE" (Evaporação), "LOSS" (Amostra)
   liters          Float    // Litros movimentados
   resultingLiters Float    // Saldo após a movimentação
-  date            DateTime @default(now()) // Data da movimentação
-  batchNumber     String?  // Lote / Alambicada
-  abvPercentage   Float?   // Teor Alcoólico no momento
-  responsibleName String?  // Mestre Alambiqueiro / Operador
-  notes           String?  // Motivo / Observação
+  costPerLiterAfter Float  @default(12.0) // Custo por litro recalculado
+  date            DateTime @default(now())
+  batchNumber     String?
+  abvPercentage   Float?
+  responsibleName String?
+  notes           String?
   createdAt       DateTime @default(now())
 }
 
+// -------------------------------------------------------------
+// 4. BLENDS & LICORES FINOS (Multi-barrel Blends & Fruit Liqueurs)
+// -------------------------------------------------------------
+model BlendBatch {
+  id                  String      @id @default(cuid())
+  tenantId            String      @default("PURABRASIL")
+  name                String      // Ex: "Blend 3 Madeiras Safra Ouro"
+  batchNumber         String      // Ex: "BLEND-2026/01"
+  date                DateTime    @default(now())
+  totalLiters         Float       // Volume total do blend obtido
+  averageCostPerLiter Float       // Custo Médio Ponderado por Litro
+  finalAbv            Float       // % ABV ponderado final
+  destinationBarrelId String?     // Barril de descanso do blend
+  notes               String?
+  items               BlendItem[]
+  createdAt           DateTime    @default(now())
+}
+
+model BlendItem {
+  id             String     @id @default(cuid())
+  blendBatchId   String
+  blendBatch     BlendBatch @relation(fields: [blendBatchId], references: [id], onDelete: Cascade)
+  barrelId       String
+  barrel         Barrel     @relation(fields: [barrelId], references: [id], onDelete: Restrict)
+  litersUsed     Float      // Litros retirados deste barril
+  costPerLiter   Float      // Custo por litro deste barril
+  woodType       String     // Madeira de origem
+}
+
+model LiquorBatch {
+  id                     String   @id @default(cuid())
+  tenantId               String   @default("PURABRASIL")
+  name                   String   // Ex: "Licor Fino de Banana c/ Canela e Amburana"
+  flavor                 String   // "BANANA", "MARACUJA", "CAFE", "JABUTICABA", "CANELA", "DOCE_DE_LEITE"
+  batchNumber            String   // Ex: "LICOR-2026/01"
+  date                   DateTime @default(now())
+  baseSpiritLiters       Float    // Litros de Cachaça usados
+  baseSpiritCostPerLiter Float    // Custo/L da Cachaça base
+  ingredientsCost        Float    // Custo externo de frutas, açúcar e insumos
+  macerationDays         Int      @default(30) // Dias de maceração
+  finalVolumeLiters      Float    // Volume final de licor obtido
+  finalAbv               Float    @default(22.0) // % ABV do licor
+  costPerLiter           Float    // Custo Total por Litro do Licor
+  notes                  String?
+  createdAt              DateTime @default(now())
+}
+
+// -------------------------------------------------------------
+// 5. RECEITAS & FICHA TÉCNICA DE ENVASE (BOM)
+// -------------------------------------------------------------
 model Recipe {
   id               String   @id @default(cuid())
   tenantId         String   @default("PURABRASIL")
   name             String   // Ex: "Cachaça Amburana Extra Premium"
-  category         String   @default("ENVELHECIDA") // "PRATA", "ENVELHECIDA", "PREMIUM", "EXTRA_PREMIUM", "BLEND"
+  category         String   @default("ENVELHECIDA") // "PRATA", "ENVELHECIDA", "PREMIUM", "EXTRA_PREMIUM", "BLEND", "LICOR"
   woodType         String   // "AMBURANA", "CARVALHO_FRANCES", "CARVALHO_AMERICANO", "BALSAMO", "JEQUITIBA", "INOX", "BLEND"
-  agingMonths      Int      @default(12) // Meses de maturação
-  targetAbv        Float    @default(42.0) // % Álcool pretendido
-  sugarBrix        Float?   // °Brix da garapa (ex: 16.0)
-  fermentationType String?  // "LEVEDURA_SELVAGEM", "CAIPIRA_MILHO", "SACCHAROMYCES"
-  fermentationHours Int?    // Horas de fermentação (ex: 28)
-  distillationType String?  // "ALAMBIQUE_COBRE"
-  heartCutPercent  Float?   // % Corte Coração (ex: 80)
-  sensoryProfile   String?  // Perfil sensorial (aromas, cor, paladar)
-  instructions     String?  // Modo de fazer / Passo a passo detalhado
+  agingMonths      Int      @default(12)
+  targetAbv        Float    @default(42.0)
+  sugarBrix        Float?   // °Brix da garapa
+  fermentationType String?
+  fermentationHours Int?
+  distillationType String?
+  heartCutPercent  Float?   // % Corte Coração
+  sensoryProfile   String?
+  instructions     String?
   active           Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
 
 model BottlingRun {
-  id              String   @id @default(cuid())
-  tenantId        String   @default("PURABRASIL")
-  barrelId        String?
-  productName     String   // Ex: "Cachaça Amburana Reserva 750ml"
-  bottlesQuantity Int      // Ex: 100
-  bottleVolumeMl  Int      @default(750) // 750, 500, 160
-  litersUsed      Float    // Ex: 75.0 L
-  cogsPerBottle   Float    // Custo Total por Garrafa
-  retailPrice     Float    // Preço Varejo Sugerido
-  wholesalePrice  Float    // Preço Atacado Sugerido
-  notes           String?
-  createdAt       DateTime @default(now())
+  id                     String   @id @default(cuid())
+  tenantId               String   @default("PURABRASIL")
+  liquidSourceType       String   @default("BARREL") // "BARREL", "BLEND", "LIQUOR"
+  sourceId               String?  // ID do Barril, Blend ou Licor
+  productName            String   // Ex: "Cachaça Amburana Reserva 750ml"
+  bottlesQuantity        Int      // Ex: 100
+  bottleVolumeMl         Int      @default(750) // 750, 500, 160
+  litersUsed             Float    // Ex: 75.0 L
+  liquidCostPerLiter     Float    @default(12.0) // Custo líquido vindo da cadeia completa
+  packagingCostPerBottle Float    @default(15.0) // Vidro + Rolha + Rótulos + Lacre + Caixa
+  laborCostPerBottle     Float    @default(2.5)  // Mão de obra de envase
+  cogsPerBottle          Float    // Custo Total Unitário da Garrafa (COGS)
+  retailPrice            Float    // Preço Varejo Sugerido (PDV)
+  wholesalePrice         Float    // Preço Atacado Sugerido (Caixas/B2B)
+  notes                  String?
+  createdAt              DateTime @default(now())
 }

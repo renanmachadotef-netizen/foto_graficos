@@ -46,6 +46,7 @@ import {
   deleteBarrelAction,
   recordBarrelMovementAction,
   updateBarrelAction,
+  applyAngelsShareAction,
 } from "./actions";
 import Link from "next/link";
 
@@ -67,6 +68,8 @@ export interface BarrelItem {
   woodType: string;
   capacityLiters: number;
   currentLiters: number;
+  costPerLiter?: number;
+  evaporationRateAnnual?: number;
   abvPercentage: number;
   fillDate: Date | string;
   batchNumber: string;
@@ -181,7 +184,32 @@ export function BarrelsClientView({
   // Barrel History Modal
   const [historyBarrel, setHistoryBarrel] = useState<BarrelItem | null>(null);
 
+  // Angel's Share Modal
+  const [isAngelsShareOpen, setIsAngelsShareOpen] = useState(false);
+  const [angelsShareBarrel, setAngelsShareBarrel] = useState<BarrelItem | null>(null);
+  const [evaporationPercent, setEvaporationPercent] = useState("3.0");
+  const [angelsShareDate, setAngelsShareDate] = useState(new Date().toISOString().split("T")[0]);
+  const [angelsShareNotes, setAngelsShareNotes] = useState("");
+
   const [loading, setLoading] = useState(false);
+
+  const handleApplyAngelsShare = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!angelsShareBarrel) return;
+    setLoading(true);
+    try {
+      await applyAngelsShareAction({
+        barrelId: angelsShareBarrel.id,
+        evaporationPercentage: parseFloat(evaporationPercent) || 3.0,
+        date: angelsShareDate,
+        notes: angelsShareNotes,
+      });
+      setIsAngelsShareOpen(false);
+      window.location.reload();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Metrics
   const totalLiters = useMemo(() => {
@@ -555,35 +583,138 @@ export function BarrelsClientView({
                 </div>
               </div>
 
-              {/* Card Footer - Movimentação & Extrato */}
-              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setHistoryBarrel(barrel)}
-                  className="w-1/2 border-amber-200 text-amber-900 hover:bg-amber-50 font-bold text-xs rounded-xl gap-1.5 cursor-pointer"
-                >
-                  <History className="w-3.5 h-3.5 text-amber-700" />
-                  Extrato ({movementsCount})
-                </Button>
+              {/* Card Footer - Movimentação & Extrato & Angel's Share */}
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setHistoryBarrel(barrel)}
+                    className="w-1/2 border-amber-200 text-amber-900 hover:bg-amber-50 font-bold text-xs rounded-xl gap-1.5 cursor-pointer"
+                  >
+                    <History className="w-3.5 h-3.5 text-amber-700" />
+                    Extrato ({movementsCount})
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setSelectedBarrelForMovement(barrel);
+                      setMovementType("OUTPUT");
+                      setIsMovementOpen(true);
+                    }}
+                    className="w-1/2 bg-amber-800 hover:bg-amber-700 text-white font-bold text-xs rounded-xl gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <ArrowUpCircle className="w-3.5 h-3.5 text-amber-300" />
+                    Retirar p/ Envase
+                  </Button>
+                </div>
 
                 <Button
                   size="sm"
+                  variant="ghost"
                   onClick={() => {
-                    setSelectedBarrelForMovement(barrel);
-                    setMovementType("OUTPUT");
-                    setIsMovementOpen(true);
+                    setAngelsShareBarrel(barrel);
+                    setEvaporationPercent(String(barrel.evaporationRateAnnual || 3.0));
+                    setIsAngelsShareOpen(true);
                   }}
-                  className="w-1/2 bg-amber-800 hover:bg-amber-700 text-white font-bold text-xs rounded-xl gap-1.5 shadow-xs cursor-pointer"
+                  className="w-full text-[11px] font-bold text-amber-900 hover:bg-amber-100/60 rounded-xl gap-1.5 h-7 cursor-pointer"
                 >
-                  <ArrowUpCircle className="w-3.5 h-3.5 text-amber-300" />
-                  Retirar p/ Envase
+                  🪽 Angel's Share (Evaporação) • R$ {(barrel.costPerLiter || 12).toFixed(2)}/L
                 </Button>
               </div>
             </Card>
           );
         })}
       </div>
+
+      {/* ANGEL'S SHARE MODAL */}
+      <Dialog open={isAngelsShareOpen} onOpenChange={setIsAngelsShareOpen}>
+        <DialogContent className="max-w-md rounded-3xl p-6 bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900 flex items-center gap-2">
+              🪽 Angel's Share • Evaporação Natural
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Os poros da madeira respiram e evaporam parte da cachaça ("a parte dos anjos"). O volume físico diminui no Kardex e o custo por litro restante aumenta proporcionalmente para preservar o valor total imobilizado.
+            </DialogDescription>
+          </DialogHeader>
+
+          {angelsShareBarrel && (
+            <form onSubmit={handleApplyAngelsShare} className="space-y-4 pt-2">
+              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs space-y-1">
+                <p className="font-bold text-amber-950">
+                  Barril: <strong>{angelsShareBarrel.code}</strong> ({WOOD_PROFILES[angelsShareBarrel.woodType]?.name})
+                </p>
+                <p className="text-slate-600">
+                  Saldo Físico Atual: <strong>{angelsShareBarrel.currentLiters} L</strong> • Custo Atual: <strong>R$ {(angelsShareBarrel.costPerLiter || 12).toFixed(2)} / Litro</strong>
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-700">% Evaporação Anual *</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    required
+                    value={evaporationPercent}
+                    onChange={(e) => setEvaporationPercent(e.target.value)}
+                    className="rounded-xl text-base font-black text-amber-950"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-700">Data do Abate</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={angelsShareDate}
+                    onChange={(e) => setAngelsShareDate(e.target.value)}
+                    className="rounded-xl text-xs font-semibold"
+                  />
+                </div>
+              </div>
+
+              {/* Simulation Result */}
+              {(() => {
+                const ep = parseFloat(evaporationPercent) || 0;
+                const lostLiters = (angelsShareBarrel.currentLiters * ep) / 100;
+                const resultingLiters = Math.max(0, angelsShareBarrel.currentLiters - lostLiters);
+                const currentCost = angelsShareBarrel.costPerLiter || 12.0;
+                const newCost = resultingLiters > 0 ? (angelsShareBarrel.currentLiters * currentCost) / resultingLiters : currentCost;
+
+                return (
+                  <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Volume Evaporado:</span>
+                      <span className="font-bold text-rose-400">-{lostLiters.toFixed(2)} Litros</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Novo Saldo Restante:</span>
+                      <span className="font-black text-white">{resultingLiters.toFixed(2)} Litros</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-slate-800">
+                      <span className="text-amber-300 font-bold">Novo Custo por Litro:</span>
+                      <span className="font-black text-amber-300 text-sm">R$ {newCost.toFixed(2)} / L</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <DialogFooter className="pt-2">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-amber-800 hover:bg-amber-700 text-white font-bold rounded-2xl py-5 text-sm"
+                >
+                  {loading ? "Processando..." : "Confirmar Abate do Angel's Share"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* RECORD MOVEMENT DIALOG (INPUT / OUTPUT) */}
       <Dialog open={isMovementOpen} onOpenChange={setIsMovementOpen}>

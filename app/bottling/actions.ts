@@ -5,6 +5,8 @@ import { getCurrentTenant } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 
 export interface ExecuteBottlingInput {
+  liquidSourceType?: "BARREL" | "BLEND" | "LIQUOR";
+  sourceId?: string;
   barrelId?: string;
   productName: string;
   woodType: string;
@@ -27,10 +29,12 @@ export async function executeBottlingRunAction(data: ExecuteBottlingInput) {
 
   const totalLitersNeeded = (data.bottlesQuantity * data.bottleVolumeMl) / 1000;
   const boxesNeeded = Math.ceil(data.bottlesQuantity / 6);
+  const targetSourceId = data.sourceId || data.barrelId;
+  const sourceType = data.liquidSourceType || "BARREL";
 
-  // 1. If barrel specified, deduct liquid volume from barrel
-  if (data.barrelId && data.barrelId !== "none") {
-    const barrel = await prisma.barrel.findUnique({ where: { id: data.barrelId } });
+  // 1. If source is barrel, deduct liquid volume from barrel
+  if (sourceType === "BARREL" && targetSourceId && targetSourceId !== "none") {
+    const barrel = await prisma.barrel.findUnique({ where: { id: targetSourceId } });
     if (barrel) {
       const newLiters = Math.max(0, barrel.currentLiters - totalLitersNeeded);
       await prisma.barrel.update({
@@ -38,6 +42,22 @@ export async function executeBottlingRunAction(data: ExecuteBottlingInput) {
         data: {
           currentLiters: newLiters,
           status: newLiters === 0 ? "EMPTY" : barrel.status,
+        },
+      });
+
+      // Grava no Kardex a saída
+      await prisma.barrelMovement.create({
+        data: {
+          tenantId: currentTenant,
+          barrelId: barrel.id,
+          type: "OUTPUT",
+          liters: totalLitersNeeded,
+          resultingLiters: newLiters,
+          costPerLiterAfter: barrel.costPerLiter,
+          batchNumber: barrel.batchNumber,
+          abvPercentage: barrel.abvPercentage,
+          responsibleName: "Mestre Alambiqueiro",
+          notes: `Saída para Envase de ${data.bottlesQuantity} garrafas (${data.productName})`,
         },
       });
     }
@@ -57,11 +77,15 @@ export async function executeBottlingRunAction(data: ExecuteBottlingInput) {
   const bottlingRun = await prisma.bottlingRun.create({
     data: {
       tenantId: currentTenant,
-      barrelId: data.barrelId && data.barrelId !== "none" ? data.barrelId : null,
+      liquidSourceType: sourceType,
+      sourceId: targetSourceId && targetSourceId !== "none" ? targetSourceId : null,
       productName: data.productName,
       bottlesQuantity: data.bottlesQuantity,
       bottleVolumeMl: data.bottleVolumeMl,
       litersUsed: totalLitersNeeded,
+      liquidCostPerLiter: data.liquidCostPerLiter,
+      packagingCostPerBottle,
+      laborCostPerBottle: data.laborUnitCost,
       cogsPerBottle: totalCogsPerBottle,
       retailPrice: data.retailPrice,
       wholesalePrice: data.wholesalePrice,

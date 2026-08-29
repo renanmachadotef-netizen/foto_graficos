@@ -654,5 +654,93 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
         ],
       });
     }
+
+    // 8. Ensure Plantation Fields & Milling for PURABRASIL
+    const fieldsCount = await prisma.plantationField.count({
+      where: { tenantId: "PURABRASIL" },
+    });
+
+    if (fieldsCount === 0) {
+      const field1 = await prisma.plantationField.create({
+        data: {
+          tenantId: "PURABRASIL",
+          name: "Talhão 01 - Morro Alto",
+          variety: "RB867515",
+          areaHectares: 4.5,
+          estimatedTons: 180,
+        },
+      });
+
+      await prisma.plantationField.create({
+        data: {
+          tenantId: "PURABRASIL",
+          name: "Talhão 02 - Encosta do Rio",
+          variety: "Caninha Rosa",
+          areaHectares: 3.0,
+          estimatedTons: 110,
+        },
+      });
+
+      // Seed Agricultural Costs
+      await prisma.agriculturalCost.createMany({
+        data: [
+          {
+            tenantId: "PURABRASIL",
+            fieldId: field1.id,
+            category: "CORTE_TERCEIROS",
+            description: "Diaristas corte manual de cana - 20 Toneladas",
+            amount: 720.0,
+            date: new Date(),
+          },
+          {
+            tenantId: "PURABRASIL",
+            fieldId: field1.id,
+            category: "FROTA_TRATOR_DIESEL",
+            description: "Abastecimento Trator Valmet & Carreta - Óleo Diesel",
+            amount: 380.0,
+            date: new Date(),
+          },
+        ],
+      });
+
+      // Seed Milling Run
+      await prisma.millingRun.create({
+        data: {
+          tenantId: "PURABRASIL",
+          fieldId: field1.id,
+          batchNumber: "MOAGEM-2026/01",
+          caneTons: 5.5,
+          millingHours: 4.0,
+          juiceLiters: 3500,
+          sugarBrix: 19.5,
+          yieldLitersPerTon: 636.36,
+          operationalCost: 450.0,
+          costPerLiterJuice: 0.128,
+          notes: "Garapa límpida com excelente densidade de açúcares para fermentação.",
+        },
+      });
+
+      // Seed Distillation Run
+      await prisma.distillationRun.create({
+        data: {
+          tenantId: "PURABRASIL",
+          batchNumber: "ALAMB-2026/01",
+          stillNumber: "Alambique de Cobre Capitel 1 (500L)",
+          washVolumeInput: 1000,
+          headsLiters: 18,
+          headsPercentage: 1.8,
+          headsAbv: 65.0,
+          heartsLiters: 165,
+          heartsPercentage: 16.5,
+          heartsAbv: 44.0,
+          tailsLiters: 38,
+          tailsPercentage: 3.8,
+          tailsAbv: 15.0,
+          totalRunCost: 1650.0,
+          costPerLiterHeart: 10.0,
+          notes: "Destilação lenta a lenha com corte rigoroso de 165L de Coração Nobre.",
+        },
+      });
+    }
   }
 }

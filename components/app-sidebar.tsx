@@ -19,6 +19,8 @@ import {
   GlassWater,
   Layers,
   BookOpen,
+  Wheat,
+  Flame,
 } from "lucide-react";
 import {
   Sidebar,
@@ -59,7 +61,65 @@ export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps
   const menuGroups: MenuGroup[] = isPuraBrasil
     ? [
         {
-          groupLabel: "Comercial & Vendas",
+          groupLabel: "Canavial & Moenda",
+          items: [
+            {
+              title: "Agrícola & Moagem",
+              url: "/milling",
+              icon: Wheat,
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
+              badge: "Cana",
+            },
+          ],
+        },
+        {
+          groupLabel: "Alambique & Adega",
+          items: [
+            {
+              title: "Destilação & Cortes",
+              url: "/distillation",
+              icon: Flame,
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
+              badge: "Cobre",
+            },
+            {
+              title: "Adega de Barris",
+              url: "/barrels",
+              icon: Wine,
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
+              badge: "Tonéis",
+            },
+            {
+              title: "Blends & Licores Finos",
+              url: "/blends",
+              icon: Sparkles,
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
+              badge: "Lotes",
+            },
+            {
+              title: "Caderno de Receitas",
+              url: "/recipes",
+              icon: BookOpen,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
+              badge: "Mestre",
+            },
+            {
+              title: "Ficha de Envase (BOM)",
+              url: "/bottling",
+              icon: GlassWater,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
+              badge: "Custos",
+            },
+            {
+              title: "Estoque de Insumos",
+              url: "/materials",
+              icon: Package,
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
+            },
+          ],
+        },
+        {
+          groupLabel: "Comercial & Balcão",
           items: [
             {
               title: "Dashboard do Alambique",
@@ -96,45 +156,7 @@ export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps
           ],
         },
         {
-          groupLabel: "Alambique & Maturação",
-          items: [
-            {
-              title: "Adega de Barris",
-              url: "/barrels",
-              icon: Wine,
-              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-              badge: "Tonéis",
-            },
-            {
-              title: "Caderno de Receitas",
-              url: "/recipes",
-              icon: BookOpen,
-              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
-              badge: "Mestre",
-            },
-            {
-              title: "Ficha de Envase (BOM)",
-              url: "/bottling",
-              icon: GlassWater,
-              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
-              badge: "Custos",
-            },
-            {
-              title: "Estoque & Insumos",
-              url: "/materials",
-              icon: Package,
-              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-            },
-            {
-              title: "Lotes & Produção (PCP)",
-              url: "/pcp",
-              icon: PackageSearch,
-              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-            },
-          ],
-        },
-        {
-          groupLabel: "Financeiro & Custos",
+          groupLabel: "Financeiro & Gestão",
           items: [
             {
               title: "Fluxo Financeiro",
@@ -143,16 +165,17 @@ export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps
               allowedRoles: ["ADMIN", "MANAGER"],
             },
             {
-              title: "Equipe do Alambique",
+              title: "Equipe & Pró-Labore",
               url: "/employees",
-              icon: Users,
-              allowedRoles: ["ADMIN"],
+              icon: UserCog,
+              allowedRoles: ["ADMIN", "MANAGER"],
+              badge: "👑 Sócios",
             },
             {
-              title: "Alambiques & Equipamentos",
+              title: "Alambiques & Máquinas",
               url: "/machines",
               icon: Cpu,
-              allowedRoles: ["ADMIN"],
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
             },
           ],
         },

@@ -131,10 +131,64 @@ export async function recordBarrelMovementAction(data: {
   return { success: true, movement, resultingLiters };
 }
 
+export async function applyAngelsShareAction(data: {
+  barrelId: string;
+  evaporationPercentage: number;
+  date?: string;
+  notes?: string;
+}) {
+  const currentTenant = await getCurrentTenant();
+
+  const barrel = await prisma.barrel.findUnique({
+    where: { id: data.barrelId },
+  });
+
+  if (!barrel) throw new Error("Barril não encontrado");
+
+  const lostLiters = (barrel.currentLiters * data.evaporationPercentage) / 100;
+  const resultingLiters = Math.max(0, barrel.currentLiters - lostLiters);
+
+  // O valor monetário total contábil do barril se mantém, então o custo unitário por litro aumenta!
+  const previousTotalValue = barrel.currentLiters * barrel.costPerLiter;
+  const newCostPerLiter = resultingLiters > 0 ? previousTotalValue / resultingLiters : barrel.costPerLiter;
+
+  // 1. Atualiza o barril
+  await prisma.barrel.update({
+    where: { id: barrel.id },
+    data: {
+      currentLiters: resultingLiters,
+      costPerLiter: newCostPerLiter,
+      lastEvaporationDate: data.date ? new Date(data.date) : new Date(),
+    },
+  });
+
+  // 2. Registra o movimento de perda no Kardex
+  const movement = await prisma.barrelMovement.create({
+    data: {
+      tenantId: currentTenant,
+      barrelId: barrel.id,
+      type: "ANGELS_SHARE",
+      liters: lostLiters,
+      resultingLiters,
+      costPerLiterAfter: newCostPerLiter,
+      date: data.date ? new Date(data.date) : new Date(),
+      responsibleName: "Mestre Alambiqueiro",
+      notes: data.notes || `Angel's Share: ${data.evaporationPercentage}% de evaporação natural na madeira`,
+    },
+  });
+
+  revalidatePath("/barrels");
+  revalidatePath("/bottling");
+  revalidatePath("/");
+
+  return { success: true, movement, lostLiters, resultingLiters, newCostPerLiter };
+}
+
 export async function updateBarrelAction(
   id: string,
   data: Partial<{
     currentLiters: number;
+    costPerLiter: number;
     abvPercentage: number;
     status: string;
     sensoryNotes: string;
