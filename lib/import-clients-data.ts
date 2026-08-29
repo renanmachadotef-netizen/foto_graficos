@@ -494,7 +494,16 @@ export async function importLegacyClientsIntoDatabase(targetTenantId: "FOTOGRAFI
   const lines = RAW_CLIENTS_CSV.trim().split("\n");
   const rows = lines.slice(1);
 
-  console.log(`[Import] Importando ${rows.length} clientes para o tenant ${targetTenantId}...`);
+  console.log(`[Import] Limpando duplicatas e sincronizando ${rows.length} clientes únicos para ${targetTenantId}...`);
+
+  // 1. Remove non-transactional duplicates to ensure clean 1-to-1 sync
+  await prisma.client.deleteMany({
+    where: {
+      tenantId: targetTenantId,
+      quotes: { none: {} },
+      transactions: { none: {} },
+    },
+  });
 
   let count = 0;
   let birthdayCount = 0;
@@ -518,26 +527,55 @@ export async function importLegacyClientsIntoDatabase(targetTenantId: "FOTOGRAFI
     const { date, day, month } = parseDate(rawBirthDate);
     if (day && month) birthdayCount++;
 
-    await prisma.client.create({
-      data: {
+    // Check if client already exists (e.g. preserved due to quotes/transactions)
+    const existing = await prisma.client.findFirst({
+      where: {
         tenantId: targetTenantId,
-        name,
-        code,
-        document: document && document.length > 3 ? document : null,
-        address: address && address.length > 3 ? address : null,
-        gender,
-        phone,
-        email: email && email.includes("@") ? email : null,
-        birthDate: date,
-        birthDay: day,
-        birthMonth: month,
-        status,
+        OR: [
+          ...(code ? [{ code }] : []),
+          { name },
+        ],
       },
     });
+
+    if (existing) {
+      await prisma.client.update({
+        where: { id: existing.id },
+        data: {
+          code: code || existing.code,
+          document: document || existing.document,
+          address: address || existing.address,
+          gender: gender || existing.gender,
+          phone: phone || existing.phone,
+          email: email || existing.email,
+          birthDate: date || existing.birthDate,
+          birthDay: day || existing.birthDay,
+          birthMonth: month || existing.birthMonth,
+          status,
+        },
+      });
+    } else {
+      await prisma.client.create({
+        data: {
+          tenantId: targetTenantId,
+          name,
+          code,
+          document: document && document.length > 3 ? document : null,
+          address: address && address.length > 3 ? address : null,
+          gender,
+          phone,
+          email: email && email.includes("@") ? email : null,
+          birthDate: date,
+          birthDay: day,
+          birthMonth: month,
+          status,
+        },
+      });
+    }
 
     count++;
   }
 
-  console.log(`[Import] ✅ Concluído: ${count} clientes importados (${birthdayCount} com aniversários).`);
+  console.log(`[Import] ✅ Concluído com sucesso: ${count} clientes únicos sincronizados (${birthdayCount} com aniversários).`);
   return { count, birthdayCount };
 }

@@ -245,3 +245,35 @@ model FixedCost {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Barrel {
+  id             String   @id @default(cuid())
+  tenantId       String   @default("PURABRASIL")
+  code           String   // Ex: "BARRIL-01", "DORNA-03"
+  woodType       String   // "CARVALHO_AMERICANO", "CARVALHO_FRANCES", "AMBURANA", "BALSAMO", "JEQUITIBA", "INOX"
+  capacityLiters Float    // Ex: 200.0
+  currentLiters  Float    // Ex: 185.0
+  abvPercentage  Float    // Ex: 42.0 (% Álcool)
+  fillDate       DateTime // Data de início do envelhecimento
+  batchNumber    String   // Lote / Alambicada
+  status         String   @default("AGING") // "AGING", "READY", "EMPTY", "BOTTLING"
+  sensoryNotes   String?  // Notas sensoriais (baunilha, floral, especiarias)
+  location       String?  // Posição na adega
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model BottlingRun {
+  id              String   @id @default(cuid())
+  tenantId        String   @default("PURABRASIL")
+  barrelId        String?
+  productName     String   // Ex: "Cachaça Amburana Reserva 750ml"
+  bottlesQuantity Int      // Ex: 100
+  bottleVolumeMl  Int      @default(750) // 750, 500, 160
+  litersUsed      Float    // Ex: 75.0 L
+  cogsPerBottle   Float    // Custo Total por Garrafa
+  retailPrice     Float    // Preço Varejo Sugerido
+  wholesalePrice  Float    // Preço Atacado Sugerido
+  notes           String?
+  createdAt       DateTime @default(now())
+}

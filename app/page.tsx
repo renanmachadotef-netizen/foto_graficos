@@ -20,6 +20,8 @@ import {
   Target,
   Sparkles,
   Wine,
+  GlassWater,
+  ShoppingBag,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +45,7 @@ export default async function DashboardPage() {
     serviceOrders,
     transactions,
     materials,
+    barrels,
   ] = await Promise.all([
     prisma.companySettings.findFirst({ where: { tenantId } }),
     prisma.fixedCost.findMany({ where: { tenantId } }),
@@ -62,6 +65,7 @@ export default async function DashboardPage() {
     }),
     prisma.financialTransaction.findMany({ where: { tenantId } }),
     prisma.material.findMany({ where: { tenantId } }),
+    prisma.barrel.findMany({ where: { tenantId } }),
   ]);
 
   // 1. Calculate Total Fixed Costs (Monthly Operating Cost)
@@ -97,54 +101,92 @@ export default async function DashboardPage() {
 
   // 4. Stock Alerts
   const criticalMaterials = materials.filter((m) => m.minStock > 0 && m.currentStock <= m.minStock);
+  const totalLitersInBarrels = barrels.reduce((acc, b) => acc + b.currentLiters, 0);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Welcome & Quick Action Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5" />
-            Visão Geral Executiva
+      <div
+        className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-8 rounded-3xl text-white shadow-xl border ${
+          isPuraBrasil
+            ? "bg-gradient-to-br from-amber-950 via-amber-900 to-yellow-950 border-amber-700/50 shadow-amber-950/20"
+            : "bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-indigo-900/40"
+        }`}
+      >
+        <div className="space-y-1.5">
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
+              isPuraBrasil ? "bg-amber-500/20 text-amber-300 border border-amber-400/30" : "bg-indigo-500/20 text-indigo-300"
+            }`}
+          >
+            {isPuraBrasil ? <Wine className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+            {isPuraBrasil ? "Gestão do Alambique & Adega" : "Visão Geral Executiva"}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
             Olá, {session.name.split(" ")[0]}!
           </h1>
-          <p className="text-slate-300 text-xs sm:text-sm max-w-xl">
-            Acompanhe o faturamento, ponto de equilíbrio, ordens no chão de fábrica e alertas de reposição em tempo real.
+          <p className="text-white/80 text-xs sm:text-sm max-w-xl">
+            {isPuraBrasil
+              ? "Acompanhe os tonéis em maturação, envase de garrafas, faturamento do alambique e ponto de equilíbrio em tempo real."
+              : "Acompanhe o faturamento, ponto de equilíbrio, ordens no chão de fábrica e alertas de reposição em tempo real."}
           </p>
         </div>
 
         {/* Quick Action Buttons */}
-        <div className="flex flex-wrap gap-2">
-          <a href="/pricing">
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs gap-1.5 shadow-md">
-              <Calculator className="w-4 h-4" />
-              Calculadora
-            </Button>
-          </a>
-          <a href="/quotes">
-            <Button size="sm" variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-0 text-xs gap-1.5">
-              <FileText className="w-4 h-4" />
-              Novo Orçamento
-            </Button>
-          </a>
-          <a href="/materials">
-            <Button size="sm" variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-0 text-xs gap-1.5">
-              <Package className="w-4 h-4" />
-              Entrada Estoque
-            </Button>
-          </a>
+        <div className="flex flex-wrap gap-2.5">
+          {isPuraBrasil ? (
+            <>
+              <a href="/barrels">
+                <Button size="sm" className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs gap-1.5 shadow-md rounded-xl cursor-pointer">
+                  <Wine className="w-4 h-4" />
+                  Adega de Barris
+                </Button>
+              </a>
+              <a href="/bottling">
+                <Button size="sm" className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-black text-xs gap-1.5 shadow-md rounded-xl cursor-pointer">
+                  <GlassWater className="w-4 h-4" />
+                  Simular Envase
+                </Button>
+              </a>
+              <a href="/pdv">
+                <Button size="sm" variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-0 text-xs gap-1.5 rounded-xl cursor-pointer">
+                  <ShoppingBag className="w-4 h-4" />
+                  PDV Balcão
+                </Button>
+              </a>
+            </>
+          ) : (
+            <>
+              <a href="/pricing">
+                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs gap-1.5 shadow-md rounded-xl cursor-pointer">
+                  <Calculator className="w-4 h-4" />
+                  Calculadora
+                </Button>
+              </a>
+              <a href="/quotes">
+                <Button size="sm" variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-0 text-xs gap-1.5 rounded-xl cursor-pointer">
+                  <FileText className="w-4 h-4" />
+                  Novo Orçamento
+                </Button>
+              </a>
+              <a href="/materials">
+                <Button size="sm" variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-0 text-xs gap-1.5 rounded-xl cursor-pointer">
+                  <Package className="w-4 h-4" />
+                  Entrada Estoque
+                </Button>
+              </a>
+            </>
+          )}
         </div>
       </div>
 
       {/* Main KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-slate-200 bg-white shadow-xs">
+        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturado / Recebido</p>
-              <p className="text-2xl font-extrabold text-emerald-600 mt-0.5">
+              <p className="text-2xl font-black text-emerald-600 mt-0.5">
                 R$ {paidIncome.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </p>
               <p className="text-[11px] text-slate-400 mt-0.5">Receitas confirmadas</p>
@@ -155,11 +197,11 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 bg-white shadow-xs">
+        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">A Receber Pendente</p>
-              <p className="text-2xl font-extrabold text-amber-600 mt-0.5">
+              <p className="text-2xl font-black text-amber-600 mt-0.5">
                 R$ {pendingIncome.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </p>
               <p className="text-[11px] text-slate-400 mt-0.5">Vendas em aberto / sinal</p>
@@ -170,24 +212,30 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 bg-white shadow-xs">
+        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Produção Ativa (PCP)</p>
-              <p className="text-2xl font-extrabold text-indigo-600 mt-0.5">{serviceOrders.length}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Ordens em andamento</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                {isPuraBrasil ? "Líquido em Maturação" : "Produção Ativa (PCP)"}
+              </p>
+              <p className="text-2xl font-black text-indigo-600 mt-0.5">
+                {isPuraBrasil ? `${totalLitersInBarrels.toLocaleString("pt-BR")} L` : serviceOrders.length}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {isPuraBrasil ? `${barrels.length} tonéis na adega` : "Ordens em andamento"}
+              </p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <PackageSearch className="w-5 h-5" />
+              {isPuraBrasil ? <Wine className="w-5 h-5" /> : <PackageSearch className="w-5 h-5" />}
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`border-slate-200 shadow-xs ${criticalMaterials.length > 0 ? "bg-rose-50/60 border-rose-200" : "bg-white"}`}>
+        <Card className={`rounded-2xl border-slate-200/80 shadow-xs ${criticalMaterials.length > 0 ? "bg-rose-50/60 border-rose-200" : "bg-white"}`}>
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-rose-700 uppercase tracking-wider">Estoque Crítico</p>
-              <p className="text-2xl font-extrabold text-rose-600 mt-0.5">{criticalMaterials.length}</p>
+              <p className="text-2xl font-black text-rose-600 mt-0.5">{criticalMaterials.length}</p>
               <p className="text-[11px] text-rose-600/80 mt-0.5">
                 {criticalMaterials.length > 0 ? "Insumos para repor" : "Todos os insumos OK"}
               </p>

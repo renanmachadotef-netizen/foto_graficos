@@ -16,6 +16,8 @@ import {
   ShoppingBag,
   Wine,
   Cake,
+  GlassWater,
+  Layers,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,7 +28,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Role, ROLE_PERMISSIONS } from "@/lib/roles";
+import { Role } from "@/lib/roles";
 import { TenantConfig } from "@/lib/tenant";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -44,109 +46,6 @@ interface MenuGroup {
   items: MenuItem[];
 }
 
-const menuGroups: MenuGroup[] = [
-  {
-    groupLabel: "Comercial & Vendas",
-    items: [
-      {
-        title: "Dashboard",
-        url: "/",
-        icon: Home,
-        allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
-      },
-      {
-        title: "PDV (Balcão Rápido)",
-        url: "/pdv",
-        icon: ShoppingBag,
-        allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
-        badge: "Rápido",
-      },
-      {
-        title: "Clientes (CRM)",
-        url: "/clients",
-        icon: Users,
-        allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
-      },
-      {
-        title: "Aniversariantes",
-        url: "/birthdays",
-        icon: Cake,
-        allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
-        badge: "🎁 Sorteio",
-      },
-      {
-        title: "Orçamentos & Vendas",
-        url: "/quotes",
-        icon: FileText,
-        allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
-      },
-      {
-        title: "Calculadora de Preço",
-        url: "/pricing",
-        icon: Calculator,
-        allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
-      },
-    ],
-  },
-  {
-    groupLabel: "Produção & Estoque",
-    items: [
-      {
-        title: "Fila de Produção (PCP)",
-        url: "/pcp",
-        icon: PackageSearch,
-        allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-      },
-      {
-        title: "Estoque & Insumos",
-        url: "/materials",
-        icon: Package,
-        allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-      },
-    ],
-  },
-  {
-    groupLabel: "Financeiro & Custos",
-    items: [
-      {
-        title: "Fluxo Financeiro",
-        url: "/financial",
-        icon: CircleDollarSign,
-        allowedRoles: ["ADMIN", "MANAGER"],
-      },
-      {
-        title: "Equipe & Salários",
-        url: "/employees",
-        icon: Users,
-        allowedRoles: ["ADMIN"],
-      },
-      {
-        title: "Máquinas & Depreciação",
-        url: "/machines",
-        icon: Cpu,
-        allowedRoles: ["ADMIN"],
-      },
-    ],
-  },
-  {
-    groupLabel: "Administração",
-    items: [
-      {
-        title: "Gestão de Usuários",
-        url: "/users",
-        icon: UserCog,
-        allowedRoles: ["ADMIN"],
-      },
-      {
-        title: "Configurações Gerais",
-        url: "/settings",
-        icon: Settings,
-        allowedRoles: ["ADMIN", "MANAGER"],
-      },
-    ],
-  },
-];
-
 interface AppSidebarProps {
   userRole?: Role;
   tenantConfig?: TenantConfig;
@@ -155,6 +54,220 @@ interface AppSidebarProps {
 export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps) {
   const pathname = usePathname();
   const isPuraBrasil = tenantConfig?.id === "PURABRASIL";
+
+  const menuGroups: MenuGroup[] = isPuraBrasil
+    ? [
+        {
+          groupLabel: "Comercial & Vendas",
+          items: [
+            {
+              title: "Dashboard do Alambique",
+              url: "/",
+              icon: Home,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
+            },
+            {
+              title: "PDV Balcão & Doses",
+              url: "/pdv",
+              icon: ShoppingBag,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+              badge: "Vendas",
+            },
+            {
+              title: "Clientes & Empórios",
+              url: "/clients",
+              icon: Users,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+            },
+            {
+              title: "Aniversariantes",
+              url: "/birthdays",
+              icon: Cake,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+              badge: "🎁 Sorteio",
+            },
+            {
+              title: "Pedidos & Distribuição",
+              url: "/quotes",
+              icon: FileText,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+            },
+          ],
+        },
+        {
+          groupLabel: "Alambique & Maturação",
+          items: [
+            {
+              title: "Adega de Barris",
+              url: "/barrels",
+              icon: Wine,
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
+              badge: "Tonéis",
+            },
+            {
+              title: "Ficha de Envase (BOM)",
+              url: "/bottling",
+              icon: GlassWater,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
+              badge: "Custos",
+            },
+            {
+              title: "Estoque & Insumos",
+              url: "/materials",
+              icon: Package,
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
+            },
+            {
+              title: "Lotes & Produção (PCP)",
+              url: "/pcp",
+              icon: PackageSearch,
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
+            },
+          ],
+        },
+        {
+          groupLabel: "Financeiro & Custos",
+          items: [
+            {
+              title: "Fluxo Financeiro",
+              url: "/financial",
+              icon: CircleDollarSign,
+              allowedRoles: ["ADMIN", "MANAGER"],
+            },
+            {
+              title: "Equipe do Alambique",
+              url: "/employees",
+              icon: Users,
+              allowedRoles: ["ADMIN"],
+            },
+            {
+              title: "Alambiques & Equipamentos",
+              url: "/machines",
+              icon: Cpu,
+              allowedRoles: ["ADMIN"],
+            },
+          ],
+        },
+        {
+          groupLabel: "Administração",
+          items: [
+            {
+              title: "Gestão de Usuários",
+              url: "/users",
+              icon: UserCog,
+              allowedRoles: ["ADMIN"],
+            },
+            {
+              title: "Configurações do Alambique",
+              url: "/settings",
+              icon: Settings,
+              allowedRoles: ["ADMIN", "MANAGER"],
+            },
+          ],
+        },
+      ]
+    : [
+        {
+          groupLabel: "Comercial & Vendas",
+          items: [
+            {
+              title: "Dashboard",
+              url: "/",
+              icon: Home,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
+            },
+            {
+              title: "PDV (Balcão Rápido)",
+              url: "/pdv",
+              icon: ShoppingBag,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+              badge: "Rápido",
+            },
+            {
+              title: "Clientes (CRM)",
+              url: "/clients",
+              icon: Users,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+            },
+            {
+              title: "Aniversariantes",
+              url: "/birthdays",
+              icon: Cake,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+              badge: "🎁 Sorteio",
+            },
+            {
+              title: "Orçamentos & Vendas",
+              url: "/quotes",
+              icon: FileText,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+            },
+            {
+              title: "Calculadora de Preço",
+              url: "/pricing",
+              icon: Calculator,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+            },
+          ],
+        },
+        {
+          groupLabel: "Produção & Estoque",
+          items: [
+            {
+              title: "Fila de Produção (PCP)",
+              url: "/pcp",
+              icon: PackageSearch,
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
+            },
+            {
+              title: "Estoque & Insumos",
+              url: "/materials",
+              icon: Package,
+              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
+            },
+          ],
+        },
+        {
+          groupLabel: "Financeiro & Custos",
+          items: [
+            {
+              title: "Fluxo Financeiro",
+              url: "/financial",
+              icon: CircleDollarSign,
+              allowedRoles: ["ADMIN", "MANAGER"],
+            },
+            {
+              title: "Equipe & Salários",
+              url: "/employees",
+              icon: Users,
+              allowedRoles: ["ADMIN"],
+            },
+            {
+              title: "Máquinas & Depreciação",
+              url: "/machines",
+              icon: Cpu,
+              allowedRoles: ["ADMIN"],
+            },
+          ],
+        },
+        {
+          groupLabel: "Administração",
+          items: [
+            {
+              title: "Gestão de Usuários",
+              url: "/users",
+              icon: UserCog,
+              allowedRoles: ["ADMIN"],
+            },
+            {
+              title: "Configurações Gerais",
+              url: "/settings",
+              icon: Settings,
+              allowedRoles: ["ADMIN", "MANAGER"],
+            },
+          ],
+        },
+      ];
 
   return (
     <Sidebar className="border-r border-slate-200/80 bg-white">
@@ -213,7 +326,12 @@ export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps
                             <span>{item.title}</span>
                           </div>
                           {item.badge && !isActive && (
-                            <Badge variant="admin" className="text-[9px] px-1.5 py-0 uppercase">
+                            <Badge
+                              variant="admin"
+                              className={`text-[9px] px-1.5 py-0 uppercase ${
+                                isPuraBrasil ? "bg-amber-100 text-amber-900" : ""
+                              }`}
+                            >
                               {item.badge}
                             </Badge>
                           )}

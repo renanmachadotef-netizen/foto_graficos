@@ -445,4 +445,96 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
       });
     }
   }
+
+  // 6. Ensure Barrels for PURABRASIL
+  if (tenantId === "PURABRASIL") {
+    const barrelsCount = await prisma.barrel.count({
+      where: { tenantId: "PURABRASIL" },
+    });
+
+    if (barrelsCount === 0) {
+      await prisma.barrel.createMany({
+        data: [
+          {
+            tenantId: "PURABRASIL",
+            code: "BAR-01",
+            woodType: "CARVALHO_FRANCES",
+            capacityLiters: 200,
+            currentLiters: 185,
+            abvPercentage: 42.5,
+            fillDate: new Date("2024-03-15"),
+            batchNumber: "LOTE-2024/01",
+            status: "READY",
+            sensoryNotes: "Aromas de baunilha madura, amêndoas e final extremamente sedoso.",
+            location: "Adega Subsolo - Fileira A1",
+          },
+          {
+            tenantId: "PURABRASIL",
+            code: "BAR-02",
+            woodType: "AMBURANA",
+            capacityLiters: 250,
+            currentLiters: 230,
+            abvPercentage: 42.0,
+            fillDate: new Date("2024-06-20"),
+            batchNumber: "LOTE-2024/02",
+            status: "READY",
+            sensoryNotes: "Bouquet doce marcante, canela, mel e especiarias autênticas.",
+            location: "Adega Subsolo - Fileira A2",
+          },
+          {
+            tenantId: "PURABRASIL",
+            code: "BAR-03",
+            woodType: "BALSAMO",
+            capacityLiters: 200,
+            currentLiters: 190,
+            abvPercentage: 43.0,
+            fillDate: new Date("2025-01-10"),
+            batchNumber: "LOTE-2025/01",
+            status: "AGING",
+            sensoryNotes: "Notas herbais frescas, anis estrelado e persistência marcante.",
+            location: "Adega Subsolo - Fileira B1",
+          },
+          {
+            tenantId: "PURABRASIL",
+            code: "BAR-04",
+            woodType: "JEQUITIBA",
+            capacityLiters: 500,
+            currentLiters: 480,
+            abvPercentage: 40.0,
+            fillDate: new Date("2025-02-15"),
+            batchNumber: "LOTE-2025/02",
+            status: "AGING",
+            sensoryNotes: "Maciez aveludada, frescor da cana preservado e notas florais sutis.",
+            location: "Galpão Principal - Posição C",
+          },
+          {
+            tenantId: "PURABRASIL",
+            code: "BAR-05",
+            woodType: "CARVALHO_AMERICANO",
+            capacityLiters: 200,
+            currentLiters: 160,
+            abvPercentage: 44.0,
+            fillDate: new Date("2023-11-05"),
+            batchNumber: "LOTE-2023/02",
+            status: "READY",
+            sensoryNotes: "Tostagem média-alta, caramelo toffee, coco queimado e corpo robusto.",
+            location: "Adega Subsolo - Fileira B2",
+          },
+          {
+            tenantId: "PURABRASIL",
+            code: "DOR-01",
+            woodType: "INOX",
+            capacityLiters: 1000,
+            currentLiters: 850,
+            abvPercentage: 40.0,
+            fillDate: new Date("2026-01-10"),
+            batchNumber: "LOTE-2026/01",
+            status: "READY",
+            sensoryNotes: "Cachaça Prata Clássica descansada em dorna de inox para harmonização.",
+            location: "Galpão de Destilação",
+          },
+        ],
+      });
+    }
+  }
 }
