@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { FinancialClientView } from "./FinancialClientView";
-
-const prisma = new PrismaClient();
 
 export default async function FinancialPage() {
   const [fixedCosts, transactions, clients] = await Promise.all([

@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { EmployeeForm } from "./EmployeeForm";
 import { Trash2 } from "lucide-react";
 import { deleteEmployee } from "./actions";
 import { EditEmployeeDialog } from "./EditEmployeeDialog";
-
-const prisma = new PrismaClient();
 
 export default async function EmployeesPage() {
   const employees = await prisma.employee.findMany({

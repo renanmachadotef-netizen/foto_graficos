@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { KanbanBoard } from "./KanbanBoard";
-
-const prisma = new PrismaClient();
 
 export default async function PcpPage() {
   const orders = await prisma.serviceOrder.findMany({

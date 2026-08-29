@@ -1,8 +1,6 @@
 "use server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-
-const prisma = new PrismaClient();
 
 export async function createEmployee(data: any) {
   await prisma.employee.create({ data });

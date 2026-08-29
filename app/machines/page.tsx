@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { MachineForm } from "./MachineForm";
 import { Trash2 } from "lucide-react";
 import { deleteMachine } from "./actions";
 import { EditMachineDialog } from "./EditMachineDialog";
-
-const prisma = new PrismaClient();
 
 export default async function MachinesPage() {
   const machines = await prisma.machine.findMany({

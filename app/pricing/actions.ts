@@ -1,7 +1,6 @@
 "use server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 export async function saveQuote(data: any) {
   const quote = await prisma.quote.create({

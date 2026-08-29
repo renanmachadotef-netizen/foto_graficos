@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { approveQuote, rejectQuote } from "./actions";
 import { Check, X, Printer, ArrowRight } from "lucide-react";
 import Link from "next/link";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export default async function QuotesListPage() {
   const quotes = await prisma.quote.findMany({

@@ -1,9 +1,7 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-
-const prisma = new PrismaClient();
 
 export interface CreateTransactionInput {
   description: string;
@@ -134,7 +132,10 @@ export async function updateCompanySettings(data: any) {
   } else {
     await prisma.companySettings.create({ data });
   }
+  revalidatePath("/settings");
   revalidatePath("/financial");
+  revalidatePath("/");
+  return { success: true };
 }
 
 export async function addFixedCost(name: string, amount: number) {

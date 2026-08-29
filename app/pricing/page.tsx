@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { PricingCalculator } from "./PricingCalculator";
-
-const prisma = new PrismaClient();
 
 export default async function PricingPage() {
   const materials = await prisma.material.findMany();

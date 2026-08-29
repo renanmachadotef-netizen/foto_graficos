@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { Printer } from "lucide-react";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export default async function QuotePage({ params }: { params: { id: string } }) {
   const quote = await prisma.quote.findUnique({

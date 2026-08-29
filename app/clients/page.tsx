@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import { ClientForm } from "./ClientForm";
 import { Trash2 } from "lucide-react";
 import { deleteClient } from "./actions";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export default async function ClientsPage() {
   const clients = await prisma.client.findMany({
