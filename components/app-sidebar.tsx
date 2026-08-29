@@ -15,6 +15,7 @@ import {
   Lock,
   ShoppingBag,
   Wine,
+  Cake,
 } from "lucide-react";
 import {
   Sidebar,
@@ -65,6 +66,13 @@ const menuGroups: MenuGroup[] = [
         url: "/clients",
         icon: Users,
         allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+      },
+      {
+        title: "Aniversariantes",
+        url: "/birthdays",
+        icon: Cake,
+        allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+        badge: "🎁 Sorteio",
       },
       {
         title: "Orçamentos & Vendas",

@@ -48,9 +48,17 @@ model Client {
   id           String                 @id @default(cuid())
   tenantId     String                 @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name         String
+  code         String?
   document     String? // CPF/CNPJ
   phone        String?
   email        String?
+  address      String?
+  gender       String? // M / F
+  birthDate    DateTime?
+  birthDay     Int? // 1-31 (para consulta e ordenação rápida de aniversariantes)
+  birthMonth   Int? // 1-12 (para agrupar aniversariantes do mês)
+  notes        String?
+  status       String                 @default("Ativo")
   quotes       Quote[]
   transactions FinancialTransaction[]
   createdAt    DateTime               @default(now())
