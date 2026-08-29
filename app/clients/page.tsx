@@ -1,6 +1,6 @@
 import { ClientForm } from "./ClientForm";
-import { Trash2, Cake, Gift, ArrowRight } from "lucide-react";
-import { deleteClient } from "./actions";
+import { Trash2, Cake, Gift, ArrowRight, Download, RefreshCw } from "lucide-react";
+import { deleteClient, importLegacyClientsAction } from "./actions";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
 import Link from "next/link";
@@ -36,13 +36,22 @@ export default async function ClientsPage() {
           </p>
         </div>
 
-        <Link href="/birthdays">
-          <Button className="bg-gradient-to-r from-pink-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white font-bold shadow-md shadow-pink-500/20 gap-2 cursor-pointer">
-            <Cake className="w-4 h-4 text-yellow-300" />
-            Aniversariantes & Sorteio ({birthdayCount})
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <form action={async () => { "use server"; await importLegacyClientsAction(); }}>
+            <Button variant="outline" type="submit" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-semibold text-xs gap-1.5 shadow-xs cursor-pointer">
+              <Download className="w-4 h-4" />
+              Sincronizar Banco (462 Clientes)
+            </Button>
+          </form>
+
+          <Link href="/birthdays">
+            <Button className="bg-gradient-to-r from-pink-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white font-bold shadow-md shadow-pink-500/20 gap-2 cursor-pointer">
+              <Cake className="w-4 h-4 text-yellow-300" />
+              Aniversariantes & Sorteio ({birthdayCount})
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

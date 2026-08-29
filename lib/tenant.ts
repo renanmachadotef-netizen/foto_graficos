@@ -408,4 +408,41 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
       });
     }
   }
+
+  // 5. Ensure Clients
+  const clientsCount = await prisma.client.count({
+    where: { tenantId },
+  });
+
+  if (clientsCount === 0) {
+    if (tenantId === "FOTOGRAFICOS") {
+      const { importLegacyClientsIntoDatabase } = await import("./import-clients-data");
+      await importLegacyClientsIntoDatabase("FOTOGRAFICOS");
+    } else {
+      await prisma.client.createMany({
+        data: [
+          {
+            tenantId: "PURABRASIL",
+            name: "Empório & Restaurante Sabor da Serra",
+            document: "12.345.678/0001-90",
+            phone: "48999887766",
+            email: "contato@sabordaserra.com.br",
+            birthDay: 15,
+            birthMonth: 8,
+            status: "Ativo",
+          },
+          {
+            tenantId: "PURABRASIL",
+            name: "Rancho Tropeiro Bar & Grill",
+            document: "98.765.432/0001-10",
+            phone: "48988776655",
+            email: "pedidos@ranchotropeiro.com.br",
+            birthDay: 22,
+            birthMonth: 9,
+            status: "Ativo",
+          },
+        ],
+      });
+    }
+  }
 }

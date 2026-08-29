@@ -77,3 +77,13 @@ export async function updateClient(id: string, data: any) {
   revalidatePath("/clients");
   revalidatePath("/birthdays");
 }
+
+export async function importLegacyClientsAction() {
+  const currentTenant = await getCurrentTenant();
+  const { importLegacyClientsIntoDatabase } = await import("@/lib/import-clients-data");
+  const result = await importLegacyClientsIntoDatabase(currentTenant);
+  revalidatePath("/clients");
+  revalidatePath("/birthdays");
+  revalidatePath("/");
+  return result;
+}
