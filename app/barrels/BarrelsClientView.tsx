@@ -19,6 +19,13 @@ import {
   Edit,
   Activity,
   GlassWater,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  History,
+  FileSpreadsheet,
+  BookOpen,
+  Wheat,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,8 +41,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { TenantConfig } from "@/lib/tenant";
-import { createBarrelAction, deleteBarrelAction, updateBarrelAction } from "./actions";
+import {
+  createBarrelAction,
+  deleteBarrelAction,
+  recordBarrelMovementAction,
+  updateBarrelAction,
+} from "./actions";
 import Link from "next/link";
+
+export interface MovementItem {
+  id: string;
+  type: string;
+  liters: number;
+  resultingLiters: number;
+  date: Date | string;
+  batchNumber?: string | null;
+  abvPercentage?: number | null;
+  responsibleName?: string | null;
+  notes?: string | null;
+}
 
 export interface BarrelItem {
   id: string;
@@ -49,11 +73,13 @@ export interface BarrelItem {
   status: string;
   sensoryNotes?: string | null;
   location?: string | null;
+  movements?: MovementItem[];
 }
 
 interface BarrelsClientViewProps {
   initialBarrels: BarrelItem[];
   bottlingRuns: any[];
+  yearlyProducedLiters?: number;
   tenantConfig: TenantConfig;
   userRole: string;
 }
@@ -121,12 +147,13 @@ export const WOOD_PROFILES: Record<
 export function BarrelsClientView({
   initialBarrels,
   bottlingRuns,
+  yearlyProducedLiters = 0,
   tenantConfig,
   userRole,
 }: BarrelsClientViewProps) {
   const [barrels, setBarrels] = useState<BarrelItem[]>(initialBarrels);
   const [selectedWoodFilter, setSelectedWoodFilter] = useState<string>("ALL");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("" );
 
   // Create Barrel Modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -136,9 +163,24 @@ export function BarrelsClientView({
   const [currentLiters, setCurrentLiters] = useState("200");
   const [abvPercentage, setAbvPercentage] = useState("42.0");
   const [fillDate, setFillDate] = useState(new Date().toISOString().split("T")[0]);
-  const [batchNumber, setBatchNumber] = useState("LOTE-2026/01");
+  const [batchNumber, setBatchNumber] = useState(`LOTE-${new Date().getFullYear()}/01`);
   const [sensoryNotes, setSensoryNotes] = useState("");
   const [location, setLocation] = useState("Adega Principal - Fileira A");
+
+  // Movement Modal (Input/Output)
+  const [isMovementOpen, setIsMovementOpen] = useState(false);
+  const [movementType, setMovementType] = useState<"INPUT" | "OUTPUT">("INPUT");
+  const [selectedBarrelForMovement, setSelectedBarrelForMovement] = useState<BarrelItem | null>(null);
+  const [movLiters, setMovLiters] = useState("50");
+  const [movDate, setMovDate] = useState(new Date().toISOString().split("T")[0]);
+  const [movBatch, setMovBatch] = useState("");
+  const [movAbv, setMovAbv] = useState("42.0");
+  const [movResponsible, setMovResponsible] = useState("Mestre Alambiqueiro");
+  const [movNotes, setMovNotes] = useState("");
+
+  // Barrel History Modal
+  const [historyBarrel, setHistoryBarrel] = useState<BarrelItem | null>(null);
+
   const [loading, setLoading] = useState(false);
 
   // Metrics
@@ -150,15 +192,6 @@ export function BarrelsClientView({
     return barrels.reduce((acc, b) => acc + b.capacityLiters, 0);
   }, [barrels]);
 
-  const agingBarrelsCount = useMemo(() => {
-    return barrels.filter((b) => b.status === "AGING").length;
-  }, [barrels]);
-
-  const readyBarrelsCount = useMemo(() => {
-    return barrels.filter((b) => b.status === "READY" || b.status === "BOTTLING").length;
-  }, [barrels]);
-
-  // Estimated Potential Bottles (750ml)
   const potentialBottles = useMemo(() => {
     return Math.floor(totalLiters / 0.75);
   }, [totalLiters]);
@@ -199,6 +232,29 @@ export function BarrelsClientView({
     }
   };
 
+  const handleRecordMovement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBarrelForMovement) return;
+    setLoading(true);
+    try {
+      const res = await recordBarrelMovementAction({
+        barrelId: selectedBarrelForMovement.id,
+        type: movementType,
+        liters: parseFloat(movLiters) || 0,
+        date: movDate,
+        batchNumber: movBatch || selectedBarrelForMovement.batchNumber,
+        abvPercentage: parseFloat(movAbv) || selectedBarrelForMovement.abvPercentage,
+        responsibleName: movResponsible,
+        notes: movNotes,
+      });
+
+      setIsMovementOpen(false);
+      window.location.reload();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const calculateAgingTime = (fillDate: Date | string) => {
     try {
       const start = new Date(fillDate);
@@ -210,7 +266,7 @@ export function BarrelsClientView({
       const months = Math.floor(diffDays / 30);
       if (months < 12) return `${months} meses`;
       const years = (diffDays / 365).toFixed(1);
-      return `${years} anos (${months} meses)`;
+      return `${years} anos (${months}m)`;
     } catch {
       return "Recém abastecido";
     }
@@ -218,116 +274,128 @@ export function BarrelsClientView({
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Lovable Banner - Adega de Maturação */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-amber-900 via-amber-800 to-yellow-950 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 border border-amber-700/50">
+      {/* Header Banner - Lovable Adega & Mestre Alambiqueiro */}
+      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-amber-950 via-amber-900 to-yellow-950 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 border border-amber-700/50">
         <div className="relative z-10 space-y-2 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 backdrop-blur-md text-amber-200 text-xs font-semibold uppercase tracking-wider">
             <Wine className="w-4 h-4 text-amber-300" />
-            Galpão de Tonéis & Envelhecimento
+            Adega de Envelhecimento & Rastreabilidade
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight flex items-center gap-3">
-            Adega de Barris • Pura Brasil
+            Meus Barris • Pura Brasil
           </h1>
           <p className="text-amber-100/90 text-sm sm:text-base leading-relaxed font-normal">
-            Acompanhe o tempo de maturação das madeiras nobres brasileiras, volume útil nos tonéis, teor alcoólico e simule o envase de garrafas com controle exato de custos.
+            Controle de ponta a ponta: registre as entradas da alambicada, saídas para envase de garrafas, tempo de repouso em madeira e o extrato completo de cada tonel.
           </p>
         </div>
 
-        {/* Quick Actions */}
+        {/* Big Friendly Action Buttons */}
         <div className="relative z-10 flex flex-wrap items-center gap-3">
-          <Link href="/bottling">
+          <Link href="/recipes">
             <Button
               size="lg"
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black shadow-xl shadow-amber-950/40 rounded-2xl gap-2 cursor-pointer text-sm"
+              className="bg-white/15 hover:bg-white/25 text-white border border-amber-300/40 backdrop-blur-md rounded-2xl font-bold gap-2 cursor-pointer text-xs sm:text-sm py-6 px-5"
             >
-              <GlassWater className="w-5 h-5" />
-              Simular / Executar Envase
+              <BookOpen className="w-4 h-4 text-yellow-300" />
+              Caderno de Receitas
             </Button>
           </Link>
 
           <Button
             size="lg"
-            variant="outline"
-            onClick={() => setIsCreateOpen(true)}
-            className="bg-white/10 hover:bg-white/20 text-white border-amber-300/40 backdrop-blur-md rounded-2xl font-bold gap-2 cursor-pointer text-sm"
+            onClick={() => {
+              if (barrels.length > 0) setSelectedBarrelForMovement(barrels[0]);
+              setMovementType("INPUT");
+              setIsMovementOpen(true);
+            }}
+            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black shadow-lg shadow-emerald-950/30 rounded-2xl gap-2 cursor-pointer text-xs sm:text-sm py-6 px-5"
           >
-            <Plus className="w-5 h-5 text-amber-300" />
-            Novo Barril / Dorna
+            <ArrowDownCircle className="w-5 h-5 text-emerald-900" />
+            Entrou Cachaça (Alambicada)
+          </Button>
+
+          <Button
+            size="lg"
+            onClick={() => setIsCreateOpen(true)}
+            className="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black shadow-xl shadow-yellow-500/20 rounded-2xl gap-2 cursor-pointer text-xs sm:text-sm py-6 px-5"
+          >
+            <Plus className="w-5 h-5" />
+            Novo Barril
           </Button>
         </div>
 
-        {/* Subtle Watermark */}
         <div className="absolute -right-6 -bottom-10 opacity-10 pointer-events-none text-9xl">
           🥃
         </div>
       </div>
 
-      {/* KPI Cards in Lovable Palette */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="rounded-2xl border-amber-200/60 bg-gradient-to-b from-amber-50/50 to-white shadow-xs">
+        <Card className="rounded-3xl border-amber-200/70 bg-gradient-to-b from-amber-50/60 to-white shadow-xs">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Volume em Barris</span>
-              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
+              <span className="text-xs font-black text-amber-900 uppercase tracking-wider">Safra {new Date().getFullYear()}</span>
+              <div className="w-8 h-8 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-800">
+                <Wheat className="w-4 h-4" />
+              </div>
+            </div>
+            <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
+              {yearlyProducedLiters > 0 ? yearlyProducedLiters.toLocaleString("pt-BR") : totalLiters.toLocaleString("pt-BR")}{" "}
+              <span className="text-xs font-semibold text-slate-500">Litros</span>
+            </p>
+            <p className="text-xs text-amber-800 font-medium mt-1">
+              Produção alambicada no ano
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-3xl border-amber-200/70 bg-gradient-to-b from-amber-50/60 to-white shadow-xs">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-amber-900 uppercase tracking-wider">Volume em Barris</span>
+              <div className="w-8 h-8 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-800">
                 <Droplet className="w-4 h-4" />
               </div>
             </div>
             <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
-              {totalLiters.toLocaleString("pt-BR")} <span className="text-sm font-semibold text-slate-500">Litros</span>
+              {totalLiters.toLocaleString("pt-BR")} <span className="text-xs font-semibold text-slate-500">L</span>
             </p>
-            <p className="text-xs text-amber-700 font-medium mt-1">
+            <p className="text-xs text-amber-800 font-medium mt-1">
               Capacidade total: {totalCapacity.toLocaleString("pt-BR")} L
             </p>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-amber-200/60 bg-gradient-to-b from-amber-50/50 to-white shadow-xs">
+        <Card className="rounded-3xl border-amber-200/70 bg-gradient-to-b from-amber-50/60 to-white shadow-xs">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Potencial de Envase</span>
-              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
+              <span className="text-xs font-black text-amber-900 uppercase tracking-wider">Garrafas Potenciais</span>
+              <div className="w-8 h-8 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-800">
                 <Wine className="w-4 h-4" />
               </div>
             </div>
             <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
-              ~{potentialBottles.toLocaleString("pt-BR")} <span className="text-sm font-semibold text-slate-500">Garrafas</span>
+              ~{potentialBottles.toLocaleString("pt-BR")} <span className="text-xs font-semibold text-slate-500">Unidades</span>
             </p>
-            <p className="text-xs text-amber-700 font-medium mt-1">
-              Equivalente a {(potentialBottles / 6).toFixed(0)} caixas fechadas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border-amber-200/60 bg-gradient-to-b from-amber-50/50 to-white shadow-xs">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Barris em Maturação</span>
-              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
-                <Clock className="w-4 h-4" />
-              </div>
-            </div>
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
-              {agingBarrelsCount} <span className="text-sm font-semibold text-slate-500">Tonéis</span>
-            </p>
-            <p className="text-xs text-emerald-700 font-semibold mt-1">
-              {readyBarrelsCount} prontos para engarrafar
+            <p className="text-xs text-amber-800 font-medium mt-1">
+              Garrafas padrão 750ml
             </p>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-amber-200/60 bg-gradient-to-b from-amber-50/50 to-white shadow-xs">
+        <Card className="rounded-3xl border-amber-200/70 bg-gradient-to-b from-amber-50/60 to-white shadow-xs">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Madeiras em Estoque</span>
-              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
+              <span className="text-xs font-black text-amber-900 uppercase tracking-wider">Tonéis na Adega</span>
+              <div className="w-8 h-8 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-800">
                 <Layers className="w-4 h-4" />
               </div>
             </div>
             <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
-              {Object.keys(WOOD_PROFILES).length} <span className="text-sm font-semibold text-slate-500">Perfis</span>
+              {barrels.length} <span className="text-xs font-semibold text-slate-500">Barris</span>
             </p>
-            <p className="text-xs text-amber-800 font-medium mt-1">
-              Carvalho, Amburana, Bálsamo e mais
+            <p className="text-xs text-emerald-700 font-bold mt-1">
+              Rastreabilidade ativa
             </p>
           </CardContent>
         </Card>
@@ -338,7 +406,7 @@ export function BarrelsClientView({
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedWoodFilter("ALL")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
               selectedWoodFilter === "ALL"
                 ? "bg-amber-900 text-white shadow-md shadow-amber-900/20"
                 : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
@@ -355,7 +423,7 @@ export function BarrelsClientView({
               <button
                 key={key}
                 onClick={() => setSelectedWoodFilter(key)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                   isSelected
                     ? "bg-amber-900 text-white shadow-md shadow-amber-900/20"
                     : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
@@ -363,7 +431,7 @@ export function BarrelsClientView({
               >
                 <span>{prof.icon}</span>
                 <span>{prof.name}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full ${isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
                   {count}
                 </span>
               </button>
@@ -374,20 +442,21 @@ export function BarrelsClientView({
         <div className="relative w-full sm:w-64">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Buscar por código, lote ou aroma..."
+            placeholder="Buscar por barril ou lote..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 text-xs rounded-xl bg-white border-slate-200"
+            className="pl-9 h-10 text-xs rounded-2xl bg-white border-slate-200"
           />
         </div>
       </div>
 
-      {/* Barrels Grid in Lovable Style */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* Barrels Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredBarrels.map((barrel) => {
           const woodInfo = WOOD_PROFILES[barrel.woodType] || WOOD_PROFILES.CARVALHO_FRANCES;
           const fillPercentage = Math.min(100, Math.round((barrel.currentLiters / barrel.capacityLiters) * 100));
           const agingTime = calculateAgingTime(barrel.fillDate);
+          const movementsCount = barrel.movements?.length || 0;
 
           return (
             <Card
@@ -396,7 +465,7 @@ export function BarrelsClientView({
             >
               <div>
                 {/* Header with Wood Header Bar */}
-                <div className="p-5 pb-4 border-b border-amber-100/80 flex items-start justify-between gap-3">
+                <div className="p-5 pb-4 border-b border-amber-100/80 flex items-start justify-between gap-3 bg-gradient-to-r from-amber-50/40 to-white">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-700 to-amber-950 flex items-center justify-center text-2xl text-white shadow-md shadow-amber-900/20 shrink-0">
                       {woodInfo.icon}
@@ -408,27 +477,19 @@ export function BarrelsClientView({
                           className={`text-[10px] font-black uppercase ${
                             barrel.status === "READY"
                               ? "bg-emerald-600 text-white"
-                              : barrel.status === "BOTTLING"
-                              ? "bg-indigo-600 text-white"
                               : barrel.status === "EMPTY"
                               ? "bg-slate-400 text-white"
                               : "bg-amber-600 text-white"
                           }`}
                         >
-                          {barrel.status === "AGING"
-                            ? "Maturando"
-                            : barrel.status === "READY"
-                            ? "Pronto"
-                            : barrel.status === "BOTTLING"
-                            ? "Em Envase"
-                            : "Vazio"}
+                          {barrel.status === "AGING" ? "Maturando" : barrel.status === "READY" ? "Pronto" : "Vazio"}
                         </Badge>
                       </div>
                       <p className="text-xs font-bold text-amber-900 mt-0.5">{woodInfo.name}</p>
                     </div>
                   </div>
 
-                  <span className="text-[11px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">
+                  <span className="text-[11px] font-mono font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-xl">
                     {barrel.batchNumber}
                   </span>
                 </div>
@@ -438,7 +499,7 @@ export function BarrelsClientView({
                   {/* Gauge & Liters Meter */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="font-semibold text-slate-600 flex items-center gap-1">
+                      <span className="font-bold text-slate-600 flex items-center gap-1">
                         <Droplet className="w-3.5 h-3.5 text-amber-600" />
                         Volume Atual
                       </span>
@@ -447,7 +508,7 @@ export function BarrelsClientView({
                       </span>
                     </div>
 
-                    <div className="w-full h-3 rounded-full bg-amber-100 overflow-hidden p-0.5">
+                    <div className="w-full h-3.5 rounded-full bg-amber-100 overflow-hidden p-0.5">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-400 transition-all duration-500"
                         style={{ width: `${fillPercentage}%` }}
@@ -455,20 +516,20 @@ export function BarrelsClientView({
                     </div>
                   </div>
 
-                  {/* 3 Metric Pills */}
-                  <div className="grid grid-cols-3 gap-2 py-2">
-                    <div className="bg-amber-50/60 p-2.5 rounded-xl text-center border border-amber-100/60">
+                  {/* Metric Pills */}
+                  <div className="grid grid-cols-3 gap-2 py-1">
+                    <div className="bg-amber-50/70 p-2.5 rounded-2xl text-center border border-amber-100">
                       <p className="text-[10px] uppercase font-bold text-amber-800/80">Teor ABV</p>
                       <p className="text-sm font-black text-slate-900 mt-0.5">{barrel.abvPercentage}%</p>
                     </div>
 
-                    <div className="bg-amber-50/60 p-2.5 rounded-xl text-center border border-amber-100/60">
+                    <div className="bg-amber-50/70 p-2.5 rounded-2xl text-center border border-amber-100">
                       <p className="text-[10px] uppercase font-bold text-amber-800/80">Envelhecido</p>
                       <p className="text-xs font-black text-slate-900 mt-1 truncate">{agingTime}</p>
                     </div>
 
-                    <div className="bg-amber-50/60 p-2.5 rounded-xl text-center border border-amber-100/60">
-                      <p className="text-[10px] uppercase font-bold text-amber-800/80">Garrafas (750ml)</p>
+                    <div className="bg-amber-50/70 p-2.5 rounded-2xl text-center border border-amber-100">
+                      <p className="text-[10px] uppercase font-bold text-amber-800/80">Garrafas</p>
                       <p className="text-sm font-black text-amber-900 mt-0.5">
                         ~{Math.floor(barrel.currentLiters / 0.75)}
                       </p>
@@ -477,7 +538,7 @@ export function BarrelsClientView({
 
                   {/* Sensory Notes */}
                   {barrel.sensoryNotes && (
-                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700">
+                    <div className="p-3 rounded-2xl bg-amber-50/40 border border-amber-100 text-xs text-slate-700">
                       <span className="font-bold text-amber-950 flex items-center gap-1 mb-0.5">
                         <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Notas de Degustação:
                       </span>
@@ -494,25 +555,249 @@ export function BarrelsClientView({
                 </div>
               </div>
 
-              {/* Card Footer Actions */}
-              <div className="p-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2">
-                <Link href={`/bottling?barrelId=${barrel.id}`} className="w-full">
-                  <Button
-                    size="sm"
-                    className="w-full bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs rounded-xl gap-1.5 shadow-xs cursor-pointer"
-                  >
-                    <GlassWater className="w-3.5 h-3.5" />
-                    Envasar Garrafas
-                    <ArrowRight className="w-3.5 h-3.5 ml-auto" />
-                  </Button>
-                </Link>
+              {/* Card Footer - Movimentação & Extrato */}
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setHistoryBarrel(barrel)}
+                  className="w-1/2 border-amber-200 text-amber-900 hover:bg-amber-50 font-bold text-xs rounded-xl gap-1.5 cursor-pointer"
+                >
+                  <History className="w-3.5 h-3.5 text-amber-700" />
+                  Extrato ({movementsCount})
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setSelectedBarrelForMovement(barrel);
+                    setMovementType("OUTPUT");
+                    setIsMovementOpen(true);
+                  }}
+                  className="w-1/2 bg-amber-800 hover:bg-amber-700 text-white font-bold text-xs rounded-xl gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <ArrowUpCircle className="w-3.5 h-3.5 text-amber-300" />
+                  Retirar p/ Envase
+                </Button>
               </div>
             </Card>
           );
         })}
       </div>
 
-      {/* CREATE BARREL DIALOG */}
+      {/* RECORD MOVEMENT DIALOG (INPUT / OUTPUT) */}
+      <Dialog open={isMovementOpen} onOpenChange={setIsMovementOpen}>
+        <DialogContent className="max-w-lg rounded-3xl p-6 bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900 flex items-center gap-2">
+              {movementType === "INPUT" ? (
+                <ArrowDownCircle className="w-6 h-6 text-emerald-600" />
+              ) : (
+                <ArrowUpCircle className="w-6 h-6 text-amber-600" />
+              )}
+              {movementType === "INPUT" ? "Entrada de Cachaça (Alambicada)" : "Retirada para Envase / Blending"}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              {movementType === "INPUT"
+                ? "Registre a cachaça destilada que está entrando no barril para iniciar ou completar a maturação."
+                : "Registre a quantidade de litros retirada do barril para engarrafar ou transferir."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleRecordMovement} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-700">Selecione o Barril *</Label>
+              <select
+                value={selectedBarrelForMovement?.id || ""}
+                onChange={(e) => {
+                  const b = barrels.find((x) => x.id === e.target.value);
+                  if (b) setSelectedBarrelForMovement(b);
+                }}
+                className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold outline-none focus:border-amber-600"
+              >
+                {barrels.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.code} • {WOOD_PROFILES[b.woodType]?.name} (Saldo: {b.currentLiters}L / {b.capacityLiters}L)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700">
+                  {movementType === "INPUT" ? "Litros que Entraram (+)" : "Litros Retirados (-)"}
+                </Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  required
+                  value={movLiters}
+                  onChange={(e) => setMovLiters(e.target.value)}
+                  className="rounded-xl text-base font-black text-slate-900"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700">Data do Evento *</Label>
+                <Input
+                  type="date"
+                  required
+                  value={movDate}
+                  onChange={(e) => setMovDate(e.target.value)}
+                  className="rounded-xl text-xs font-semibold"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700">Lote / Alambicada</Label>
+                <Input
+                  value={movBatch}
+                  onChange={(e) => setMovBatch(e.target.value)}
+                  placeholder={selectedBarrelForMovement?.batchNumber || "Ex: LOTE-2026/01"}
+                  className="rounded-xl text-xs font-semibold"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700">Teor Alcoólico (% ABV)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={movAbv}
+                  onChange={(e) => setMovAbv(e.target.value)}
+                  className="rounded-xl text-xs font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-700">Responsável</Label>
+              <Input
+                value={movResponsible}
+                onChange={(e) => setMovResponsible(e.target.value)}
+                className="rounded-xl text-xs font-medium"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-slate-700">Motivo / Observações</Label>
+              <Input
+                value={movNotes}
+                onChange={(e) => setMovNotes(e.target.value)}
+                placeholder={
+                  movementType === "INPUT"
+                    ? "Ex: Alambicada de corte de coração da safra nova"
+                    : "Ex: Envase de 60 garrafas de 750ml para restaurante"
+                }
+                className="rounded-xl text-xs font-medium"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="submit"
+                disabled={loading}
+                className={`w-full py-5 rounded-2xl font-black text-sm cursor-pointer ${
+                  movementType === "INPUT"
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                    : "bg-amber-700 hover:bg-amber-800 text-white shadow-md"
+                }`}
+              >
+                {loading ? "Registrando..." : "Gravar Movimentação no Extrato"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* BARREL HISTORY / KARDEX MODAL */}
+      <Dialog open={!!historyBarrel} onOpenChange={() => setHistoryBarrel(null)}>
+        <DialogContent className="max-w-2xl rounded-3xl p-6 bg-white max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <History className="w-5 h-5 text-amber-600" />
+                Extrato do Barril: {historyBarrel?.code}
+              </div>
+              <Badge className="bg-amber-100 text-amber-950 font-black text-xs">
+                Saldo: {historyBarrel?.currentLiters}L / {historyBarrel?.capacityLiters}L
+              </Badge>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Histórico detalhado de tudo o que entrou e saiu deste tonel desde o início do envelhecimento.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-3">
+            {(!historyBarrel?.movements || historyBarrel.movements.length === 0) && (
+              <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50">
+                <p className="text-xs text-slate-500">Nenhuma movimentação registrada individualmente ainda.</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Abastecido em {historyBarrel ? new Date(historyBarrel.fillDate).toLocaleDateString("pt-BR") : ""}.
+                </p>
+              </div>
+            )}
+
+            {historyBarrel?.movements && historyBarrel.movements.length > 0 && (
+              <div className="space-y-2.5">
+                {historyBarrel.movements.map((mov) => {
+                  const isInput = mov.type === "INPUT";
+
+                  return (
+                    <div
+                      key={mov.id}
+                      className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                        isInput ? "bg-emerald-50/60 border-emerald-200/80" : "bg-amber-50/60 border-amber-200/80"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                            isInput ? "bg-emerald-600 text-white" : "bg-amber-700 text-white"
+                          }`}
+                        >
+                          {isInput ? <ArrowDownCircle className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-slate-900 text-sm">
+                              {isInput ? "Entrada (+)" : "Saída (-)"} {mov.liters} Litros
+                            </span>
+                            {mov.batchNumber && (
+                              <span className="text-[10px] font-mono bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-600">
+                                {mov.batchNumber}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-600 mt-0.5">
+                            {mov.notes || (isInput ? "Abastecimento da alambicada" : "Retirada para envase")}
+                          </p>
+                          <p className="text-[10px] text-slate-400">
+                            Por: {mov.responsibleName || "Mestre"} • {new Date(mov.date).toLocaleDateString("pt-BR")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Saldo Após</span>
+                        <span className="text-sm font-black text-slate-900 font-mono">
+                          {mov.resultingLiters} L
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* CREATE BARREL MODAL */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="max-w-lg rounded-3xl p-6 bg-white">
           <DialogHeader>
@@ -528,21 +813,22 @@ export function BarrelsClientView({
           <form onSubmit={handleCreateBarrel} className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Código / Identificação *</Label>
+                <Label className="text-xs font-bold text-slate-700">Código / Identificação *</Label>
                 <Input
                   required
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="Ex: BARRIL-07, TON-02"
+                  className="rounded-xl text-xs font-semibold"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Tipo de Madeira *</Label>
+                <Label className="text-xs font-bold text-slate-700">Tipo de Madeira *</Label>
                 <select
                   value={woodType}
                   onChange={(e) => setWoodType(e.target.value)}
-                  className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium outline-none focus:border-amber-600"
+                  className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold outline-none focus:border-amber-600"
                 >
                   {Object.entries(WOOD_PROFILES).map(([k, p]) => (
                     <option key={k} value={k}>
@@ -555,74 +841,81 @@ export function BarrelsClientView({
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Capacidade (L)</Label>
+                <Label className="text-xs font-bold text-slate-700">Capacidade (L)</Label>
                 <Input
                   type="number"
                   step="0.1"
                   required
                   value={capacityLiters}
                   onChange={(e) => setCapacityLiters(e.target.value)}
+                  className="rounded-xl text-xs font-bold"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Volume Atual (L)</Label>
+                <Label className="text-xs font-bold text-slate-700">Volume Inicial (L)</Label>
                 <Input
                   type="number"
                   step="0.1"
                   required
                   value={currentLiters}
                   onChange={(e) => setCurrentLiters(e.target.value)}
+                  className="rounded-xl text-xs font-bold"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Teor ABV %</Label>
+                <Label className="text-xs font-bold text-slate-700">Teor ABV %</Label>
                 <Input
                   type="number"
                   step="0.1"
                   value={abvPercentage}
                   onChange={(e) => setAbvPercentage(e.target.value)}
+                  className="rounded-xl text-xs font-bold"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Data de Abastecimento</Label>
+                <Label className="text-xs font-bold text-slate-700">Data de Início</Label>
                 <Input
                   type="date"
                   required
                   value={fillDate}
                   onChange={(e) => setFillDate(e.target.value)}
+                  className="rounded-xl text-xs font-semibold"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Lote / Alambicada</Label>
+                <Label className="text-xs font-bold text-slate-700">Lote / Alambicada</Label>
                 <Input
                   value={batchNumber}
                   onChange={(e) => setBatchNumber(e.target.value)}
                   placeholder="Ex: LOTE-2026/01"
+                  className="rounded-xl text-xs font-semibold"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Localização na Adega</Label>
+              <Label className="text-xs font-bold text-slate-700">Localização na Adega</Label>
               <Input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Ex: Galpão 1 - Fileira B"
+                className="rounded-xl text-xs font-medium"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Notas Sensoriais / Perfil do Destilado</Label>
+              <Label className="text-xs font-bold text-slate-700">Notas Sensoriais / Perfil do Destilado</Label>
               <Input
                 value={sensoryNotes}
                 onChange={(e) => setSensoryNotes(e.target.value)}
                 placeholder="Ex: Notas florais marcantes, final suave com toque de baunilha"
+                className="rounded-xl text-xs font-medium"
               />
             </div>
 
@@ -630,9 +923,9 @@ export function BarrelsClientView({
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl cursor-pointer"
+                className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-2xl py-5 cursor-pointer text-sm"
               >
-                {loading ? "Salvando..." : "Cadastrar Barril"}
+                {loading ? "Salvando..." : "Cadastrar Barril na Adega"}
               </Button>
             </DialogFooter>
           </form>

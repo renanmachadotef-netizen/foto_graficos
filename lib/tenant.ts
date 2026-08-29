@@ -567,5 +567,92 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
         ],
       });
     }
+
+    // 7. Ensure Recipes for PURABRASIL
+    const recipesCount = await prisma.recipe.count({
+      where: { tenantId: "PURABRASIL" },
+    });
+
+    if (recipesCount === 0) {
+      await prisma.recipe.createMany({
+        data: [
+          {
+            tenantId: "PURABRASIL",
+            name: "Cachaça Pura Brasil Amburana Extra Premium",
+            category: "EXTRA_PREMIUM",
+            woodType: "AMBURANA",
+            agingMonths: 24,
+            targetAbv: 42.0,
+            sugarBrix: 16.5,
+            fermentationType: "LEVEDURA_SELVAGEM",
+            fermentationHours: 30,
+            distillationType: "ALAMBIQUE_COBRE",
+            heartCutPercent: 80.0,
+            sensoryProfile: "Bouquet adocicado inconfundível, notas quentes de canela, mel de laranjeira e baunilha persistente.",
+            instructions: "Garapa filtrada a 16.5° Brix. Fermentação caipira lenta de 30h. Destilação em fogo brando com corte rigoroso de 80% do coração. Envelhecimento mínimo de 24 meses em dornas de Amburana selecionada.",
+          },
+          {
+            tenantId: "PURABRASIL",
+            name: "Cachaça Pura Brasil Carvalho Francês Gran Reserva",
+            category: "EXTRA_PREMIUM",
+            woodType: "CARVALHO_FRANCES",
+            agingMonths: 36,
+            targetAbv: 43.0,
+            sugarBrix: 16.0,
+            fermentationType: "LEVEDURA_SELVAGEM",
+            fermentationHours: 28,
+            distillationType: "ALAMBIQUE_COBRE",
+            heartCutPercent: 82.0,
+            sensoryProfile: "Taninos finos aveludados, amêndoas tostadas, frutas secas e toque de especiarias nobres.",
+            instructions: "Envelhecimento de 3 anos em barricas de carvalho francês de primeiro e segundo uso. Filtragem suave a frio antes do envase.",
+          },
+          {
+            tenantId: "PURABRASIL",
+            name: "Cachaça Pura Brasil Bálsamo Floral",
+            category: "PREMIUM",
+            woodType: "BALSAMO",
+            agingMonths: 18,
+            targetAbv: 42.5,
+            sugarBrix: 16.2,
+            fermentationType: "LEVEDURA_SELVAGEM",
+            fermentationHours: 32,
+            distillationType: "ALAMBIQUE_COBRE",
+            heartCutPercent: 80.0,
+            sensoryProfile: "Aroma herbal exuberante, notas de anis estrelado, camomila e frescor marcante.",
+            instructions: "Maturação de 18 meses em dorna de Bálsamo. Ideal para consumo puro em taças tipo tulipa.",
+          },
+          {
+            tenantId: "PURABRASIL",
+            name: "Cachaça Pura Brasil Blend 3 Madeiras",
+            category: "BLEND",
+            woodType: "BLEND",
+            agingMonths: 24,
+            targetAbv: 42.0,
+            sugarBrix: 16.5,
+            fermentationType: "LEVEDURA_SELVAGEM",
+            fermentationHours: 30,
+            distillationType: "ALAMBIQUE_COBRE",
+            heartCutPercent: 80.0,
+            sensoryProfile: "Harmonia perfeita: a doçura da amburana (40%), a estrutura do carvalho francês (40%) e a maciez do jequitibá rosa (20%).",
+            instructions: "Blend exclusivo montado pelo Mestre Alambiqueiro com repouso de 60 dias para casamento dos aromas antes do envase final.",
+          },
+          {
+            tenantId: "PURABRASIL",
+            name: "Cachaça Pura Brasil Prata Clássica de Alambique",
+            category: "PRATA",
+            woodType: "INOX",
+            agingMonths: 6,
+            targetAbv: 40.0,
+            sugarBrix: 16.0,
+            fermentationType: "LEVEDURA_SELVAGEM",
+            fermentationHours: 24,
+            distillationType: "ALAMBIQUE_COBRE",
+            heartCutPercent: 85.0,
+            sensoryProfile: "Cristalina, brilho intenso, aroma fresco de cana moída e maciez impecável.",
+            instructions: "Descanso de 6 meses em dorna de aço inox com aeração periódica para arredondamento dos ésteres.",
+          },
+        ],
+      });
+    }
   }
 }

@@ -247,20 +247,57 @@ model FixedCost {
 }
 
 model Barrel {
-  id             String   @id @default(cuid())
-  tenantId       String   @default("PURABRASIL")
-  code           String   // Ex: "BARRIL-01", "DORNA-03"
-  woodType       String   // "CARVALHO_AMERICANO", "CARVALHO_FRANCES", "AMBURANA", "BALSAMO", "JEQUITIBA", "INOX"
-  capacityLiters Float    // Ex: 200.0
-  currentLiters  Float    // Ex: 185.0
-  abvPercentage  Float    // Ex: 42.0 (% Álcool)
-  fillDate       DateTime // Data de início do envelhecimento
-  batchNumber    String   // Lote / Alambicada
-  status         String   @default("AGING") // "AGING", "READY", "EMPTY", "BOTTLING"
-  sensoryNotes   String?  // Notas sensoriais (baunilha, floral, especiarias)
-  location       String?  // Posição na adega
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id             String           @id @default(cuid())
+  tenantId       String           @default("PURABRASIL")
+  code           String           // Ex: "BARRIL-01", "DORNA-03"
+  woodType       String           // "CARVALHO_AMERICANO", "CARVALHO_FRANCES", "AMBURANA", "BALSAMO", "JEQUITIBA", "INOX"
+  capacityLiters Float            // Ex: 200.0
+  currentLiters  Float            // Ex: 185.0
+  abvPercentage  Float            // Ex: 42.0 (% Álcool)
+  fillDate       DateTime         // Data de início do envelhecimento
+  batchNumber    String           // Lote / Alambicada
+  status         String           @default("AGING") // "AGING", "READY", "EMPTY", "BOTTLING"
+  sensoryNotes   String?          // Notas sensoriais (baunilha, floral, especiarias)
+  location       String?          // Posição na adega
+  movements      BarrelMovement[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model BarrelMovement {
+  id              String   @id @default(cuid())
+  tenantId        String   @default("PURABRASIL")
+  barrelId        String
+  barrel          Barrel   @relation(fields: [barrelId], references: [id], onDelete: Cascade)
+  type            String   // "INPUT" (Alambicada/Entrada), "OUTPUT" (Envase), "TRANSFER" (Transferência/Blending), "LOSS" (Evaporação/Amostra)
+  liters          Float    // Litros movimentados
+  resultingLiters Float    // Saldo após a movimentação
+  date            DateTime @default(now()) // Data da movimentação
+  batchNumber     String?  // Lote / Alambicada
+  abvPercentage   Float?   // Teor Alcoólico no momento
+  responsibleName String?  // Mestre Alambiqueiro / Operador
+  notes           String?  // Motivo / Observação
+  createdAt       DateTime @default(now())
+}
+
+model Recipe {
+  id               String   @id @default(cuid())
+  tenantId         String   @default("PURABRASIL")
+  name             String   // Ex: "Cachaça Amburana Extra Premium"
+  category         String   @default("ENVELHECIDA") // "PRATA", "ENVELHECIDA", "PREMIUM", "EXTRA_PREMIUM", "BLEND"
+  woodType         String   // "AMBURANA", "CARVALHO_FRANCES", "CARVALHO_AMERICANO", "BALSAMO", "JEQUITIBA", "INOX", "BLEND"
+  agingMonths      Int      @default(12) // Meses de maturação
+  targetAbv        Float    @default(42.0) // % Álcool pretendido
+  sugarBrix        Float?   // °Brix da garapa (ex: 16.0)
+  fermentationType String?  // "LEVEDURA_SELVAGEM", "CAIPIRA_MILHO", "SACCHAROMYCES"
+  fermentationHours Int?    // Horas de fermentação (ex: 28)
+  distillationType String?  // "ALAMBIQUE_COBRE"
+  heartCutPercent  Float?   // % Corte Coração (ex: 80)
+  sensoryProfile   String?  // Perfil sensorial (aromas, cor, paladar)
+  instructions     String?  // Modo de fazer / Passo a passo detalhado
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model BottlingRun {

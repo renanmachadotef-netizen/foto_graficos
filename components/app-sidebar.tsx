@@ -18,6 +18,7 @@ import {
   Cake,
   GlassWater,
   Layers,
+  BookOpen,
 } from "lucide-react";
 import {
   Sidebar,
@@ -103,6 +104,13 @@ export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps
               icon: Wine,
               allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
               badge: "Tonéis",
+            },
+            {
+              title: "Caderno de Receitas",
+              url: "/recipes",
+              icon: BookOpen,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
+              badge: "Mestre",
             },
             {
               title: "Ficha de Envase (BOM)",

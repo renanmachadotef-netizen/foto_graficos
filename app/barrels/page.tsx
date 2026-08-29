@@ -14,9 +14,17 @@ export default async function BarrelsPage() {
   await ensureTenantInitialData(tenantId);
   const tenantConfig = TENANT_CONFIGS[tenantId];
 
-  const [barrels, bottlingRuns] = await Promise.all([
+  const currentYear = new Date().getFullYear();
+  const startOfYear = new Date(currentYear, 0, 1);
+
+  const [barrels, bottlingRuns, yearlyMovements] = await Promise.all([
     prisma.barrel.findMany({
       where: { tenantId },
+      include: {
+        movements: {
+          orderBy: { date: "desc" },
+        },
+      },
       orderBy: { code: "asc" },
     }),
     prisma.bottlingRun.findMany({
@@ -24,12 +32,22 @@ export default async function BarrelsPage() {
       orderBy: { createdAt: "desc" },
       take: 6,
     }),
+    prisma.barrelMovement.findMany({
+      where: {
+        tenantId,
+        type: "INPUT",
+        date: { gte: startOfYear },
+      },
+    }),
   ]);
+
+  const yearlyProducedLiters = yearlyMovements.reduce((acc, m) => acc + m.liters, 0);
 
   return (
     <BarrelsClientView
       initialBarrels={barrels}
       bottlingRuns={bottlingRuns}
+      yearlyProducedLiters={yearlyProducedLiters}
       tenantConfig={tenantConfig}
       userRole={session.role}
     />
