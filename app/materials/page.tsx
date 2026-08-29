@@ -29,17 +29,26 @@ import {
   Layers,
 } from "lucide-react";
 
+import { getCurrentTenant, ensureTenantInitialData, TENANT_CONFIGS } from "@/lib/tenant";
+
 export const dynamic = "force-dynamic";
 
 export default async function MaterialsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
+  const tenantId = await getCurrentTenant();
+  await ensureTenantInitialData(tenantId);
+  const tenantConfig = TENANT_CONFIGS[tenantId];
+  const isPuraBrasil = tenantId === "PURABRASIL";
+
   const materials = await prisma.material.findMany({
+    where: { tenantId },
     orderBy: { name: "asc" },
   });
 
   const recentMovements = await prisma.stockMovement.findMany({
+    where: { material: { tenantId } },
     take: 8,
     orderBy: { createdAt: "desc" },
     include: {
@@ -54,10 +63,17 @@ export default async function MaterialsPage() {
   const criticalItems = materials.filter((m) => m.minStock > 0 && m.currentStock <= m.minStock);
 
   const categoryLabels: Record<string, { label: string; color: string }> = {
+    // Foto & Gráficos
     VINIL_LONA: { label: "Lonas & Vinis", color: "bg-indigo-100 text-indigo-700" },
     RIGIDOS_CHAPAS: { label: "Chapas & Rígidos", color: "bg-sky-100 text-sky-700" },
     TINTAS_QUIMICOS: { label: "Tintas & Químicos", color: "bg-amber-100 text-amber-700" },
     ACESSORIOS: { label: "Acessórios", color: "bg-purple-100 text-purple-700" },
+    // Pura Brasil
+    CACHACA_GRANEL: { label: "Cachaça Granel / Barril", color: "bg-amber-100 text-amber-800" },
+    GARRAFAS_VIDRO: { label: "Garrafas de Vidro", color: "bg-emerald-100 text-emerald-800" },
+    TAMPAS_ROLHAS: { label: "Tampas & Rolhas", color: "bg-yellow-100 text-yellow-800" },
+    ROTULOS_LACRES: { label: "Rótulos & Lacres", color: "bg-rose-100 text-rose-800" },
+    EMBALAGENS_CAIXAS: { label: "Caixas & Embalagens", color: "bg-stone-200 text-stone-800" },
     OUTROS: { label: "Outros", color: "bg-slate-100 text-slate-700" },
   };
 

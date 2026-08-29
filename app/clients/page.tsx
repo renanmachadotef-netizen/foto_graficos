@@ -2,17 +2,24 @@ import { ClientForm } from "./ClientForm";
 import { Trash2 } from "lucide-react";
 import { deleteClient } from "./actions";
 import { prisma } from "@/lib/prisma";
+import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
+
+export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
+  const tenantId = await getCurrentTenant();
+  await ensureTenantInitialData(tenantId);
+
   const clients = await prisma.client.findMany({
-    orderBy: { createdAt: 'desc' }
+    where: { tenantId },
+    orderBy: { createdAt: "desc" },
   });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-800">Clientes (CRM)</h1>
-        <p className="text-muted-foreground">Cadastre seus clientes para gerar propostas e ordens de serviço.</p>
+        <p className="text-muted-foreground">Cadastre seus clientes para gerar propostas, vendas e ordens de serviço.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -25,7 +32,7 @@ export default async function ClientsPage() {
           
           {clients.length === 0 && (
             <div className="p-8 text-center border-2 border-dashed rounded-xl bg-slate-50">
-              <p className="text-sm text-slate-500">Nenhum cliente cadastrado ainda.</p>
+              <p className="text-sm text-slate-500">Nenhum cliente cadastrado nesta empresa ainda.</p>
             </div>
           )}
           
@@ -43,7 +50,7 @@ export default async function ClientsPage() {
                 
                 <div className="text-right border-l pl-4 ml-4">
                   <form action={async () => { "use server"; await deleteClient(client.id); }}>
-                    <button type="submit" className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50">
+                    <button type="submit" className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50 cursor-pointer">
                       <Trash2 size={20}/>
                     </button>
                   </form>

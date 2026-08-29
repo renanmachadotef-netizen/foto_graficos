@@ -1,9 +1,16 @@
 "use server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentTenant } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 
 export async function createClient(data: any) {
-  await prisma.client.create({ data });
+  const currentTenant = await getCurrentTenant();
+  await prisma.client.create({
+    data: {
+      ...data,
+      tenantId: currentTenant,
+    },
+  });
   revalidatePath("/clients");
 }
 

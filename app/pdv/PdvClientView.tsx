@@ -63,12 +63,15 @@ interface Client {
   email?: string | null;
 }
 
+import { TenantConfig } from "@/lib/tenant";
+
 interface PdvClientViewProps {
   initialProducts: Product[];
   materials: Material[];
   clients: Client[];
   companySettings: any;
   userName: string;
+  tenantConfig?: TenantConfig;
 }
 
 export function PdvClientView({
@@ -77,6 +80,7 @@ export function PdvClientView({
   clients,
   companySettings,
   userName,
+  tenantConfig,
 }: PdvClientViewProps) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
@@ -257,12 +261,16 @@ export function PdvClientView({
 
   const categories = [
     { id: "ALL", label: "Todos os Itens" },
-    { id: "BALCAO", label: "Gráfica Rápida" },
-    { id: "IMPRESSAO", label: "Banners & Lonas" },
-    { id: "FOTOS", label: "Fotos & Estúdio" },
-    { id: "ACABAMENTO", label: "Acabamentos" },
-    { id: "BRINDES", label: "Brindes & Crachás" },
+    ...(tenantConfig?.categories || [
+      { id: "BALCAO", label: "Gráfica Rápida" },
+      { id: "IMPRESSAO", label: "Banners & Lonas" },
+      { id: "FOTOS", label: "Fotos & Estúdio" },
+      { id: "ACABAMENTO", label: "Acabamentos" },
+      { id: "BRINDES", label: "Brindes & Crachás" },
+    ]),
   ];
+
+  const isPuraBrasil = tenantConfig?.id === "PURABRASIL";
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
@@ -270,23 +278,25 @@ export function PdvClientView({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-            <ShoppingCart className="w-6 h-6 text-indigo-600" />
-            PDV Balcão Rápido
+            <ShoppingCart className={`w-6 h-6 ${isPuraBrasil ? "text-amber-600" : "text-indigo-600"}`} />
+            PDV Balcão • {tenantConfig?.shortName || "Venda Rápida"}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Frente de caixa ágil • Vendas express, cálculo por m² e recibo no WhatsApp
+            Frente de caixa ágil • Vendas express e recibo no WhatsApp
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            onClick={() => setIsM2ModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs gap-1.5"
-          >
-            <Calculator className="w-4 h-4" />
-            Calcular por m²
-          </Button>
+          {!isPuraBrasil && (
+            <Button
+              size="sm"
+              onClick={() => setIsM2ModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs gap-1.5 cursor-pointer"
+            >
+              <Calculator className="w-4 h-4" />
+              Calcular por m²
+            </Button>
+          )}
 
           <Button
             size="sm"

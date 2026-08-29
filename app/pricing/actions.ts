@@ -1,10 +1,14 @@
 "use server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentTenant } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 
 export async function saveQuote(data: any) {
+  const currentTenant = await getCurrentTenant();
+
   const quote = await prisma.quote.create({
     data: {
+      tenantId: currentTenant,
       clientId: data.clientId,
       title: data.title,
       totalCost: data.totalCost,
@@ -18,11 +22,12 @@ export async function saveQuote(data: any) {
           description: item.description,
           quantity: item.quantity,
           unitCost: item.unitCost,
-          unitPrice: item.unitPrice
-        }))
-      }
-    }
+          unitPrice: item.unitPrice,
+        })),
+      },
+    },
   });
-  
+
+  revalidatePath("/quotes");
   return quote.id;
 }

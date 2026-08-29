@@ -1,18 +1,25 @@
 import { prisma } from "@/lib/prisma";
+import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
 import { EmployeeForm } from "./EmployeeForm";
 import { Trash2 } from "lucide-react";
 import { deleteEmployee } from "./actions";
 import { EditEmployeeDialog } from "./EditEmployeeDialog";
 
+export const dynamic = "force-dynamic";
+
 export default async function EmployeesPage() {
+  const tenantId = await getCurrentTenant();
+  await ensureTenantInitialData(tenantId);
+
   const employees = await prisma.employee.findMany({
-    orderBy: { createdAt: 'desc' }
+    where: { tenantId },
+    orderBy: { createdAt: "desc" },
   });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-800">Funcionários</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-800">Funcionários & Equipe</h1>
         <p className="text-muted-foreground">Gestão da equipe e cálculo inteligente do Custo de Hora-Funcionário.</p>
       </div>
 
@@ -26,7 +33,7 @@ export default async function EmployeesPage() {
           
           {employees.length === 0 && (
             <div className="p-8 text-center border-2 border-dashed rounded-xl bg-slate-50">
-              <p className="text-sm text-slate-500">Nenhum funcionário cadastrado ainda.</p>
+              <p className="text-sm text-slate-500">Nenhum funcionário cadastrado nesta empresa ainda.</p>
               <p className="text-xs text-slate-400 mt-1">Preencha o formulário ao lado para adicionar o primeiro.</p>
             </div>
           )}
@@ -56,7 +63,7 @@ export default async function EmployeesPage() {
                   <div className="flex items-center">
                     <EditEmployeeDialog employee={emp} />
                     <form action={async () => { "use server"; await deleteEmployee(emp.id); }}>
-                      <button type="submit" className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50">
+                      <button type="submit" className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50 cursor-pointer">
                         <Trash2 size={20}/>
                       </button>
                     </form>

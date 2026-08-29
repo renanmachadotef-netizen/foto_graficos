@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { getCurrentTenant, TENANT_CONFIGS, ensureTenantInitialData } from "@/lib/tenant";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import {
   FileText,
   Target,
   Sparkles,
+  Wine,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +28,12 @@ export default async function DashboardPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  // Fetch all necessary data concurrently
+  const tenantId = await getCurrentTenant();
+  await ensureTenantInitialData(tenantId);
+  const tenantConfig = TENANT_CONFIGS[tenantId];
+  const isPuraBrasil = tenantId === "PURABRASIL";
+
+  // Fetch all tenant-specific data concurrently
   const [
     companySettings,
     fixedCosts,
@@ -37,20 +44,24 @@ export default async function DashboardPage() {
     transactions,
     materials,
   ] = await Promise.all([
-    prisma.companySettings.findFirst(),
-    prisma.fixedCost.findMany(),
-    prisma.employee.findMany(),
-    prisma.machine.findMany(),
+    prisma.companySettings.findFirst({ where: { tenantId } }),
+    prisma.fixedCost.findMany({ where: { tenantId } }),
+    prisma.employee.findMany({ where: { tenantId } }),
+    prisma.machine.findMany({ where: { tenantId } }),
     prisma.quote.findMany({
+      where: { tenantId },
       take: 5,
       orderBy: { createdAt: "desc" },
       include: { client: true },
     }),
     prisma.serviceOrder.findMany({
-      where: { status: { in: ["WAITING", "PREPRESS", "PRINTING", "FINISHING"] } },
+      where: {
+        quote: { tenantId },
+        status: { in: ["WAITING", "PREPRESS", "PRINTING", "FINISHING", "AGING", "BOTTLING", "PACKAGING"] },
+      },
     }),
-    prisma.financialTransaction.findMany(),
-    prisma.material.findMany(),
+    prisma.financialTransaction.findMany({ where: { tenantId } }),
+    prisma.material.findMany({ where: { tenantId } }),
   ]);
 
   // 1. Calculate Total Fixed Costs (Monthly Operating Cost)

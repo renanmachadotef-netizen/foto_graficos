@@ -1,18 +1,25 @@
 import { prisma } from "@/lib/prisma";
+import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
 import { MachineForm } from "./MachineForm";
 import { Trash2 } from "lucide-react";
 import { deleteMachine } from "./actions";
 import { EditMachineDialog } from "./EditMachineDialog";
 
+export const dynamic = "force-dynamic";
+
 export default async function MachinesPage() {
+  const tenantId = await getCurrentTenant();
+  await ensureTenantInitialData(tenantId);
+
   const machines = await prisma.machine.findMany({
-    orderBy: { createdAt: 'desc' }
+    where: { tenantId },
+    orderBy: { createdAt: "desc" },
   });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-800">Maquinário</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-800">Maquinário & Equipamentos</h1>
         <p className="text-muted-foreground">Depreciação, manutenção e cálculo do Custo de Hora-Máquina.</p>
       </div>
 
@@ -22,11 +29,11 @@ export default async function MachinesPage() {
         </div>
         
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-xl font-semibold text-slate-700">Máquinas Registradas</h2>
+          <h2 className="text-xl font-semibold text-slate-700">Equipamentos Registrados</h2>
           
           {machines.length === 0 && (
             <div className="p-8 text-center border-2 border-dashed rounded-xl bg-slate-50">
-              <p className="text-sm text-slate-500">Nenhuma máquina cadastrada ainda.</p>
+              <p className="text-sm text-slate-500">Nenhum equipamento cadastrado nesta empresa ainda.</p>
               <p className="text-xs text-slate-400 mt-1">Utilize o formulário para adicionar seu maquinário.</p>
             </div>
           )}
@@ -69,7 +76,7 @@ export default async function MachinesPage() {
                   <div className="flex items-center">
                     <EditMachineDialog machine={mac} />
                     <form action={async () => { "use server"; await deleteMachine(mac.id); }}>
-                      <button type="submit" className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50">
+                      <button type="submit" className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50 cursor-pointer">
                         <Trash2 size={20}/>
                       </button>
                     </form>

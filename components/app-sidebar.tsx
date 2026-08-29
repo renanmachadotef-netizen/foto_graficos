@@ -14,6 +14,7 @@ import {
   Sparkles,
   Lock,
   ShoppingBag,
+  Wine,
 } from "lucide-react";
 import {
   Sidebar,
@@ -25,6 +26,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Role, ROLE_PERMISSIONS } from "@/lib/roles";
+import { TenantConfig } from "@/lib/tenant";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 
@@ -102,18 +104,18 @@ const menuGroups: MenuGroup[] = [
         title: "Fluxo Financeiro",
         url: "/financial",
         icon: CircleDollarSign,
-        allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+        allowedRoles: ["ADMIN", "MANAGER"],
       },
       {
-        title: "Custo de Máquinas",
-        url: "/machines",
-        icon: Cpu,
+        title: "Equipe & Salários",
+        url: "/employees",
+        icon: Users,
         allowedRoles: ["ADMIN"],
       },
       {
-        title: "Equipe & Mão de Obra",
-        url: "/employees",
-        icon: Users,
+        title: "Máquinas & Depreciação",
+        url: "/machines",
+        icon: Cpu,
         allowedRoles: ["ADMIN"],
       },
     ],
@@ -122,11 +124,10 @@ const menuGroups: MenuGroup[] = [
     groupLabel: "Administração",
     items: [
       {
-        title: "Usuários & Acessos",
+        title: "Gestão de Usuários",
         url: "/users",
         icon: UserCog,
         allowedRoles: ["ADMIN"],
-        badge: "ADMIN",
       },
       {
         title: "Configurações Gerais",
@@ -140,22 +141,34 @@ const menuGroups: MenuGroup[] = [
 
 interface AppSidebarProps {
   userRole?: Role;
+  tenantConfig?: TenantConfig;
 }
 
-export function AppSidebar({ userRole = "ADMIN" }: AppSidebarProps) {
+export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps) {
   const pathname = usePathname();
+  const isPuraBrasil = tenantConfig?.id === "PURABRASIL";
 
   return (
     <Sidebar className="border-r border-slate-200/80 bg-white">
       <SidebarContent className="p-2 space-y-4">
         {/* Brand Header */}
         <div className="px-3 py-4 flex items-center gap-2.5 border-b border-slate-100">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-            <Sparkles className="w-5 h-5" />
+          <div
+            className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-md ${
+              isPuraBrasil
+                ? "bg-gradient-to-tr from-amber-700 to-yellow-600 shadow-amber-600/20"
+                : "bg-gradient-to-tr from-indigo-600 to-cyan-500 shadow-indigo-500/20"
+            }`}
+          >
+            {isPuraBrasil ? <Wine className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
           </div>
           <div>
-            <h2 className="font-bold text-slate-900 text-sm tracking-tight leading-tight">Foto & Gráficos</h2>
-            <p className="text-[11px] text-slate-500 font-medium">Sistema ERP Gráfico</p>
+            <h2 className="font-bold text-slate-900 text-sm tracking-tight leading-tight">
+              {tenantConfig?.name || "Foto & Gráficos"}
+            </h2>
+            <p className="text-[11px] text-slate-500 font-medium">
+              {isPuraBrasil ? "Cachaçaria & Alambique" : "Sistema ERP Gráfico"}
+            </p>
           </div>
         </div>
 
@@ -181,7 +194,9 @@ export function AppSidebar({ userRole = "ADMIN" }: AppSidebarProps) {
                           href={item.url}
                           className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
                             isActive
-                              ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/30 font-semibold"
+                              ? isPuraBrasil
+                                ? "bg-amber-700 text-white shadow-sm shadow-amber-700/30 font-semibold"
+                                : "bg-indigo-600 text-white shadow-sm shadow-indigo-500/30 font-semibold"
                               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                           }`}
                         >

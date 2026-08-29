@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { getCurrentTenant } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 
 export async function createMaterial(data: {
@@ -15,9 +16,11 @@ export async function createMaterial(data: {
   wasteMargin?: number;
 }) {
   const session = await getSession();
+  const currentTenant = await getCurrentTenant();
 
   const material = await prisma.material.create({
     data: {
+      tenantId: currentTenant,
       name: data.name,
       category: data.category || "VINIL_LONA",
       unit: data.unit,

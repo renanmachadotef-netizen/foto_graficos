@@ -9,6 +9,7 @@ datasource db {
 
 model CompanySettings {
   id          String   @id @default(cuid())
+  tenantId    String   @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   companyName String?
   document    String?  // CNPJ
   phone       String?
@@ -30,6 +31,7 @@ model CompanySettings {
 
 model User {
   id             String          @id @default(cuid())
+  tenantId       String          @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name           String
   email          String          @unique
   password       String
@@ -44,6 +46,7 @@ model User {
 
 model Client {
   id           String                 @id @default(cuid())
+  tenantId     String                 @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name         String
   document     String? // CPF/CNPJ
   phone        String?
@@ -56,11 +59,12 @@ model Client {
 
 model Product {
   id          String   @id @default(cuid())
+  tenantId    String   @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name        String
-  category    String   @default("BALCAO") // "BALCAO", "IMPRESSAO", "FOTOS", "BRINDES", "ACABAMENTO", "OUTROS"
+  category    String   @default("BALCAO") // "BALCAO", "IMPRESSAO", "FOTOS", "BEBIDAS", "DOSES", "KITS", "BRINDES", "ACABAMENTO", "OUTROS"
   price       Float
   cost        Float    @default(0)
-  unit        String   @default("un") // "un", "m2", "cento", "milheiro", "par"
+  unit        String   @default("un") // "un", "m2", "cento", "milheiro", "par", "garrafa", "dose", "cx"
   description String?
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -69,6 +73,7 @@ model Product {
 
 model Quote {
   id           String                 @id @default(cuid())
+  tenantId     String                 @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   clientId     String
   client       Client                 @relation(fields: [clientId], references: [id])
   sellerId     String?
@@ -93,7 +98,7 @@ model ServiceOrder {
   id           String   @id @default(cuid())
   quoteId      String   @unique
   quote        Quote    @relation(fields: [quoteId], references: [id])
-  status       String   @default("WAITING") // WAITING, PREPRESS, PRINTING, FINISHING, READY
+  status       String   @default("WAITING") // WAITING, PREPRESS, PRINTING, FINISHING, READY, AGING, BOTTLING, PACKAGING
   priority     String   @default("NORMAL")  // LOW, NORMAL, HIGH
   deliveryDate DateTime?
   createdAt    DateTime @default(now())
@@ -112,6 +117,7 @@ model QuoteItem {
 
 model Employee {
   id                   String @id @default(cuid())
+  tenantId             String @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name                 String
   contractType         String // "CLT_SIMPLES", "CLT_NORMAL", "PJ"
   baseSalary           Float
@@ -127,6 +133,7 @@ model Employee {
 
 model Machine {
   id               String @id @default(cuid())
+  tenantId         String @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name             String
   acquisitionValue Float
   usefulLifeMonths Int
@@ -134,7 +141,7 @@ model Machine {
   powerConsumption Float // Watts
   kwhPrice         Float @default(0.95)
   workingHours     Int   @default(120) // Expected usage hours per month
-  productivity     Float @default(0) // m2 por hora (para plotters)
+  productivity     Float @default(0) // m2 por hora (para plotters) ou garrafas/hora (para alambique/envasadora)
   hourlyCost       Float @default(0) // Custo hora final calculado
   steps            WorkflowStep[]
   createdAt        DateTime @default(now())
@@ -143,14 +150,15 @@ model Machine {
 
 model Material {
   id           String          @id @default(cuid())
+  tenantId     String          @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name         String
-  category     String          @default("VINIL_LONA") // "VINIL_LONA", "RIGIDOS_CHAPAS", "TINTAS_QUIMICOS", "ACESSORIOS", "OUTROS"
-  unit         String          // "m2", "ml", "un", "litro"
+  category     String          @default("VINIL_LONA") // "VINIL_LONA", "RIGIDOS_CHAPAS", "CACHACA_GRANEL", "GARRAFAS_VIDRO", "TAMPAS_ROLHAS", "ROTULOS_LACRES", "EMBALAGENS_CAIXAS", "OUTROS"
+  unit         String          // "m2", "ml", "un", "litro", "lacre", "cx"
   unitCost     Float           // Custo por unidade
   currentStock Float           @default(0) // Estoque atual
   minStock     Float           @default(0) // Estoque de segurança/mínimo
-  width        Float?          // Largura do rolo em metros (Ex: 1.60)
-  wasteMargin  Float           @default(0) // % de perda técnica/sangria
+  width        Float?          // Largura do rolo em metros (para gráficas) ou capacidade em ml (para garrafas)
+  wasteMargin  Float           @default(0) // % de perda técnica/evaporação
   movements    StockMovement[]
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
@@ -202,6 +210,7 @@ model Financing {
 
 model FinancialTransaction {
   id            String    @id @default(cuid())
+  tenantId      String    @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   date          DateTime  @default(now())
   dueDate       DateTime  @default(now())
   paymentDate   DateTime?
@@ -222,6 +231,7 @@ model FinancialTransaction {
 
 model FixedCost {
   id        String   @id @default(cuid())
+  tenantId  String   @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name      String
   amount    Float
   createdAt DateTime @default(now())

@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { getCurrentTenant } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 
 export interface CreateTransactionInput {
@@ -17,6 +18,7 @@ export interface CreateTransactionInput {
 }
 
 export async function createFinancialTransaction(data: CreateTransactionInput) {
+  const currentTenant = await getCurrentTenant();
   const dueDateObj = new Date(data.dueDate);
   const paymentDateObj = data.status === "PAID" 
     ? (data.paymentDate ? new Date(data.paymentDate) : new Date())
@@ -24,6 +26,7 @@ export async function createFinancialTransaction(data: CreateTransactionInput) {
 
   await prisma.financialTransaction.create({
     data: {
+      tenantId: currentTenant,
       description: data.description,
       amount: Math.abs(data.amount),
       type: data.type,
@@ -126,11 +129,16 @@ export async function uploadTransactions(
 }
 
 export async function updateCompanySettings(data: any) {
-  const existing = await prisma.companySettings.findFirst();
+  const currentTenant = await getCurrentTenant();
+  const existing = await prisma.companySettings.findFirst({
+    where: { tenantId: currentTenant },
+  });
   if (existing) {
     await prisma.companySettings.update({ where: { id: existing.id }, data });
   } else {
-    await prisma.companySettings.create({ data });
+    await prisma.companySettings.create({
+      data: { ...data, tenantId: currentTenant },
+    });
   }
   revalidatePath("/settings");
   revalidatePath("/financial");
@@ -139,7 +147,14 @@ export async function updateCompanySettings(data: any) {
 }
 
 export async function addFixedCost(name: string, amount: number) {
-  await prisma.fixedCost.create({ data: { name, amount: Math.abs(amount) } });
+  const currentTenant = await getCurrentTenant();
+  await prisma.fixedCost.create({
+    data: {
+      tenantId: currentTenant,
+      name,
+      amount: Math.abs(amount),
+    },
+  });
   revalidatePath("/financial");
 }
 

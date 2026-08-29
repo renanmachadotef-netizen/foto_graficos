@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SaasHeader } from "@/components/saas-header";
 import { getSession, ensureDefaultUsers } from "@/lib/auth";
+import { getCurrentTenant, TENANT_CONFIGS, ensureTenantInitialData } from "@/lib/tenant";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,17 +18,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Foto & Gráficos ERP Pro",
-  description: "Sistema SaaS de Gestão de Vendas, Estoque, Custos e PCP para Comunicação Visual",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tenantId = await getCurrentTenant();
+  const config = TENANT_CONFIGS[tenantId];
+
+  return {
+    title: `${config.name} ERP Pro`,
+    description: config.tagline,
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const tenantId = await getCurrentTenant();
   await ensureDefaultUsers();
+  await ensureTenantInitialData(tenantId);
+  
+  const tenantConfig = TENANT_CONFIGS[tenantId];
   const session = await getSession();
 
   return (
@@ -36,9 +46,9 @@ export default async function RootLayout({
         <TooltipProvider>
           {session ? (
             <SidebarProvider>
-              <AppSidebar userRole={session.role} />
+              <AppSidebar userRole={session.role} tenantConfig={tenantConfig} />
               <main className="w-full flex flex-col min-h-screen">
-                <SaasHeader user={session} />
+                <SaasHeader user={session} tenantConfig={tenantConfig} />
                 <div className="flex-1 p-4 sm:p-6 md:p-8">
                   {children}
                 </div>
