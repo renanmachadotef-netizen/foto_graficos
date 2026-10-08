@@ -106,28 +106,6 @@ export async function ensureDefaultUsers() {
         role: "PRODUCTION" as Role,
         tenantId: "FOTOGRAFICOS",
       },
-      // Pura Brasil Users
-      {
-        name: "Renan (Admin Pura Brasil)",
-        email: "admin@purabrasil.com.br",
-        password: hashPassword("admin123"),
-        role: "ADMIN" as Role,
-        tenantId: "PURABRASIL",
-      },
-      {
-        name: "Mestre Alambiqueiro",
-        email: "mestre@purabrasil.com.br",
-        password: hashPassword("alambique123"),
-        role: "MANAGER" as Role,
-        tenantId: "PURABRASIL",
-      },
-      {
-        name: "Vendas & Distribuição",
-        email: "vendas@purabrasil.com.br",
-        password: hashPassword("vendas123"),
-        role: "SELLER" as Role,
-        tenantId: "PURABRASIL",
-      },
     ];
 
     for (const u of defaultUsers) {

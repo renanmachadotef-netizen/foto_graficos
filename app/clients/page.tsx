@@ -1,6 +1,6 @@
 import { ClientForm } from "./ClientForm";
 import { Trash2, Cake, Gift, ArrowRight, Download, RefreshCw } from "lucide-react";
-import { deleteClient, importLegacyClientsAction } from "./actions";
+import { deleteClient } from "./actions";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
 import Link from "next/link";

@@ -10,10 +10,9 @@ import {
   Role,
   getSession,
 } from "@/lib/auth";
-import { getCurrentTenant, ensureTenantInitialData, TenantId } from "@/lib/tenant";
+import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 
 export async function loginAction(formData: FormData) {
   const currentTenant = await getCurrentTenant();
@@ -38,12 +37,6 @@ export async function loginAction(formData: FormData) {
   const isValid = verifyPassword(password, user.password);
   if (!isValid) {
     return { error: "Senha incorreta." };
-  }
-
-  // Set active tenant cookie matching user's tenant if user has one
-  if (user.tenantId) {
-    const cookieStore = await cookies();
-    cookieStore.set("active_tenant", user.tenantId, { path: "/", maxAge: 60 * 60 * 24 * 30 });
   }
 
   await setSession({
@@ -91,13 +84,6 @@ export async function quickLoginRole(role: Role) {
     avatar: user.avatar,
   });
 
-  redirect("/");
-}
-
-export async function switchTenantAction(tenantId: TenantId) {
-  const cookieStore = await cookies();
-  cookieStore.set("active_tenant", tenantId, { path: "/", maxAge: 60 * 60 * 24 * 30 });
-  revalidatePath("/");
   redirect("/");
 }
 

@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Lock,
   Mail,
-  Wine,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,9 +25,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ tenantConfig }: LoginFormProps) {
-  const isPuraBrasil = tenantConfig.id === "PURABRASIL";
-
-  const defaultEmail = isPuraBrasil ? "admin@purabrasil.com.br" : "admin@fotograficos.com.br";
+  const defaultEmail = "admin@fotograficos.com.br";
   const defaultPassword = "admin123";
 
   const [email, setEmail] = useState(defaultEmail);
@@ -36,31 +33,7 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const quickProfiles: { role: Role; title: string; subtitle: string; icon: any; variant: any }[] = isPuraBrasil
-    ? [
-        {
-          role: "ADMIN",
-          title: "Administrador Geral (Alambique)",
-          subtitle: "Gestão completa da cachaçaria, custos de barris, alambique e financeiro",
-          icon: ShieldCheck,
-          variant: "admin",
-        },
-        {
-          role: "MANAGER",
-          title: "Mestre Alambiqueiro / Gerente",
-          subtitle: "Controle de dornas, envase, estoque de garrafas/líquidos e PCP",
-          icon: Wine,
-          variant: "manager",
-        },
-        {
-          role: "SELLER",
-          title: "Vendas & Distribuição",
-          subtitle: "PDV de garrafas, pedidos de atacado/bares e recebimentos",
-          icon: ShoppingBag,
-          variant: "seller",
-        },
-      ]
-    : [
+  const quickProfiles: { role: Role; title: string; subtitle: string; icon: any; variant: any }[] = [
         {
           role: "ADMIN",
           title: "Administrador (Full)",
@@ -120,9 +93,7 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
   return (
     <div
       className={`min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 text-slate-100 ${
-        isPuraBrasil
-          ? "bg-gradient-to-br from-stone-950 via-amber-950 to-stone-900"
-          : "bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950"
+        "bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950"
       }`}
     >
       <div className="w-full max-w-5xl grid lg:grid-cols-12 gap-8 items-center">
@@ -130,7 +101,7 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
         <div className="lg:col-span-7 space-y-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-semibold backdrop-blur-md">
-              {isPuraBrasil ? <Wine className="w-3.5 h-3.5 text-amber-400" /> : <Sparkles className="w-3.5 h-3.5 text-indigo-400" />}
+              {<Sparkles className="w-3.5 h-3.5 text-indigo-400" />}
               <span>{tenantConfig.name} • Gestão Inteligente</span>
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
@@ -160,16 +131,14 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
                     disabled={loading}
                     onClick={() => handleQuickLogin(p.role)}
                     className={`group relative p-3.5 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
-                      isPuraBrasil
-                        ? "bg-stone-900/60 hover:bg-stone-800/80 border-stone-800 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10"
-                        : "bg-slate-800/60 hover:bg-slate-800 border-slate-700/80 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10"
+                      "bg-slate-800/60 hover:bg-slate-800 border-slate-700/80 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2">
                         <div
                           className={`p-1.5 rounded-lg ${
-                            isPuraBrasil ? "bg-amber-500/10 text-amber-400" : "bg-indigo-500/10 text-indigo-400"
+                            "bg-indigo-500/10 text-indigo-400"
                           }`}
                         >
                           <Icon className="w-4 h-4" />
@@ -192,14 +161,12 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
         <div className="lg:col-span-5">
           <Card
             className={`border shadow-2xl backdrop-blur-xl ${
-              isPuraBrasil
-                ? "bg-stone-900/90 border-stone-800"
-                : "bg-slate-900/90 border-slate-800"
+              "bg-slate-900/90 border-slate-800"
             }`}
           >
             <CardHeader className="space-y-1 pb-4">
               <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
-                <Lock className={`w-5 h-5 ${isPuraBrasil ? "text-amber-400" : "text-indigo-400"}`} />
+                <Lock className={`w-5 h-5 text-indigo-400`} />
                 Entrar com E-mail
               </CardTitle>
               <CardDescription className="text-xs text-slate-400">
@@ -227,7 +194,7 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className={`bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500 text-sm ${
-                      isPuraBrasil ? "focus:border-amber-500" : "focus:border-indigo-500"
+                      "focus:border-indigo-500"
                     }`}
                   />
                 </div>
@@ -246,7 +213,7 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className={`bg-slate-800/80 border-slate-700 text-white placeholder:text-slate-500 text-sm ${
-                      isPuraBrasil ? "focus:border-amber-500" : "focus:border-indigo-500"
+                      "focus:border-indigo-500"
                     }`}
                   />
                 </div>
@@ -255,9 +222,7 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
                   type="submit"
                   disabled={loading}
                   className={`w-full text-white font-semibold py-2.5 rounded-lg shadow-lg text-sm mt-2 cursor-pointer ${
-                    isPuraBrasil
-                      ? "bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 shadow-amber-600/20"
-                      : "bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 shadow-indigo-500/20"
+                    "bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 shadow-indigo-500/20"
                   }`}
                 >
                   {loading ? "Entrando..." : "Entrar no Sistema"}

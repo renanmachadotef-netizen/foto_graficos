@@ -1,7 +1,6 @@
-import { headers, cookies } from "next/headers";
 import { prisma } from "./prisma";
 
-export type TenantId = "FOTOGRAFICOS" | "PURABRASIL";
+export type TenantId = "FOTOGRAFICOS";
 
 export interface TenantConfig {
   id: TenantId;
@@ -16,7 +15,7 @@ export interface TenantConfig {
     bgGradient: string;
     badge: string;
   };
-  iconType: "print" | "alambique";
+  iconType: "print";
   units: string[];
   categories: { id: string; label: string }[];
   pontoEquilibrioLabel: string;
@@ -47,52 +46,11 @@ export const TENANT_CONFIGS: Record<TenantId, TenantConfig> = {
     ],
     pontoEquilibrioLabel: "Ponto de Equilíbrio da Gráfica",
   },
-  PURABRASIL: {
-    id: "PURABRASIL",
-    name: "Cachaçaria Pura Brasil",
-    shortName: "Pura Brasil",
-    tagline: "Sistema de Gestão & Custos para Alambique & Cachaça Artesanal",
-    domain: "purabrasil.renanmachado.com.br",
-    theme: {
-      primary: "amber",
-      primaryLight: "amber-50",
-      accent: "amber",
-      bgGradient: "from-amber-700 via-amber-800 to-yellow-900",
-      badge: "bg-amber-600 text-white",
-    },
-    iconType: "alambique",
-    units: ["garrafa", "litro", "dose", "cx", "fardo", "barril", "un"],
-    categories: [
-      { id: "BEBIDAS", label: "Cachaças 750ml / 500ml" },
-      { id: "DOSES", label: "Shots & Doses 60ml" },
-      { id: "KITS", label: "Kits & Presentes" },
-      { id: "CAIXAS", label: "Caixas & Fardos Atacado" },
-      { id: "BARRIS", label: "Barris & Envelhecimento" },
-      { id: "ACESSORIOS", label: "Copos & Acessórios" },
-    ],
-    pontoEquilibrioLabel: "Ponto de Equilíbrio do Alambique",
-  },
 };
 
-/**
- * Automatically detects the active tenant based on HTTP host / domain
- * or cookie override (for admin switching).
+/** Sistema de uma unica empresa: Foto & Graficos.
  */
 export async function getCurrentTenant(): Promise<TenantId> {
-  const cookieStore = await cookies();
-  const cookieTenant = cookieStore.get("active_tenant")?.value as TenantId;
-
-  if (cookieTenant && (cookieTenant === "FOTOGRAFICOS" || cookieTenant === "PURABRASIL")) {
-    return cookieTenant;
-  }
-
-  const headersList = await headers();
-  const host = headersList.get("host") || headersList.get("x-forwarded-host") || "";
-
-  if (host.toLowerCase().includes("purabrasil")) {
-    return "PURABRASIL";
-  }
-
   return "FOTOGRAFICOS";
 }
 
@@ -106,25 +64,7 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
   });
 
   if (settingsCount === 0) {
-    if (tenantId === "PURABRASIL") {
-      await prisma.companySettings.create({
-        data: {
-          tenantId: "PURABRASIL",
-          companyName: "Cachaçaria Pura Brasil",
-          document: "00.000.000/0001-99",
-          phone: "(11) 99999-0002",
-          email: "contato@purabrasil.com.br",
-          address: "Fazenda Alambique Velho - Estrada do Açúcar, Km 12",
-          pixKey: "contato@purabrasil.com.br",
-          rent: 1500,
-          energy: 600,
-          internet: 150,
-          otherFixed: 750,
-          workingCap: 5000,
-        },
-      });
-    } else {
-      await prisma.companySettings.create({
+          await prisma.companySettings.create({
         data: {
           tenantId: "FOTOGRAFICOS",
           companyName: "Foto & Gráficos",
@@ -140,7 +80,6 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
           workingCap: 8000,
         },
       });
-    }
   }
 
   // 2. Ensure Stock Materials
@@ -149,85 +88,7 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
   });
 
   if (materialsCount === 0) {
-    if (tenantId === "PURABRASIL") {
-      await prisma.material.createMany({
-        data: [
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Prata Clássica (Granel)",
-            category: "CACHACA_GRANEL",
-            unit: "litro",
-            unitCost: 8.5,
-            currentStock: 1200,
-            minStock: 200,
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Carvalho Francês (Granel)",
-            category: "CACHACA_GRANEL",
-            unit: "litro",
-            unitCost: 18.0,
-            currentStock: 650,
-            minStock: 100,
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Amburana Nobre (Granel)",
-            category: "CACHACA_GRANEL",
-            unit: "litro",
-            unitCost: 16.0,
-            currentStock: 450,
-            minStock: 100,
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Garrafa Vidro 750ml Modelo Paris",
-            category: "GARRAFAS_VIDRO",
-            unit: "un",
-            unitCost: 4.8,
-            currentStock: 400,
-            minStock: 100,
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Tampa de Madeira c/ Rolha de Cortiça",
-            category: "TAMPAS_ROLHAS",
-            unit: "un",
-            unitCost: 1.7,
-            currentStock: 500,
-            minStock: 150,
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Lacre Termoencolhível Transparente",
-            category: "ROTULOS_LACRES",
-            unit: "un",
-            unitCost: 0.35,
-            currentStock: 800,
-            minStock: 200,
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Rótulo Frontal + Verso Metalizado Pura Brasil",
-            category: "ROTULOS_LACRES",
-            unit: "un",
-            unitCost: 1.2,
-            currentStock: 600,
-            minStock: 150,
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Caixa de Papelão Reforçada (6 Garrafas)",
-            category: "EMBALAGENS_CAIXAS",
-            unit: "cx",
-            unitCost: 3.5,
-            currentStock: 80,
-            minStock: 20,
-          },
-        ],
-      });
-    } else {
-      await prisma.material.createMany({
+          await prisma.material.createMany({
         data: [
           {
             tenantId: "FOTOGRAFICOS",
@@ -260,7 +121,6 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
           },
         ],
       });
-    }
   }
 
   // 3. Ensure Products for POS
@@ -269,76 +129,7 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
   });
 
   if (productsCount === 0) {
-    if (tenantId === "PURABRASIL") {
-      await prisma.product.createMany({
-        data: [
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Pura Brasil Carvalho 750ml",
-            category: "BEBIDAS",
-            price: 89.0,
-            cost: 28.0,
-            unit: "garrafa",
-            description: "Envelhecida 2 anos em barril de carvalho francês",
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Pura Brasil Amburana 750ml",
-            category: "BEBIDAS",
-            price: 79.0,
-            cost: 25.0,
-            unit: "garrafa",
-            description: "Aroma suave com notas de canela e baunilha",
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Pura Brasil Prata 750ml",
-            category: "BEBIDAS",
-            price: 55.0,
-            cost: 16.0,
-            unit: "garrafa",
-            description: "Descansada em inox, límpida e sabor puro da cana",
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Caixa c/ 6un Cachaça Carvalho 750ml (Atacado)",
-            category: "CAIXAS",
-            price: 480.0,
-            cost: 168.0,
-            unit: "cx",
-            description: "Caixa fechada para empórios, bares e restaurantes",
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Kit Degustação 3 Madeiras (3x 60ml)",
-            category: "KITS",
-            price: 65.0,
-            cost: 20.0,
-            unit: "un",
-            description: "Carvalho Francês, Amburana e Jequitibá Rosa",
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Dose / Shot Degustação (50ml)",
-            category: "DOSES",
-            price: 10.0,
-            cost: 1.5,
-            unit: "dose",
-            description: "Dose avulsa no balcão da cachaçaria",
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Copinho de Cachaça Personalizado Pura Brasil",
-            category: "ACESSORIOS",
-            price: 15.0,
-            cost: 4.5,
-            unit: "un",
-            description: "Vidro temperado com gravação a laser",
-          },
-        ],
-      });
-    } else {
-      await prisma.product.createMany({
+          await prisma.product.createMany({
         data: [
           {
             tenantId: "FOTOGRAFICOS",
@@ -378,7 +169,6 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
           },
         ],
       });
-    }
   }
 
   // 4. Ensure Fixed Costs
@@ -387,18 +177,7 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
   });
 
   if (fixedCostsCount === 0) {
-    if (tenantId === "PURABRASIL") {
-      await prisma.fixedCost.createMany({
-        data: [
-          { tenantId: "PURABRASIL", name: "Lenha / Caldeira do Alambique", amount: 900 },
-          { tenantId: "PURABRASIL", name: "Água & Limpeza Industrial", amount: 450 },
-          { tenantId: "PURABRASIL", name: "Energia Elétrica", amount: 650 },
-          { tenantId: "PURABRASIL", name: "Certificações & MAPA", amount: 400 },
-          { tenantId: "PURABRASIL", name: "Manutenção de Dornas & Bombas", amount: 350 },
-        ],
-      });
-    } else {
-      await prisma.fixedCost.createMany({
+          await prisma.fixedCost.createMany({
         data: [
           { tenantId: "FOTOGRAFICOS", name: "Aluguel do Ponto Comercial", amount: 2000 },
           { tenantId: "FOTOGRAFICOS", name: "Energia Elétrica Comercial", amount: 800 },
@@ -406,31 +185,15 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
           { tenantId: "FOTOGRAFICOS", name: "Manutenção de Plotters & Cabeças", amount: 600 },
         ],
       });
-    }
   }
 
-  // 5. Ensure and Separate Clients by Tenant
-  // Migrate legacy cachaçaria clients from FOTOGRAFICOS to PURABRASIL if needed
-  await prisma.client.updateMany({
-    where: {
-      tenantId: "FOTOGRAFICOS",
-      code: { not: null },
-    },
-    data: {
-      tenantId: "PURABRASIL",
-    },
-  });
-
+  // 5. Ensure Clients
   const clientsCount = await prisma.client.count({
     where: { tenantId },
   });
 
   if (clientsCount === 0) {
-    if (tenantId === "PURABRASIL") {
-      const { importLegacyClientsIntoDatabase } = await import("./import-clients-data");
-      await importLegacyClientsIntoDatabase("PURABRASIL");
-    } else {
-      await prisma.client.createMany({
+          await prisma.client.createMany({
         data: [
           {
             tenantId: "FOTOGRAFICOS",
@@ -474,273 +237,6 @@ export async function ensureTenantInitialData(tenantId: TenantId) {
           },
         ],
       });
-    }
   }
 
-  // 6. Ensure Barrels for PURABRASIL
-  if (tenantId === "PURABRASIL") {
-    const barrelsCount = await prisma.barrel.count({
-      where: { tenantId: "PURABRASIL" },
-    });
-
-    if (barrelsCount === 0) {
-      await prisma.barrel.createMany({
-        data: [
-          {
-            tenantId: "PURABRASIL",
-            code: "BAR-01",
-            woodType: "CARVALHO_FRANCES",
-            capacityLiters: 200,
-            currentLiters: 185,
-            abvPercentage: 42.5,
-            fillDate: new Date("2024-03-15"),
-            batchNumber: "LOTE-2024/01",
-            status: "READY",
-            sensoryNotes: "Aromas de baunilha madura, amêndoas e final extremamente sedoso.",
-            location: "Adega Subsolo - Fileira A1",
-          },
-          {
-            tenantId: "PURABRASIL",
-            code: "BAR-02",
-            woodType: "AMBURANA",
-            capacityLiters: 250,
-            currentLiters: 230,
-            abvPercentage: 42.0,
-            fillDate: new Date("2024-06-20"),
-            batchNumber: "LOTE-2024/02",
-            status: "READY",
-            sensoryNotes: "Bouquet doce marcante, canela, mel e especiarias autênticas.",
-            location: "Adega Subsolo - Fileira A2",
-          },
-          {
-            tenantId: "PURABRASIL",
-            code: "BAR-03",
-            woodType: "BALSAMO",
-            capacityLiters: 200,
-            currentLiters: 190,
-            abvPercentage: 43.0,
-            fillDate: new Date("2025-01-10"),
-            batchNumber: "LOTE-2025/01",
-            status: "AGING",
-            sensoryNotes: "Notas herbais frescas, anis estrelado e persistência marcante.",
-            location: "Adega Subsolo - Fileira B1",
-          },
-          {
-            tenantId: "PURABRASIL",
-            code: "BAR-04",
-            woodType: "JEQUITIBA",
-            capacityLiters: 500,
-            currentLiters: 480,
-            abvPercentage: 40.0,
-            fillDate: new Date("2025-02-15"),
-            batchNumber: "LOTE-2025/02",
-            status: "AGING",
-            sensoryNotes: "Maciez aveludada, frescor da cana preservado e notas florais sutis.",
-            location: "Galpão Principal - Posição C",
-          },
-          {
-            tenantId: "PURABRASIL",
-            code: "BAR-05",
-            woodType: "CARVALHO_AMERICANO",
-            capacityLiters: 200,
-            currentLiters: 160,
-            abvPercentage: 44.0,
-            fillDate: new Date("2023-11-05"),
-            batchNumber: "LOTE-2023/02",
-            status: "READY",
-            sensoryNotes: "Tostagem média-alta, caramelo toffee, coco queimado e corpo robusto.",
-            location: "Adega Subsolo - Fileira B2",
-          },
-          {
-            tenantId: "PURABRASIL",
-            code: "DOR-01",
-            woodType: "INOX",
-            capacityLiters: 1000,
-            currentLiters: 850,
-            abvPercentage: 40.0,
-            fillDate: new Date("2026-01-10"),
-            batchNumber: "LOTE-2026/01",
-            status: "READY",
-            sensoryNotes: "Cachaça Prata Clássica descansada em dorna de inox para harmonização.",
-            location: "Galpão de Destilação",
-          },
-        ],
-      });
-    }
-
-    // 7. Ensure Recipes for PURABRASIL
-    const recipesCount = await prisma.recipe.count({
-      where: { tenantId: "PURABRASIL" },
-    });
-
-    if (recipesCount === 0) {
-      await prisma.recipe.createMany({
-        data: [
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Pura Brasil Amburana Extra Premium",
-            category: "EXTRA_PREMIUM",
-            woodType: "AMBURANA",
-            agingMonths: 24,
-            targetAbv: 42.0,
-            sugarBrix: 16.5,
-            fermentationType: "LEVEDURA_SELVAGEM",
-            fermentationHours: 30,
-            distillationType: "ALAMBIQUE_COBRE",
-            heartCutPercent: 80.0,
-            sensoryProfile: "Bouquet adocicado inconfundível, notas quentes de canela, mel de laranjeira e baunilha persistente.",
-            instructions: "Garapa filtrada a 16.5° Brix. Fermentação caipira lenta de 30h. Destilação em fogo brando com corte rigoroso de 80% do coração. Envelhecimento mínimo de 24 meses em dornas de Amburana selecionada.",
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Pura Brasil Carvalho Francês Gran Reserva",
-            category: "EXTRA_PREMIUM",
-            woodType: "CARVALHO_FRANCES",
-            agingMonths: 36,
-            targetAbv: 43.0,
-            sugarBrix: 16.0,
-            fermentationType: "LEVEDURA_SELVAGEM",
-            fermentationHours: 28,
-            distillationType: "ALAMBIQUE_COBRE",
-            heartCutPercent: 82.0,
-            sensoryProfile: "Taninos finos aveludados, amêndoas tostadas, frutas secas e toque de especiarias nobres.",
-            instructions: "Envelhecimento de 3 anos em barricas de carvalho francês de primeiro e segundo uso. Filtragem suave a frio antes do envase.",
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Pura Brasil Bálsamo Floral",
-            category: "PREMIUM",
-            woodType: "BALSAMO",
-            agingMonths: 18,
-            targetAbv: 42.5,
-            sugarBrix: 16.2,
-            fermentationType: "LEVEDURA_SELVAGEM",
-            fermentationHours: 32,
-            distillationType: "ALAMBIQUE_COBRE",
-            heartCutPercent: 80.0,
-            sensoryProfile: "Aroma herbal exuberante, notas de anis estrelado, camomila e frescor marcante.",
-            instructions: "Maturação de 18 meses em dorna de Bálsamo. Ideal para consumo puro em taças tipo tulipa.",
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Pura Brasil Blend 3 Madeiras",
-            category: "BLEND",
-            woodType: "BLEND",
-            agingMonths: 24,
-            targetAbv: 42.0,
-            sugarBrix: 16.5,
-            fermentationType: "LEVEDURA_SELVAGEM",
-            fermentationHours: 30,
-            distillationType: "ALAMBIQUE_COBRE",
-            heartCutPercent: 80.0,
-            sensoryProfile: "Harmonia perfeita: a doçura da amburana (40%), a estrutura do carvalho francês (40%) e a maciez do jequitibá rosa (20%).",
-            instructions: "Blend exclusivo montado pelo Mestre Alambiqueiro com repouso de 60 dias para casamento dos aromas antes do envase final.",
-          },
-          {
-            tenantId: "PURABRASIL",
-            name: "Cachaça Pura Brasil Prata Clássica de Alambique",
-            category: "PRATA",
-            woodType: "INOX",
-            agingMonths: 6,
-            targetAbv: 40.0,
-            sugarBrix: 16.0,
-            fermentationType: "LEVEDURA_SELVAGEM",
-            fermentationHours: 24,
-            distillationType: "ALAMBIQUE_COBRE",
-            heartCutPercent: 85.0,
-            sensoryProfile: "Cristalina, brilho intenso, aroma fresco de cana moída e maciez impecável.",
-            instructions: "Descanso de 6 meses em dorna de aço inox com aeração periódica para arredondamento dos ésteres.",
-          },
-        ],
-      });
-    }
-
-    // 8. Ensure Plantation Fields & Milling for PURABRASIL
-    const fieldsCount = await prisma.plantationField.count({
-      where: { tenantId: "PURABRASIL" },
-    });
-
-    if (fieldsCount === 0) {
-      const field1 = await prisma.plantationField.create({
-        data: {
-          tenantId: "PURABRASIL",
-          name: "Talhão 01 - Morro Alto",
-          variety: "RB867515",
-          areaHectares: 4.5,
-          estimatedTons: 180,
-        },
-      });
-
-      await prisma.plantationField.create({
-        data: {
-          tenantId: "PURABRASIL",
-          name: "Talhão 02 - Encosta do Rio",
-          variety: "Caninha Rosa",
-          areaHectares: 3.0,
-          estimatedTons: 110,
-        },
-      });
-
-      // Seed Agricultural Costs
-      await prisma.agriculturalCost.createMany({
-        data: [
-          {
-            tenantId: "PURABRASIL",
-            fieldId: field1.id,
-            category: "CORTE_TERCEIROS",
-            description: "Diaristas corte manual de cana - 20 Toneladas",
-            amount: 720.0,
-            date: new Date(),
-          },
-          {
-            tenantId: "PURABRASIL",
-            fieldId: field1.id,
-            category: "FROTA_TRATOR_DIESEL",
-            description: "Abastecimento Trator Valmet & Carreta - Óleo Diesel",
-            amount: 380.0,
-            date: new Date(),
-          },
-        ],
-      });
-
-      // Seed Milling Run
-      await prisma.millingRun.create({
-        data: {
-          tenantId: "PURABRASIL",
-          fieldId: field1.id,
-          batchNumber: "MOAGEM-2026/01",
-          caneTons: 5.5,
-          millingHours: 4.0,
-          juiceLiters: 3500,
-          sugarBrix: 19.5,
-          yieldLitersPerTon: 636.36,
-          operationalCost: 450.0,
-          costPerLiterJuice: 0.128,
-          notes: "Garapa límpida com excelente densidade de açúcares para fermentação.",
-        },
-      });
-
-      // Seed Distillation Run
-      await prisma.distillationRun.create({
-        data: {
-          tenantId: "PURABRASIL",
-          batchNumber: "ALAMB-2026/01",
-          stillNumber: "Alambique de Cobre Capitel 1 (500L)",
-          washVolumeInput: 1000,
-          headsLiters: 18,
-          headsPercentage: 1.8,
-          headsAbv: 65.0,
-          heartsLiters: 165,
-          heartsPercentage: 16.5,
-          heartsAbv: 44.0,
-          tailsLiters: 38,
-          tailsPercentage: 3.8,
-          tailsAbv: 15.0,
-          totalRunCost: 1650.0,
-          costPerLiterHeart: 10.0,
-          notes: "Destilação lenta a lenha com corte rigoroso de 165L de Coração Nobre.",
-        },
-      });
-    }
-  }
 }

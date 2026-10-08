@@ -14,7 +14,6 @@ import {
   Sparkles,
   Lock,
   ShoppingBag,
-  Wine,
   Cake,
   GlassWater,
   Layers,
@@ -56,148 +55,8 @@ interface AppSidebarProps {
 
 export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps) {
   const pathname = usePathname();
-  const isPuraBrasil = tenantConfig?.id === "PURABRASIL";
 
-  const menuGroups: MenuGroup[] = isPuraBrasil
-    ? [
-        {
-          groupLabel: "Canavial & Moenda",
-          items: [
-            {
-              title: "Agrícola & Moagem",
-              url: "/milling",
-              icon: Wheat,
-              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-              badge: "Cana",
-            },
-          ],
-        },
-        {
-          groupLabel: "Alambique & Adega",
-          items: [
-            {
-              title: "Destilação & Cortes",
-              url: "/distillation",
-              icon: Flame,
-              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-              badge: "Cobre",
-            },
-            {
-              title: "Adega de Barris",
-              url: "/barrels",
-              icon: Wine,
-              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-              badge: "Tonéis",
-            },
-            {
-              title: "Blends & Licores Finos",
-              url: "/blends",
-              icon: Sparkles,
-              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-              badge: "Lotes",
-            },
-            {
-              title: "Caderno de Receitas",
-              url: "/recipes",
-              icon: BookOpen,
-              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
-              badge: "Mestre",
-            },
-            {
-              title: "Ficha de Envase (BOM)",
-              url: "/bottling",
-              icon: GlassWater,
-              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
-              badge: "Custos",
-            },
-            {
-              title: "Estoque de Insumos",
-              url: "/materials",
-              icon: Package,
-              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-            },
-          ],
-        },
-        {
-          groupLabel: "Comercial & Balcão",
-          items: [
-            {
-              title: "Dashboard do Alambique",
-              url: "/",
-              icon: Home,
-              allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
-            },
-            {
-              title: "PDV Balcão & Doses",
-              url: "/pdv",
-              icon: ShoppingBag,
-              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
-              badge: "Vendas",
-            },
-            {
-              title: "Clientes & Empórios",
-              url: "/clients",
-              icon: Users,
-              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
-            },
-            {
-              title: "Aniversariantes",
-              url: "/birthdays",
-              icon: Cake,
-              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
-              badge: "🎁 Sorteio",
-            },
-            {
-              title: "Pedidos & Distribuição",
-              url: "/quotes",
-              icon: FileText,
-              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
-            },
-          ],
-        },
-        {
-          groupLabel: "Financeiro & Gestão",
-          items: [
-            {
-              title: "Fluxo Financeiro",
-              url: "/financial",
-              icon: CircleDollarSign,
-              allowedRoles: ["ADMIN", "MANAGER"],
-            },
-            {
-              title: "Equipe & Pró-Labore",
-              url: "/employees",
-              icon: UserCog,
-              allowedRoles: ["ADMIN", "MANAGER"],
-              badge: "👑 Sócios",
-            },
-            {
-              title: "Alambiques & Máquinas",
-              url: "/machines",
-              icon: Cpu,
-              allowedRoles: ["ADMIN", "MANAGER", "PRODUCTION"],
-            },
-          ],
-        },
-        {
-          groupLabel: "Administração",
-          items: [
-            {
-              title: "Gestão de Usuários",
-              url: "/users",
-              icon: UserCog,
-              allowedRoles: ["ADMIN"],
-            },
-            {
-              title: "Configurações do Alambique",
-              url: "/settings",
-              icon: Settings,
-              allowedRoles: ["ADMIN", "MANAGER"],
-            },
-          ],
-        },
-      ]
-    : [
+  const menuGroups: MenuGroup[] = [
         {
           groupLabel: "Comercial & Vendas",
           items: [
@@ -307,19 +166,17 @@ export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps
         <div className="px-3 py-4 flex items-center gap-2.5 border-b border-slate-100">
           <div
             className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-md ${
-              isPuraBrasil
-                ? "bg-gradient-to-tr from-amber-700 to-yellow-600 shadow-amber-600/20"
-                : "bg-gradient-to-tr from-indigo-600 to-cyan-500 shadow-indigo-500/20"
+              "bg-gradient-to-tr from-indigo-600 to-cyan-500 shadow-indigo-500/20"
             }`}
           >
-            {isPuraBrasil ? <Wine className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+            {<Sparkles className="w-5 h-5" />}
           </div>
           <div>
             <h2 className="font-bold text-slate-900 text-sm tracking-tight leading-tight">
               {tenantConfig?.name || "Foto & Gráficos"}
             </h2>
             <p className="text-[11px] text-slate-500 font-medium">
-              {isPuraBrasil ? "Cachaçaria & Alambique" : "Sistema ERP Gráfico"}
+              {"Sistema ERP Gráfico"}
             </p>
           </div>
         </div>
@@ -346,9 +203,7 @@ export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps
                           href={item.url}
                           className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
                             isActive
-                              ? isPuraBrasil
-                                ? "bg-amber-700 text-white shadow-sm shadow-amber-700/30 font-semibold"
-                                : "bg-indigo-600 text-white shadow-sm shadow-indigo-500/30 font-semibold"
+                              ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/30 font-semibold"
                               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                           }`}
                         >
@@ -360,7 +215,7 @@ export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps
                             <Badge
                               variant="admin"
                               className={`text-[9px] px-1.5 py-0 uppercase ${
-                                isPuraBrasil ? "bg-amber-100 text-amber-900" : ""
+                                ""
                               }`}
                             >
                               {item.badge}

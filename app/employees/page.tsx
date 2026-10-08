@@ -13,7 +13,6 @@ export default async function EmployeesPage() {
   const tenantId = await getCurrentTenant();
   await ensureTenantInitialData(tenantId);
   const tenantConfig = TENANT_CONFIGS[tenantId];
-  const isPuraBrasil = tenantId === "PURABRASIL";
 
   const employees = await prisma.employee.findMany({
     where: { tenantId },
@@ -42,15 +41,13 @@ export default async function EmployeesPage() {
       {/* Header Banner */}
       <div
         className={`p-6 sm:p-8 rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 border ${
-          isPuraBrasil
-            ? "bg-gradient-to-br from-amber-950 via-amber-900 to-yellow-950 border-amber-700/50"
-            : "bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-indigo-900/40"
+          "bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-indigo-900/40"
         }`}
       >
         <div className="relative z-10 space-y-2 max-w-2xl">
           <div
             className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-              isPuraBrasil ? "bg-amber-500/20 text-amber-300 border border-amber-400/30" : "bg-indigo-500/20 text-indigo-300"
+              "bg-indigo-500/20 text-indigo-300"
             }`}
           >
             <Users className="w-4 h-4" />

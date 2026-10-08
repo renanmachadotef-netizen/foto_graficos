@@ -19,8 +19,6 @@ import {
   FileText,
   Target,
   Sparkles,
-  Wine,
-  GlassWater,
   ShoppingBag,
 } from "lucide-react";
 
@@ -33,7 +31,6 @@ export default async function DashboardPage() {
   const tenantId = await getCurrentTenant();
   await ensureTenantInitialData(tenantId);
   const tenantConfig = TENANT_CONFIGS[tenantId];
-  const isPuraBrasil = tenantId === "PURABRASIL";
 
   // Fetch all tenant-specific data concurrently
   const [
@@ -45,7 +42,6 @@ export default async function DashboardPage() {
     serviceOrders,
     transactions,
     materials,
-    barrels,
   ] = await Promise.all([
     prisma.companySettings.findFirst({ where: { tenantId } }),
     prisma.fixedCost.findMany({ where: { tenantId } }),
@@ -60,12 +56,11 @@ export default async function DashboardPage() {
     prisma.serviceOrder.findMany({
       where: {
         quote: { tenantId },
-        status: { in: ["WAITING", "PREPRESS", "PRINTING", "FINISHING", "AGING", "BOTTLING", "PACKAGING"] },
+        status: { in: ["WAITING", "PREPRESS", "PRINTING", "FINISHING"] },
       },
     }),
     prisma.financialTransaction.findMany({ where: { tenantId } }),
     prisma.material.findMany({ where: { tenantId } }),
-    prisma.barrel.findMany({ where: { tenantId } }),
   ]);
 
   // 1. Calculate Total Fixed Costs (Monthly Operating Cost)
@@ -101,61 +96,35 @@ export default async function DashboardPage() {
 
   // 4. Stock Alerts
   const criticalMaterials = materials.filter((m) => m.minStock > 0 && m.currentStock <= m.minStock);
-  const totalLitersInBarrels = barrels.reduce((acc, b) => acc + b.currentLiters, 0);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Welcome & Quick Action Header */}
       <div
         className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-8 rounded-3xl text-white shadow-xl border ${
-          isPuraBrasil
-            ? "bg-gradient-to-br from-amber-950 via-amber-900 to-yellow-950 border-amber-700/50 shadow-amber-950/20"
-            : "bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-indigo-900/40"
+          "bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-indigo-900/40"
         }`}
       >
         <div className="space-y-1.5">
           <div
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-              isPuraBrasil ? "bg-amber-500/20 text-amber-300 border border-amber-400/30" : "bg-indigo-500/20 text-indigo-300"
+              "bg-indigo-500/20 text-indigo-300"
             }`}
           >
-            {isPuraBrasil ? <Wine className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
-            {isPuraBrasil ? "Gestão do Alambique & Adega" : "Visão Geral Executiva"}
+            {<Sparkles className="w-3.5 h-3.5" />}
+            {"Visão Geral Executiva"}
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
             Olá, {session.name.split(" ")[0]}!
           </h1>
           <p className="text-white/80 text-xs sm:text-sm max-w-xl">
-            {isPuraBrasil
-              ? "Acompanhe os tonéis em maturação, envase de garrafas, faturamento do alambique e ponto de equilíbrio em tempo real."
-              : "Acompanhe o faturamento, ponto de equilíbrio, ordens no chão de fábrica e alertas de reposição em tempo real."}
+            {"Acompanhe o faturamento, ponto de equilíbrio, ordens no chão de fábrica e alertas de reposição em tempo real."}
           </p>
         </div>
 
         {/* Quick Action Buttons */}
         <div className="flex flex-wrap gap-2.5">
-          {isPuraBrasil ? (
-            <>
-              <a href="/barrels">
-                <Button size="sm" className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs gap-1.5 shadow-md rounded-xl cursor-pointer">
-                  <Wine className="w-4 h-4" />
-                  Adega de Barris
-                </Button>
-              </a>
-              <a href="/bottling">
-                <Button size="sm" className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-black text-xs gap-1.5 shadow-md rounded-xl cursor-pointer">
-                  <GlassWater className="w-4 h-4" />
-                  Simular Envase
-                </Button>
-              </a>
-              <a href="/pdv">
-                <Button size="sm" variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-0 text-xs gap-1.5 rounded-xl cursor-pointer">
-                  <ShoppingBag className="w-4 h-4" />
-                  PDV Balcão
-                </Button>
-              </a>
-            </>
-          ) : (
+          {(
             <>
               <a href="/pricing">
                 <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs gap-1.5 shadow-md rounded-xl cursor-pointer">
@@ -216,17 +185,17 @@ export default async function DashboardPage() {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                {isPuraBrasil ? "Líquido em Maturação" : "Produção Ativa (PCP)"}
+                {"Produção Ativa (PCP)"}
               </p>
               <p className="text-2xl font-black text-indigo-600 mt-0.5">
-                {isPuraBrasil ? `${totalLitersInBarrels.toLocaleString("pt-BR")} L` : serviceOrders.length}
+                {serviceOrders.length}
               </p>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                {isPuraBrasil ? `${barrels.length} tonéis na adega` : "Ordens em andamento"}
+                {"Ordens em andamento"}
               </p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              {isPuraBrasil ? <Wine className="w-5 h-5" /> : <PackageSearch className="w-5 h-5" />}
+              {<PackageSearch className="w-5 h-5" />}
             </div>
           </CardContent>
         </Card>

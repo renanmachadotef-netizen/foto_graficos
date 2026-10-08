@@ -126,7 +126,7 @@ export async function createPosSaleAction(data: PosSaleInput) {
           tenantId: currentTenant,
           name: "Cliente Balcão",
           phone: clientPhone || null,
-          email: currentTenant === "PURABRASIL" ? "balcao@purabrasil.com.br" : "balcao@fotograficos.com.br",
+          email: "balcao@fotograficos.com.br",
         },
       });
     }

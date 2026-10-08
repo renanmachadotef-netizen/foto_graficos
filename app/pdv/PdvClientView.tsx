@@ -270,7 +270,6 @@ export function PdvClientView({
     ]),
   ];
 
-  const isPuraBrasil = tenantConfig?.id === "PURABRASIL";
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
@@ -278,7 +277,7 @@ export function PdvClientView({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-            <ShoppingCart className={`w-6 h-6 ${isPuraBrasil ? "text-amber-600" : "text-indigo-600"}`} />
+            <ShoppingCart className={`w-6 h-6 text-indigo-600`} />
             PDV Balcão • {tenantConfig?.shortName || "Venda Rápida"}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -287,7 +286,7 @@ export function PdvClientView({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {!isPuraBrasil && (
+          {(
             <Button
               size="sm"
               onClick={() => setIsM2ModalOpen(true)}

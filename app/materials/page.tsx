@@ -40,7 +40,6 @@ export default async function MaterialsPage() {
   const tenantId = await getCurrentTenant();
   await ensureTenantInitialData(tenantId);
   const tenantConfig = TENANT_CONFIGS[tenantId];
-  const isPuraBrasil = tenantId === "PURABRASIL";
 
   const materials = await prisma.material.findMany({
     where: { tenantId },
@@ -68,12 +67,6 @@ export default async function MaterialsPage() {
     RIGIDOS_CHAPAS: { label: "Chapas & Rígidos", color: "bg-sky-100 text-sky-700" },
     TINTAS_QUIMICOS: { label: "Tintas & Químicos", color: "bg-amber-100 text-amber-700" },
     ACESSORIOS: { label: "Acessórios", color: "bg-purple-100 text-purple-700" },
-    // Pura Brasil
-    CACHACA_GRANEL: { label: "Cachaça Granel / Barril", color: "bg-amber-100 text-amber-800" },
-    GARRAFAS_VIDRO: { label: "Garrafas de Vidro", color: "bg-emerald-100 text-emerald-800" },
-    TAMPAS_ROLHAS: { label: "Tampas & Rolhas", color: "bg-yellow-100 text-yellow-800" },
-    ROTULOS_LACRES: { label: "Rótulos & Lacres", color: "bg-rose-100 text-rose-800" },
-    EMBALAGENS_CAIXAS: { label: "Caixas & Embalagens", color: "bg-stone-200 text-stone-800" },
     OUTROS: { label: "Outros", color: "bg-slate-100 text-slate-700" },
   };
 

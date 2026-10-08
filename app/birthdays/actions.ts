@@ -41,7 +41,7 @@ export async function drawBirthdayWinnerAction(month: number, prizeDescription: 
   const winner = clients[winnerIndex];
 
   const companyName = company?.companyName || tenantConfig.name;
-  const prize = prizeDescription || (currentTenant === "PURABRASIL" ? "1 Garrafa de Cachaça Especial" : "1 Banner Personalizado 1x1m");
+  const prize = prizeDescription || "1 Banner Personalizado 1x1m";
 
   const whatsappMessage = `🎉 *PARABÉNS, ${winner.name.toUpperCase()}!* 🎂🎈\n\n` +
     `Em comemoração ao seu mês de aniversário, você foi o(a) grande sorteado(a) no *Sorteio Especial de Aniversariantes* da *${companyName}*!\n\n` +

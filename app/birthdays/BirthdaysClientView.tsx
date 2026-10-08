@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/dialog";
 import { TenantConfig } from "@/lib/tenant";
 import { drawBirthdayWinnerAction } from "./actions";
-import { importLegacyClientsAction } from "@/app/clients/actions";
 
 interface ClientBirthday {
   id: string;
@@ -86,7 +85,7 @@ export function BirthdaysClientView({
   // Raffle State
   const [isRaffleOpen, setIsRaffleOpen] = useState(false);
   const [rafflePrize, setRafflePrize] = useState<string>(
-    tenantConfig.id === "PURABRASIL" ? "1 Garrafa Cachaça Carvalho Premium 750ml" : "1 Banner Fotográfico Personalizado 1x1m"
+    "1 Banner Fotográfico Personalizado 1x1m"
   );
   const [isSpinning, setIsSpinning] = useState(false);
   const [currentDisplayCandidate, setCurrentDisplayCandidate] = useState<string>("");
@@ -186,11 +185,8 @@ export function BirthdaysClientView({
     if (!cleanPhone) return null;
 
     const companyName = tenantConfig.name;
-    const isPB = tenantConfig.id === "PURABRASIL";
     const greetingText = `Olá *${client.name.trim()}*, tudo bem? 🎉🎂\n\nA equipe da *${companyName}* está passando para te desejar um *Feliz Aniversário*! Que o seu novo ano de vida seja repleto de muitas alegrias, saúde e sucesso!\n\n${
-      isPB
-        ? "Venha brindar conosco! Preparamos um presente especial para celebrar o seu dia no nosso alambique! 🥃✨"
-        : "Como nosso cliente especial, venha nos visitar para retirar um brinde comemorativo e um desconto especial no seu próximo pedido! 🎁🖨️"
+      "Como nosso cliente especial, venha nos visitar para retirar um brinde comemorativo e um desconto especial no seu próximo pedido! 🎁🖨️"
     }\n\nAbraços de toda a nossa equipe!`;
 
     return `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(greetingText)}`;
@@ -213,16 +209,13 @@ export function BirthdaysClientView({
     return null;
   };
 
-  const isPuraBrasil = tenantConfig.id === "PURABRASIL";
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
       <div
         className={`p-6 sm:p-8 rounded-2xl text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 ${
-          isPuraBrasil
-            ? "bg-gradient-to-r from-amber-800 via-amber-700 to-yellow-800"
-            : "bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-600"
+          "bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-600"
         }`}
       >
         <div className="relative z-10 space-y-2 max-w-2xl">
@@ -326,9 +319,7 @@ export function BirthdaysClientView({
                 onClick={() => setSelectedMonth(m.id)}
                 className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between cursor-pointer ${
                   isSelected
-                    ? isPuraBrasil
-                      ? "bg-amber-800 text-white border-amber-900 shadow-md shadow-amber-800/20"
-                      : "bg-indigo-600 text-white border-indigo-700 shadow-md shadow-indigo-600/20"
+                    ? "bg-indigo-600 text-white border-indigo-700 shadow-md shadow-indigo-600/20"
                     : "bg-white text-slate-700 border-slate-200/80 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
@@ -416,8 +407,6 @@ export function BirthdaysClientView({
                         className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center font-black shrink-0 shadow-xs ${
                           isToday
                             ? "bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 shadow-amber-400/30 ring-2 ring-amber-400"
-                            : isPuraBrasil
-                            ? "bg-amber-100 text-amber-900 border border-amber-200"
                             : "bg-indigo-50 text-indigo-700 border border-indigo-100"
                         }`}
                       >
@@ -510,7 +499,7 @@ export function BirthdaysClientView({
               <Input
                 value={rafflePrize}
                 onChange={(e) => setRafflePrize(e.target.value)}
-                placeholder="Ex: 1 Banner 1x1m, 1 Ensaio Fotográfico, 1 Caixa de Cachaça..."
+                placeholder="Ex: 1 Banner 1x1m, 1 Ensaio Fotográfico..."
                 disabled={isSpinning}
                 className="bg-slate-900/90 border-slate-700 text-white text-sm focus:border-yellow-400"
               />
