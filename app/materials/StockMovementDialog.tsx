@@ -94,7 +94,7 @@ export function StockMovementDialog({ material }: StockMovementDialogProps) {
                 className={`py-2 px-3 rounded-lg text-xs font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
                   type === "IN"
                     ? "bg-emerald-50 border-emerald-500 text-emerald-700 shadow-xs"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                    : "bg-card border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 <ArrowUpCircle className="w-4 h-4 text-emerald-600" />
@@ -107,7 +107,7 @@ export function StockMovementDialog({ material }: StockMovementDialogProps) {
                 className={`py-2 px-3 rounded-lg text-xs font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
                   type === "OUT"
                     ? "bg-rose-50 border-rose-500 text-rose-700 shadow-xs"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                    : "bg-card border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 <ArrowDownCircle className="w-4 h-4 text-rose-600" />
@@ -120,7 +120,7 @@ export function StockMovementDialog({ material }: StockMovementDialogProps) {
                 className={`py-2 px-3 rounded-lg text-xs font-bold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
                   type === "ADJUSTMENT"
                     ? "bg-blue-50 border-blue-500 text-blue-700 shadow-xs"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                    : "bg-card border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 <RefreshCw className="w-4 h-4 text-blue-600" />

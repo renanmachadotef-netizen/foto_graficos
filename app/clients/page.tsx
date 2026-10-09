@@ -63,7 +63,7 @@ export default async function ClientsPage() {
           
           <div className="grid gap-3">
             {clients.map(client => (
-              <div key={client.id} className="p-4 bg-white border border-slate-200 rounded-xl flex justify-between items-center shadow-xs hover:shadow-md transition-shadow">
+              <div key={client.id} className="p-4 bg-card border border-slate-200 rounded-xl flex justify-between items-center shadow-xs hover:shadow-md transition-shadow">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-bold text-slate-800 text-base">{client.name}</h3>

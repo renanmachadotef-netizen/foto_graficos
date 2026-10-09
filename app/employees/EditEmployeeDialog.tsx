@@ -61,7 +61,7 @@ export function EditEmployeeDialog({ employee }: { employee: any }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<button className="text-slate-400 hover:text-indigo-600 transition-colors p-2 rounded-xl hover:bg-indigo-50 cursor-pointer"><Edit size={18} /></button>} />
-      <DialogContent className="max-w-md rounded-3xl p-6 bg-white">
+      <DialogContent className="max-w-md rounded-3xl p-6 bg-card">
         <DialogHeader>
           <DialogTitle className="text-lg font-black text-slate-900 flex items-center gap-2">
             {isOwner ? <Crown className="w-5 h-5 text-amber-600" /> : <UserCheck className="w-5 h-5 text-indigo-600" />}
@@ -76,7 +76,7 @@ export function EditEmployeeDialog({ employee }: { employee: any }) {
           <div className="space-y-1.5">
             <Label className="text-xs font-bold text-slate-700">Papel / Regime</Label>
             <Select value={contractType} onValueChange={(v) => v && setContractType(v)}>
-              <SelectTrigger className="rounded-xl text-xs font-bold bg-white">
+              <SelectTrigger className="rounded-xl text-xs font-bold bg-card">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
@@ -147,7 +147,7 @@ export function EditEmployeeDialog({ employee }: { employee: any }) {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl cursor-pointer"
+              className="w-full bg-ink hover:bg-ink-2 text-white font-bold rounded-xl cursor-pointer"
             >
               {loading ? "Salvando..." : "Salvar Alterações"}
             </Button>

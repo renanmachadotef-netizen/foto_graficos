@@ -43,7 +43,7 @@ export function MaterialForm() {
   };
 
   return (
-    <Card className="shadow-xs border-slate-200 bg-white">
+    <Card className="shadow-xs border-slate-200 bg-card">
       <CardHeader className="bg-slate-50/70 border-b border-slate-100 p-4">
         <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
           <PackagePlus className="w-4 h-4 text-indigo-600" />
@@ -141,7 +141,7 @@ export function MaterialForm() {
                 step="0.01"
                 value={width}
                 onChange={(e) => setWidth(e.target.value)}
-                className="bg-white border-indigo-200 text-xs font-bold"
+                className="bg-card border-indigo-200 text-xs font-bold"
                 placeholder="Ex: 1.60"
               />
             </div>

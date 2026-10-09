@@ -38,7 +38,7 @@ export default async function MachinesPage() {
           
           <div className="grid gap-3">
             {machines.map(mac => (
-              <div key={mac.id} className="p-4 bg-white border border-slate-200 rounded-xl flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
+              <div key={mac.id} className="p-4 bg-card border border-slate-200 rounded-xl flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
                 <div className="w-full">
                   <h3 className="font-bold text-slate-800 text-lg">{mac.name}</h3>
                   <div className="flex gap-2 mt-1">

@@ -28,7 +28,7 @@ export function KanbanBoard({ orders }: { orders: any[] }) {
           <div key={col.id} className="flex-1 min-w-[280px] bg-slate-50/50 rounded-xl border border-slate-200 flex flex-col overflow-hidden">
             <div className={`p-3 border-b border-slate-200 font-bold ${col.color} ${col.textColor} flex justify-between items-center`}>
               <span>{col.title}</span>
-              <span className="bg-white/50 px-2 py-0.5 rounded-full text-xs">{colOrders.length}</span>
+              <span className="bg-card/50 px-2 py-0.5 rounded-full text-xs">{colOrders.length}</span>
             </div>
             
             <div className="p-3 flex-1 overflow-y-auto space-y-3">
@@ -39,7 +39,7 @@ export function KanbanBoard({ orders }: { orders: any[] }) {
                 return (
                   <div 
                     key={order.id} 
-                    className={`bg-white p-4 rounded-lg shadow-sm border border-slate-200 relative ${movingId === order.id ? 'opacity-50' : ''}`}
+                    className={`bg-card p-4 rounded-lg shadow-sm border border-slate-200 relative ${movingId === order.id ? 'opacity-50' : ''}`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-bold text-slate-400">#{order.id.slice(-5).toUpperCase()}</span>

@@ -31,7 +31,7 @@ export function SettingsForm({ settings }: { settings: any }) {
   };
 
   return (
-    <Card className="max-w-2xl border-slate-200 bg-white shadow-xs">
+    <Card className="max-w-2xl border-slate-200 bg-card shadow-xs">
       <CardHeader className="border-b border-slate-100 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

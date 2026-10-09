@@ -47,3 +47,8 @@ next-env.d.ts
 *.db-journal
 *.db-wal
 *.db-shm
+
+# previa local (sqlite) - nao versionar
+prisma/schema.local.prisma
+prisma/local-preview.db*
+.claude/launch.json

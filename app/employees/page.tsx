@@ -39,13 +39,13 @@ export default async function EmployeesPage() {
       {/* Header Banner */}
       <div
         className={`p-6 sm:p-8 rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 border ${
-          "bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-indigo-900/40"
+          "bg-gradient-to-br from-ink via-ink-2 to-ink border-indigo-900/40"
         }`}
       >
         <div className="relative z-10 space-y-2 max-w-2xl">
           <div
             className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-              "bg-indigo-500/20 text-indigo-300"
+              "bg-ember-500/20 text-ember-300"
             }`}
           >
             <Users className="w-4 h-4" />
@@ -100,7 +100,7 @@ export default async function EmployeesPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
+        <Card className="rounded-2xl border-slate-200/80 bg-card shadow-xs">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">💰 Custo Total Folha</span>
@@ -117,7 +117,7 @@ export default async function EmployeesPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
+        <Card className="rounded-2xl border-slate-200/80 bg-card shadow-xs">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">⏱️ Média Hora-Homem</span>
@@ -169,7 +169,7 @@ export default async function EmployeesPage() {
                   className={`p-5 rounded-3xl border transition-all duration-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs hover:shadow-md ${
                     isOwner
                       ? "bg-gradient-to-r from-amber-50/70 via-white to-amber-50/40 border-amber-300/80"
-                      : "bg-white border-slate-200/80"
+                      : "bg-card border-slate-200/80"
                   }`}
                 >
                   <div className="space-y-2">

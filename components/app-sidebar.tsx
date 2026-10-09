@@ -158,7 +158,7 @@ export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
       ];
 
   return (
-    <Sidebar className="border-r border-slate-200/80 bg-white">
+    <Sidebar className="border-r border-slate-200/80 bg-card">
       <SidebarContent className="p-2 space-y-4">
         {/* Brand Header */}
         <div className="px-3 py-4 flex items-center gap-2.5 border-b border-slate-100">

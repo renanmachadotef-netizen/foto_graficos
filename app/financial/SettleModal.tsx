@@ -56,7 +56,7 @@ export function SettleModal({ isOpen, onClose, transaction }: SettleModalProps) 
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-2xl">
+      <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl bg-card border border-slate-200 shadow-2xl">
         <div className={`p-6 text-white ${isIncome ? "bg-emerald-600" : "bg-blue-600"}`}>
           <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
             <CheckCircle2 className="h-6 w-6" />
@@ -113,7 +113,7 @@ export function SettleModal({ isOpen, onClose, transaction }: SettleModalProps) 
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-400"
+              className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-card text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-400"
             >
               {PAYMENT_METHODS.map((pm) => (
                 <option key={pm.value} value={pm.value}>{pm.label}</option>

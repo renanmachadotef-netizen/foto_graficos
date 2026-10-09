@@ -17,7 +17,7 @@ export default async function QuotePage({ params }: { params: Promise<{ id: stri
   const settings = await prisma.companySettings.findFirst() || {} as any;
 
   return (
-    <div className="min-h-screen bg-slate-100 py-8 print:bg-white print:py-0">
+    <div className="min-h-screen bg-slate-100 py-8 print:bg-card print:py-0">
       
       {/* Botão de impressão (escondido na hora de imprimir) */}
       <div className="max-w-[800px] mx-auto mb-4 flex justify-end print:hidden">
@@ -32,7 +32,7 @@ export default async function QuotePage({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* Papel A4 */}
-      <div className="max-w-[800px] mx-auto bg-white p-12 shadow-xl print:shadow-none print:p-0 min-h-[1122px]">
+      <div className="max-w-[800px] mx-auto bg-card p-12 shadow-xl print:shadow-none print:p-0 min-h-[1122px]">
         
         {/* Cabeçalho */}
         <header className="flex justify-between items-start border-b-2 border-slate-200 pb-8 mb-8">

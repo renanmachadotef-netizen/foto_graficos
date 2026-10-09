@@ -84,7 +84,7 @@ export default async function MaterialsPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-slate-200 bg-white shadow-xs">
+        <Card className="border-slate-200 bg-card shadow-xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Insumos</p>
@@ -97,7 +97,7 @@ export default async function MaterialsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 bg-white shadow-xs">
+        <Card className="border-slate-200 bg-card shadow-xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor em Estoque</p>
@@ -112,7 +112,7 @@ export default async function MaterialsPage() {
           </CardContent>
         </Card>
 
-        <Card className={`border-slate-200 shadow-xs ${criticalItems.length > 0 ? "bg-rose-50/50 border-rose-200" : "bg-white"}`}>
+        <Card className={`border-slate-200 shadow-xs ${criticalItems.length > 0 ? "bg-rose-50/50 border-rose-200" : "bg-card"}`}>
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-rose-700 uppercase tracking-wider">Alerta de Reposição</p>
@@ -127,7 +127,7 @@ export default async function MaterialsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 bg-white shadow-xs">
+        <Card className="border-slate-200 bg-card shadow-xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Últimas Movimentações</p>
@@ -150,7 +150,7 @@ export default async function MaterialsPage() {
 
         {/* Right Column: Inventory Table */}
         <div className="lg:col-span-8 space-y-6">
-          <Card className="border-slate-200 bg-white shadow-xs">
+          <Card className="border-slate-200 bg-card shadow-xs">
             <CardHeader className="p-4 pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold text-slate-900">Grade de Materiais em Estoque</CardTitle>
@@ -264,7 +264,7 @@ export default async function MaterialsPage() {
           </Card>
 
           {/* Recent Movements History */}
-          <Card className="border-slate-200 bg-white shadow-xs">
+          <Card className="border-slate-200 bg-card shadow-xs">
             <CardHeader className="p-4 pb-2 border-b border-slate-100">
               <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <History className="w-4 h-4 text-slate-500" />

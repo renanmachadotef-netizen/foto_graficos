@@ -400,7 +400,7 @@ export function FinancialClientView({ transactions, clients, fixedCosts }: Finan
       {(activeTab === "ALL" || activeTab === "RECEIVABLE" || activeTab === "PAYABLE") && (
         <div className="space-y-4">
           {/* Filter Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+          <div className="bg-card p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
             {/* Search Input */}
             <div className="relative w-full md:w-80">
               <Search className="absolute left-3 top-2.5 text-slate-400 size-4" />
@@ -419,7 +419,7 @@ export function FinancialClientView({ transactions, clients, fixedCosts }: Finan
                 <button
                   onClick={() => setStatusFilter("ALL")}
                   className={`px-3 py-1.5 rounded-lg transition-all ${
-                    statusFilter === "ALL" ? "bg-white text-slate-900 shadow-xs" : "hover:text-slate-900"
+                    statusFilter === "ALL" ? "bg-card text-slate-900 shadow-xs" : "hover:text-slate-900"
                   }`}
                 >
                   Todos
@@ -455,7 +455,7 @@ export function FinancialClientView({ transactions, clients, fixedCosts }: Finan
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold bg-white text-slate-700 focus:outline-hidden"
+                  className="h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold bg-card text-slate-700 focus:outline-hidden"
                 >
                   <option value="ALL">Todos os Meses</option>
                   {availableMonths.map((m) => {
@@ -474,7 +474,7 @@ export function FinancialClientView({ transactions, clients, fixedCosts }: Finan
           </div>
 
           {/* TRANSACTIONS TABLE */}
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+          <div className="bg-card border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="bg-slate-50/80 text-slate-600 border-b border-slate-200 text-xs font-bold uppercase tracking-wider">

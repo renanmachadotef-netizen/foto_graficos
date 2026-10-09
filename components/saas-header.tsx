@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Role, ROLE_PERMISSIONS } from "@/lib/roles";
 import { logoutAction, quickLoginRole } from "@/app/login/actions";
 import { CompanyConfig } from "@/lib/company";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   ShieldCheck,
   UserCheck,
@@ -34,7 +35,7 @@ export function SaasHeader({ user, company }: SaasHeaderProps) {
 
   if (!user) {
     return (
-      <header className="h-14 border-b border-slate-200 bg-white px-4 flex items-center justify-between shadow-xs sticky top-0 z-30">
+      <header className="h-14 border-b border-slate-200 bg-card px-4 flex items-center justify-between shadow-xs sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <SidebarTrigger />
           <span className="font-semibold text-slate-800 text-sm">{company.name}</span>
@@ -58,7 +59,7 @@ export function SaasHeader({ user, company }: SaasHeaderProps) {
   const RoleIcon = roleIcons[user.role] || User;
 
   return (
-    <header className="h-14 border-b border-slate-200/80 bg-white/95 backdrop-blur-md px-4 flex items-center justify-between shadow-xs sticky top-0 z-30">
+    <header className="h-14 border-b border-slate-200/80 bg-card/95 backdrop-blur-md px-4 flex items-center justify-between shadow-xs sticky top-0 z-30">
       {/* Left side: Sidebar trigger & Company Title */}
       <div className="flex items-center gap-3">
         <SidebarTrigger />
@@ -76,13 +77,14 @@ export function SaasHeader({ user, company }: SaasHeaderProps) {
         </div>
       </div>
 
-      {/* Right side: User Card + Logout */}
+      {/* Right side: Tema + User Card + Logout */}
       <div className="flex items-center gap-2 sm:gap-3">
+        <ThemeToggle />
         {/* User Card with Role Badge */}
         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/90 rounded-lg px-2.5 py-1">
           <div
             className={`w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-bold shadow-xs ${
-              "bg-slate-900"
+              "bg-ink"
             }`}
           >
             {user.name.charAt(0).toUpperCase()}
@@ -124,7 +126,7 @@ export function SaasHeader({ user, company }: SaasHeaderProps) {
           </Button>
 
           {showRoleSwitcher && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-50 animate-in fade-in-50 zoom-in-95">
+            <div className="absolute right-0 mt-2 w-56 bg-card rounded-xl shadow-xl border border-slate-200 p-2 z-50 animate-in fade-in-50 zoom-in-95">
               <div className="text-[11px] font-semibold text-slate-400 px-2 py-1 uppercase tracking-wider">
                 Simular Perfil:
               </div>

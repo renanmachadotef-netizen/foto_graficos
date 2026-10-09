@@ -274,7 +274,7 @@ export function PdvClientView({
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
       {/* Top Bar: Title + Fast Action Shortcuts */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             <ShoppingCart className={`w-6 h-6 text-indigo-600`} />
@@ -323,7 +323,7 @@ export function PdvClientView({
                 placeholder="Buscar produto, lona, foto, adesivo..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-white text-sm border-slate-200 shadow-xs"
+                className="pl-9 bg-card text-sm border-slate-200 shadow-xs"
               />
             </div>
 
@@ -336,7 +336,7 @@ export function PdvClientView({
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                     selectedCategory === cat.id
                       ? "bg-indigo-600 text-white shadow-xs"
-                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                      : "bg-card text-slate-600 border border-slate-200 hover:bg-slate-50"
                   }`}
                 >
                   {cat.label}
@@ -351,7 +351,7 @@ export function PdvClientView({
               <button
                 key={prod.id}
                 onClick={() => addToCart(prod)}
-                className="p-3.5 bg-white border border-slate-200 hover:border-indigo-500 rounded-xl text-left transition-all duration-150 hover:shadow-md hover:scale-[1.02] flex flex-col justify-between h-32 group cursor-pointer"
+                className="p-3.5 bg-card border border-slate-200 hover:border-indigo-500 rounded-xl text-left transition-all duration-150 hover:shadow-md hover:scale-[1.02] flex flex-col justify-between h-32 group cursor-pointer"
               >
                 <div>
                   <h3 className="font-bold text-xs sm:text-sm text-slate-900 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
@@ -377,7 +377,7 @@ export function PdvClientView({
           </div>
 
           {filteredProducts.length === 0 && (
-            <div className="p-8 text-center bg-white rounded-xl border border-dashed border-slate-200 text-slate-400 text-sm">
+            <div className="p-8 text-center bg-card rounded-xl border border-dashed border-slate-200 text-slate-400 text-sm">
               Nenhum produto encontrado nessa categoria.
             </div>
           )}
@@ -385,7 +385,7 @@ export function PdvClientView({
 
         {/* Right Side: Cart / Comanda (5 cols) */}
         <div className="lg:col-span-5">
-          <Card className="border-slate-200 bg-white shadow-md sticky top-16">
+          <Card className="border-slate-200 bg-card shadow-md sticky top-16">
             <CardHeader className="p-4 pb-3 border-b border-slate-100 bg-slate-50/70">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -403,7 +403,7 @@ export function PdvClientView({
                   <select
                     value={selectedClientId}
                     onChange={(e) => setSelectedClientId(e.target.value)}
-                    className="w-full text-xs font-medium bg-white border border-slate-300 rounded-lg p-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
+                    className="w-full text-xs font-medium bg-card border border-slate-300 rounded-lg p-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
                   >
                     <option value="balcao">👤 Cliente Balcão (Rápido)</option>
                     {clients.map((c) => (
@@ -420,13 +420,13 @@ export function PdvClientView({
                       placeholder="Nome do cliente (opcional)"
                       value={customClientName}
                       onChange={(e) => setCustomClientName(e.target.value)}
-                      className="text-xs h-8 bg-white"
+                      className="text-xs h-8 bg-card"
                     />
                     <Input
                       placeholder="WhatsApp (ex: 11999998888)"
                       value={customClientPhone}
                       onChange={(e) => setCustomClientPhone(e.target.value)}
-                      className="text-xs h-8 bg-white"
+                      className="text-xs h-8 bg-card"
                     />
                   </div>
                 )}
@@ -457,7 +457,7 @@ export function PdvClientView({
 
                       <div className="flex items-center gap-3">
                         {/* Qty Controls */}
-                        <div className="flex items-center border border-slate-200 rounded-md bg-white">
+                        <div className="flex items-center border border-slate-200 rounded-md bg-card">
                           <button
                             type="button"
                             onClick={() => updateItemQty(idx, -1)}
@@ -509,7 +509,7 @@ export function PdvClientView({
                       step="0.50"
                       value={discount}
                       onChange={(e) => setDiscount(e.target.value)}
-                      className="w-24 h-7 text-xs text-right font-bold text-rose-600 bg-white"
+                      className="w-24 h-7 text-xs text-right font-bold text-rose-600 bg-card"
                       placeholder="0,00"
                     />
                   </div>
@@ -573,7 +573,7 @@ export function PdvClientView({
                       className={`p-2.5 rounded-lg border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
                         isSelected
                           ? "bg-indigo-50 border-indigo-500 text-indigo-900 shadow-xs"
-                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                          : "bg-card border-slate-200 text-slate-600 hover:bg-slate-50"
                       }`}
                     >
                       <Icon className={`w-4 h-4 ${item.color}`} />
@@ -590,7 +590,7 @@ export function PdvClientView({
                 <p className="font-bold flex items-center gap-1.5">
                   <QrCode className="w-3.5 h-3.5 text-teal-600" /> Chave PIX da Empresa:
                 </p>
-                <p className="font-mono text-xs mt-1 bg-white p-1.5 rounded border border-teal-100 select-all">
+                <p className="font-mono text-xs mt-1 bg-card p-1.5 rounded border border-teal-100 select-all">
                   {companySettings.pixKey}
                 </p>
               </div>
@@ -607,12 +607,12 @@ export function PdvClientView({
                     placeholder="Ex: 50.00"
                     value={amountPaidInput}
                     onChange={(e) => setAmountPaidInput(e.target.value)}
-                    className="bg-white border-emerald-300 font-bold text-emerald-700 text-sm"
+                    className="bg-card border-emerald-300 font-bold text-emerald-700 text-sm"
                   />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs font-bold text-emerald-950">Troco a Devolver</Label>
-                  <div className="h-9 px-3 flex items-center font-extrabold text-base text-emerald-700 bg-white rounded-md border border-emerald-200">
+                  <div className="h-9 px-3 flex items-center font-extrabold text-base text-emerald-700 bg-card rounded-md border border-emerald-200">
                     R$ {change.toFixed(2)}
                   </div>
                 </div>
@@ -640,12 +640,12 @@ export function PdvClientView({
                       step="1.00"
                       value={amountPaidInput}
                       onChange={(e) => setAmountPaidInput(e.target.value)}
-                      className="bg-white border-amber-300 font-bold text-amber-900"
+                      className="bg-card border-amber-300 font-bold text-amber-900"
                     />
                   </div>
                   <div>
                     <Label className="text-amber-900 font-bold">Saldo na Retirada</Label>
-                    <div className="h-9 px-2 flex items-center font-bold text-amber-900 bg-white rounded border border-amber-200">
+                    <div className="h-9 px-2 flex items-center font-bold text-amber-900 bg-card rounded border border-amber-200">
                       R$ {Math.max(0, total - (parseFloat(amountPaidInput) || 0)).toFixed(2)}
                     </div>
                   </div>
@@ -765,7 +765,7 @@ export function PdvClientView({
 
                 <Button
                   onClick={() => setIsReceiptOpen(false)}
-                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                  className="w-full bg-ink hover:bg-ink-2 text-white font-bold text-xs"
                 >
                   Nova Venda
                 </Button>
@@ -794,7 +794,7 @@ export function PdvClientView({
               <select
                 value={m2Material}
                 onChange={(e) => setM2Material(e.target.value)}
-                className="w-full text-xs border border-slate-300 rounded-md p-2 bg-white"
+                className="w-full text-xs border border-slate-300 rounded-md p-2 bg-card"
               >
                 <option value="Lona Frontlight 440g">Lona Frontlight 440g</option>
                 <option value="Lona Blackout 510g">Lona Blackout 510g</option>
@@ -860,7 +860,7 @@ export function PdvClientView({
               <select
                 value={m2Finish}
                 onChange={(e) => setM2Finish(e.target.value)}
-                className="w-full text-xs border border-slate-300 rounded-md p-2 bg-white"
+                className="w-full text-xs border border-slate-300 rounded-md p-2 bg-card"
               >
                 <option value="Bastão e Cordinha">Bastão e Cordinha</option>
                 <option value="Ilhoses em toda a volta">Ilhoses em toda a volta</option>

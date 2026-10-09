@@ -123,7 +123,7 @@ export function UsersClientView({ initialUsers }: { initialUsers: UserItem[] }) 
                   id="role"
                   name="role"
                   defaultValue="SELLER"
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-md border border-slate-300 bg-card px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none"
                 >
                   <option value="ADMIN">ADMIN - Administrador (Acesso Total)</option>
                   <option value="MANAGER">MANAGER - Gerente (Gestão & Aprovações)</option>
@@ -150,7 +150,7 @@ export function UsersClientView({ initialUsers }: { initialUsers: UserItem[] }) 
         {(["ADMIN", "MANAGER", "SELLER", "PRODUCTION"] as Role[]).map((r) => {
           const info = ROLE_PERMISSIONS[r];
           return (
-            <Card key={r} className="border-slate-200 bg-white shadow-xs">
+            <Card key={r} className="border-slate-200 bg-card shadow-xs">
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-xs text-slate-900">{r}</span>
@@ -173,7 +173,7 @@ export function UsersClientView({ initialUsers }: { initialUsers: UserItem[] }) 
       </div>
 
       {/* Users Table */}
-      <Card className="border-slate-200 bg-white shadow-xs">
+      <Card className="border-slate-200 bg-card shadow-xs">
         <CardHeader className="p-5 pb-3 border-b border-slate-100">
           <CardTitle className="text-base font-bold text-slate-900">Usuários Cadastrados</CardTitle>
           <CardDescription className="text-xs text-slate-500">
@@ -195,7 +195,7 @@ export function UsersClientView({ initialUsers }: { initialUsers: UserItem[] }) 
               {users.map((u) => (
                 <TableRow key={u.id} className="hover:bg-slate-50/50">
                   <TableCell className="font-medium text-slate-900 text-sm flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    <div className="w-8 h-8 rounded-full bg-ink text-white flex items-center justify-center font-bold text-xs shadow-xs">
                       {u.name.charAt(0).toUpperCase()}
                     </div>
                     <span>{u.name}</span>

@@ -93,7 +93,7 @@ export function EmployeeForm() {
   };
 
   return (
-    <Card className="shadow-md border-amber-200/80 rounded-2xl overflow-hidden bg-white">
+    <Card className="shadow-md border-amber-200/80 rounded-2xl overflow-hidden bg-card">
       <CardHeader className="bg-gradient-to-r from-amber-500/10 via-amber-50 to-orange-50/50 border-b border-amber-100/80 pb-4">
         <CardTitle className="text-base font-black text-slate-800 flex items-center gap-2">
           {isOwner ? (
@@ -123,7 +123,7 @@ export function EmployeeForm() {
           <div className="space-y-1.5">
             <Label className="text-xs font-bold text-slate-700">Papel & Regime de Contratação *</Label>
             <Select value={contractType} onValueChange={handleContractChange}>
-              <SelectTrigger className="rounded-xl text-xs font-bold bg-white">
+              <SelectTrigger className="rounded-xl text-xs font-bold bg-card">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
@@ -221,12 +221,12 @@ export function EmployeeForm() {
               required
               value={efficiencyPercentage}
               onChange={(e) => setEfficiencyPercentage(e.target.value)}
-              className="border-amber-300 bg-white h-8 text-xs font-bold rounded-lg"
+              className="border-amber-300 bg-card h-8 text-xs font-bold rounded-lg"
             />
           </div>
 
           {/* Result Banner */}
-          <div className="p-4 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl text-white flex items-center justify-between shadow-md">
+          <div className="p-4 bg-gradient-to-br from-ink to-ink-2 rounded-2xl text-white flex items-center justify-between shadow-md">
             <div>
               <p className="text-[10px] uppercase font-bold text-amber-300 tracking-wider flex items-center gap-1">
                 <Sparkles className="w-3 h-3" /> Custo Hora-Homem

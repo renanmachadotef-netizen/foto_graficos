@@ -215,7 +215,7 @@ export function BirthdaysClientView({
       {/* Header Banner */}
       <div
         className={`p-6 sm:p-8 rounded-2xl text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 ${
-          "bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-600"
+          "bg-gradient-to-r from-ink via-ink-2 to-pink-600"
         }`}
       >
         <div className="relative z-10 space-y-2 max-w-2xl">
@@ -270,7 +270,7 @@ export function BirthdaysClientView({
               {todaysBirthdays.map((c) => (
                 <div
                   key={c.id}
-                  className="bg-white p-3.5 rounded-xl border border-yellow-300/80 shadow-xs flex items-center justify-between gap-3"
+                  className="bg-card p-3.5 rounded-xl border border-yellow-300/80 shadow-xs flex items-center justify-between gap-3"
                 >
                   <div className="min-w-0">
                     <p className="font-bold text-slate-900 text-sm truncate">{c.name}</p>
@@ -320,7 +320,7 @@ export function BirthdaysClientView({
                 className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between cursor-pointer ${
                   isSelected
                     ? "bg-indigo-600 text-white border-indigo-700 shadow-md shadow-indigo-600/20"
-                    : "bg-white text-slate-700 border-slate-200/80 hover:bg-slate-50 hover:border-slate-300"
+                    : "bg-card text-slate-700 border-slate-200/80 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between w-full mb-1">
@@ -328,7 +328,7 @@ export function BirthdaysClientView({
                   {isThisMonth && (
                     <span
                       className={`text-[9px] px-1.5 py-0.2 rounded font-black uppercase ${
-                        isSelected ? "bg-white text-indigo-700" : "bg-indigo-100 text-indigo-700"
+                        isSelected ? "bg-card text-indigo-700" : "bg-indigo-100 text-indigo-700"
                       }`}
                     >
                       Atual
@@ -349,7 +349,7 @@ export function BirthdaysClientView({
       </div>
 
       {/* Main List Section */}
-      <Card className="border-slate-200/80 shadow-sm bg-white">
+      <Card className="border-slate-200/80 shadow-sm bg-card">
         <CardHeader className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -476,8 +476,8 @@ export function BirthdaysClientView({
 
       {/* RAFFLE DIALOG / MODAL */}
       <Dialog open={isRaffleOpen} onOpenChange={setIsRaffleOpen}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden border-2 border-yellow-400/80 rounded-2xl bg-slate-950 text-white">
-          <div className="p-6 text-center bg-gradient-to-b from-amber-600/30 to-slate-950 border-b border-yellow-500/20">
+        <DialogContent className="max-w-lg p-0 overflow-hidden border-2 border-yellow-400/80 rounded-2xl bg-ink text-white">
+          <div className="p-6 text-center bg-gradient-to-b from-amber-600/30 to-ink border-b border-yellow-500/20">
             <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-yellow-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-xl shadow-yellow-500/30 animate-pulse">
               <Trophy className="w-9 h-9 text-slate-950" />
             </div>
@@ -501,12 +501,12 @@ export function BirthdaysClientView({
                 onChange={(e) => setRafflePrize(e.target.value)}
                 placeholder="Ex: 1 Banner 1x1m, 1 Ensaio Fotográfico..."
                 disabled={isSpinning}
-                className="bg-slate-900/90 border-slate-700 text-white text-sm focus:border-yellow-400"
+                className="bg-ink/90 border-slate-700 text-white text-sm focus:border-yellow-400"
               />
             </div>
 
             {/* Live Roulette Display */}
-            <div className="relative py-8 px-4 rounded-xl bg-gradient-to-b from-slate-900 to-slate-950 border border-yellow-500/40 text-center shadow-inner overflow-hidden">
+            <div className="relative py-8 px-4 rounded-xl bg-gradient-to-b from-ink to-ink border border-yellow-500/40 text-center shadow-inner overflow-hidden">
               <div className="text-[11px] uppercase font-bold text-slate-400 mb-1">
                 {isSpinning ? "Girando a Roleta..." : raffleWinner ? "🎉 GANHADOR(A) SORTEADO(A) 🎉" : "Candidato"}
               </div>
@@ -579,7 +579,7 @@ export function BirthdaysClientView({
                     variant="outline"
                     onClick={handleStartRaffle}
                     disabled={isSpinning}
-                    className="w-full border-slate-700 hover:bg-slate-900 text-slate-300 text-xs py-2"
+                    className="w-full border-slate-700 hover:bg-ink text-slate-300 text-xs py-2"
                   >
                     <RefreshCw className="w-3.5 h-3.5 mr-1" />
                     Sortear Novamente

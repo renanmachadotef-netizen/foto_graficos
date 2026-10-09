@@ -99,13 +99,13 @@ export default async function DashboardPage() {
       {/* Welcome & Quick Action Header */}
       <div
         className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-8 rounded-3xl text-white shadow-xl border ${
-          "bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-indigo-900/40"
+          "bg-gradient-to-r from-ink via-ink-2 to-ink border-indigo-900/40"
         }`}
       >
         <div className="space-y-1.5">
           <div
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-              "bg-indigo-500/20 text-indigo-300"
+              "bg-ember-500/20 text-ember-300"
             }`}
           >
             {<Sparkles className="w-3.5 h-3.5" />}
@@ -148,7 +148,7 @@ export default async function DashboardPage() {
 
       {/* Main KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
+        <Card className="rounded-2xl border-slate-200/80 bg-card shadow-xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturado / Recebido</p>
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
+        <Card className="rounded-2xl border-slate-200/80 bg-card shadow-xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">A Receber Pendente</p>
@@ -178,7 +178,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs">
+        <Card className="rounded-2xl border-slate-200/80 bg-card shadow-xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -197,7 +197,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className={`rounded-2xl border-slate-200/80 shadow-xs ${criticalMaterials.length > 0 ? "bg-rose-50/60 border-rose-200" : "bg-white"}`}>
+        <Card className={`rounded-2xl border-slate-200/80 shadow-xs ${criticalMaterials.length > 0 ? "bg-rose-50/60 border-rose-200" : "bg-card"}`}>
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-rose-700 uppercase tracking-wider">Estoque Crítico</p>
@@ -217,7 +217,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Break-Even Progress Card */}
         <div className="lg:col-span-7">
-          <Card className="border-slate-200 bg-white shadow-xs h-full flex flex-col justify-between">
+          <Card className="border-slate-200 bg-card shadow-xs h-full flex flex-col justify-between">
             <CardHeader className="p-5 pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -285,7 +285,7 @@ export default async function DashboardPage() {
 
         {/* Reposição de Estoque Urgente Card */}
         <div className="lg:col-span-5">
-          <Card className="border-slate-200 bg-white shadow-xs h-full flex flex-col justify-between">
+          <Card className="border-slate-200 bg-card shadow-xs h-full flex flex-col justify-between">
             <CardHeader className="p-5 pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -328,7 +328,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Bottom Row: Recent Quotes / Sales Pipeline */}
-      <Card className="border-slate-200 bg-white shadow-xs">
+      <Card className="border-slate-200 bg-card shadow-xs">
         <CardHeader className="p-5 pb-3 flex flex-row items-center justify-between border-b border-slate-100">
           <div>
             <CardTitle className="text-base font-bold text-slate-900">Últimos Orçamentos & Vendas</CardTitle>

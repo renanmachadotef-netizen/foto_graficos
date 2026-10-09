@@ -131,7 +131,7 @@ export function TransactionModal({ isOpen, onClose, clients, initialData }: Tran
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-2xl">
+      <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl bg-card border border-slate-200 shadow-2xl">
         {/* Header with Type Selector */}
         <div className={`p-6 text-white ${type === "INCOME" ? "bg-gradient-to-r from-emerald-600 to-teal-600" : "bg-gradient-to-r from-rose-600 to-red-600"}`}>
           <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
@@ -148,7 +148,7 @@ export function TransactionModal({ isOpen, onClose, clients, initialData }: Tran
                 type="button"
                 onClick={() => { setType("INCOME"); if (!category) setCategory(CATEGORIES_INCOME[0]); }}
                 className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  type === "INCOME" ? "bg-white text-emerald-700 shadow-sm" : "text-white/80 hover:text-white"
+                  type === "INCOME" ? "bg-card text-emerald-700 shadow-sm" : "text-white/80 hover:text-white"
                 }`}
               >
                 <TrendingUp size={14} /> A Receber (Receita)
@@ -157,7 +157,7 @@ export function TransactionModal({ isOpen, onClose, clients, initialData }: Tran
                 type="button"
                 onClick={() => { setType("EXPENSE"); if (!category) setCategory(CATEGORIES_EXPENSE[0]); }}
                 className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  type === "EXPENSE" ? "bg-white text-rose-700 shadow-sm" : "text-white/80 hover:text-white"
+                  type === "EXPENSE" ? "bg-card text-rose-700 shadow-sm" : "text-white/80 hover:text-white"
                 }`}
               >
                 <TrendingDown size={14} /> A Pagar (Despesa)
@@ -226,7 +226,7 @@ export function TransactionModal({ isOpen, onClose, clients, initialData }: Tran
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-400"
+                className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-card text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-400"
               >
                 <option value="">Selecione uma categoria...</option>
                 {categoryOptions.map((cat) => (
@@ -242,7 +242,7 @@ export function TransactionModal({ isOpen, onClose, clients, initialData }: Tran
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-400"
+                className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-card text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-400"
               >
                 {PAYMENT_METHODS.map((pm) => (
                   <option key={pm.value} value={pm.value}>{pm.label}</option>
@@ -259,7 +259,7 @@ export function TransactionModal({ isOpen, onClose, clients, initialData }: Tran
             <select
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
-              className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-400"
+              className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-card text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-400"
             >
               <option value="">Nenhum cliente vinculado</option>
               {clients.map((c) => (
@@ -307,7 +307,7 @@ export function TransactionModal({ isOpen, onClose, clients, initialData }: Tran
                   type="date"
                   value={paymentDate}
                   onChange={(e) => setPaymentDate(e.target.value)}
-                  className="h-9 text-sm bg-white"
+                  className="h-9 text-sm bg-card"
                 />
               </div>
             )}

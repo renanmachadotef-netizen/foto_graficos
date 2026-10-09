@@ -214,7 +214,7 @@ export function PricingCalculator({
           <CardContent className="pt-4 space-y-4">
             <div className="flex gap-2">
               <Input 
-                className="bg-white border-purple-200 focus-visible:ring-purple-500"
+                className="bg-card border-purple-200 focus-visible:ring-purple-500"
                 placeholder="Ex: 'Quero 50 faixas de 2x1 metros em lona com ilhós'" 
                 value={aiPrompt} 
                 onChange={e => setAiPrompt(e.target.value)}
@@ -262,7 +262,7 @@ export function PricingCalculator({
               };
 
               return (
-                <div key={um.id} className="bg-white p-3 border rounded-lg space-y-3">
+                <div key={um.id} className="bg-card p-3 border rounded-lg space-y-3">
                   <div className="flex gap-4 items-end">
                     <div className="flex-1 space-y-1">
                       <Label className="text-xs font-bold text-slate-600">Insumo / Material</Label>
@@ -346,7 +346,7 @@ export function PricingCalculator({
           <CardContent className="pt-4 space-y-4">
             {workflow.length === 0 && <p className="text-sm text-slate-500">Nenhuma etapa de produção adicionada.</p>}
             {workflow.map((step, index) => (
-              <div key={step.id} className="flex gap-4 items-end bg-white p-3 border rounded-lg">
+              <div key={step.id} className="flex gap-4 items-end bg-card p-3 border rounded-lg">
                 <div className="w-16 flex items-center justify-center font-bold text-slate-300">#{index + 1}</div>
                 <div className="flex-1 space-y-1">
                   <Label className="text-xs">{step.type === 'machine' ? 'Máquina Utilizada' : 'Mão de Obra (Funcionário)'}</Label>
@@ -384,7 +384,7 @@ export function PricingCalculator({
 
       {/* Lado Direito: Resultados e Escala */}
       <div className="lg:col-span-1 space-y-6">
-        <Card className="bg-slate-800 text-white shadow-xl border-none">
+        <Card className="bg-ink-2 text-white shadow-xl border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Calculator /> Tabela de Preços</CardTitle>
             <p className="text-slate-400 text-sm">A mágica da diluição do custo de Setup na quantidade.</p>
@@ -396,7 +396,7 @@ export function PricingCalculator({
             </div>
 
             {/* Painel de Regras de Margem Dinâmica */}
-            <div className="bg-slate-900 p-4 rounded-lg border border-slate-700 space-y-3 mt-4">
+            <div className="bg-ink p-4 rounded-lg border border-slate-700 space-y-3 mt-4">
               <div className="flex justify-between items-center">
                 <Label className="text-slate-300 font-bold text-xs uppercase tracking-wider">Regras de Margem (Markup)</Label>
                 <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-blue-400 hover:text-blue-300"
@@ -410,12 +410,12 @@ export function PricingCalculator({
                 <div key={tier.id} className="flex gap-2 items-center">
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-slate-500">De</span>
-                    <Input type="number" className="w-16 h-7 text-xs bg-slate-800 border-slate-600 text-white px-1 text-center" 
+                    <Input type="number" className="w-16 h-7 text-xs bg-ink-2 border-slate-600 text-white px-1 text-center" 
                       value={tier.min} onChange={e => { const n = [...markupTiers]; n[index].min = parseInt(e.target.value)||0; setMarkupTiers(n); }} />
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-slate-500">Até</span>
-                    <Input type="number" className="w-16 h-7 text-xs bg-slate-800 border-slate-600 text-white px-1 text-center" 
+                    <Input type="number" className="w-16 h-7 text-xs bg-ink-2 border-slate-600 text-white px-1 text-center" 
                       value={tier.max} onChange={e => { const n = [...markupTiers]; n[index].max = parseInt(e.target.value)||0; setMarkupTiers(n); }} />
                   </div>
                   <div className="flex items-center gap-1 pl-2 border-l border-slate-700 ml-1">
@@ -432,7 +432,7 @@ export function PricingCalculator({
             </div>
 
             {/* Custos Comerciais (Impostos e Taxas) */}
-            <div className="grid grid-cols-2 gap-4 mt-4 bg-slate-800/50 p-4 border border-slate-700 rounded-lg">
+            <div className="grid grid-cols-2 gap-4 mt-4 bg-ink-2/50 p-4 border border-slate-700 rounded-lg">
               <div className="space-y-2">
                 <Label className="text-slate-400 text-xs uppercase font-bold tracking-wider">Imposto (NF-e)</Label>
                 <div className="relative">
@@ -492,7 +492,7 @@ export function PricingCalculator({
             <div className="space-y-2">
               <Label className="text-blue-900 font-semibold">Cliente</Label>
               <Select value={selectedClientId} onValueChange={(val: string | null) => { if (val) setSelectedClientId(val); }}>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-card">
                   <SelectValue placeholder="Selecione o Cliente">
                     {clients.find(c => c.id === selectedClientId)?.name || "Selecione o Cliente"}
                   </SelectValue>
@@ -506,7 +506,7 @@ export function PricingCalculator({
             
             <div className="space-y-2">
               <Label className="text-blue-900 font-semibold">Quantidade Fechada</Label>
-              <Input type="number" className="bg-white" value={targetQty} onChange={e => setTargetQty(e.target.value)} />
+              <Input type="number" className="bg-card" value={targetQty} onChange={e => setTargetQty(e.target.value)} />
             </div>
 
             <Button onClick={handleSaveQuote} disabled={isSaving} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold">

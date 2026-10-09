@@ -62,7 +62,7 @@ export function EditMaterialDialog({ material }: { material: any }) {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900"
+                className="w-full rounded-md border border-slate-300 bg-card px-3 py-2 text-xs text-slate-900"
               >
                 <option value="VINIL_LONA">Lonas & Vinis</option>
                 <option value="RIGIDOS_CHAPAS">Chapas & Rígidos</option>

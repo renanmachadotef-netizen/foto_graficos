@@ -93,7 +93,7 @@ export function MachineForm() {
           <div className="space-y-2 p-3 border border-amber-100 bg-amber-50 rounded-md">
             <Label className="text-amber-800">Provisão de Manutenção (R$/Mês)</Label>
             <p className="text-[11px] text-amber-700/80 mb-2">Sim, as manutenções (troca de correia, cabeça de impressão, tubos laser) entram aqui! Estime um gasto médio mensal.</p>
-            <Input type="number" required value={maintenanceCost} onChange={e => setMaintenanceCost(e.target.value)} className="border-amber-200 bg-white" />
+            <Input type="number" required value={maintenanceCost} onChange={e => setMaintenanceCost(e.target.value)} className="border-amber-200 bg-card" />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
@@ -126,7 +126,7 @@ export function MachineForm() {
              </div>
           </div>
 
-          <div className="p-4 bg-slate-800 rounded-lg flex items-center justify-between">
+          <div className="p-4 bg-ink-2 rounded-lg flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-300 font-medium">Custo Final Hora-Máquina</p>
               <p className="text-xs text-slate-400">Pronto para a calculadora.</p>
