@@ -32,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { TenantConfig } from "@/lib/tenant";
+import { CompanyConfig } from "@/lib/company";
 import { drawBirthdayWinnerAction } from "./actions";
 
 interface ClientBirthday {
@@ -54,7 +54,7 @@ interface BirthdaysClientViewProps {
   totalClients: number;
   currentMonth: number;
   currentDay: number;
-  tenantConfig: TenantConfig;
+  company: CompanyConfig;
 }
 
 const MONTHS = [
@@ -77,7 +77,7 @@ export function BirthdaysClientView({
   totalClients,
   currentMonth,
   currentDay,
-  tenantConfig,
+  company,
 }: BirthdaysClientViewProps) {
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -184,7 +184,7 @@ export function BirthdaysClientView({
     const cleanPhone = client.phone.replace(/\D/g, "");
     if (!cleanPhone) return null;
 
-    const companyName = tenantConfig.name;
+    const companyName = company.name;
     const greetingText = `Olá *${client.name.trim()}*, tudo bem? 🎉🎂\n\nA equipe da *${companyName}* está passando para te desejar um *Feliz Aniversário*! Que o seu novo ano de vida seja repleto de muitas alegrias, saúde e sucesso!\n\n${
       "Como nosso cliente especial, venha nos visitar para retirar um brinde comemorativo e um desconto especial no seu próximo pedido! 🎁🖨️"
     }\n\nAbraços de toda a nossa equipe!`;

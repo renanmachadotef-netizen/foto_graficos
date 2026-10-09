@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { getCurrentTenant, TENANT_CONFIGS, ensureTenantInitialData } from "@/lib/tenant";
+import { COMPANY, ensureInitialData } from "@/lib/company";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,11 +28,10 @@ export default async function DashboardPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const tenantId = await getCurrentTenant();
-  await ensureTenantInitialData(tenantId);
-  const tenantConfig = TENANT_CONFIGS[tenantId];
+  await ensureInitialData();
+  const company = COMPANY;
 
-  // Fetch all tenant-specific data concurrently
+  // Busca todos os dados do painel em paralelo
   const [
     companySettings,
     fixedCosts,
@@ -43,24 +42,22 @@ export default async function DashboardPage() {
     transactions,
     materials,
   ] = await Promise.all([
-    prisma.companySettings.findFirst({ where: { tenantId } }),
-    prisma.fixedCost.findMany({ where: { tenantId } }),
-    prisma.employee.findMany({ where: { tenantId } }),
-    prisma.machine.findMany({ where: { tenantId } }),
+    prisma.companySettings.findFirst(),
+    prisma.fixedCost.findMany(),
+    prisma.employee.findMany(),
+    prisma.machine.findMany(),
     prisma.quote.findMany({
-      where: { tenantId },
       take: 5,
       orderBy: { createdAt: "desc" },
       include: { client: true },
     }),
     prisma.serviceOrder.findMany({
       where: {
-        quote: { tenantId },
         status: { in: ["WAITING", "PREPRESS", "PRINTING", "FINISHING"] },
       },
     }),
-    prisma.financialTransaction.findMany({ where: { tenantId } }),
-    prisma.material.findMany({ where: { tenantId } }),
+    prisma.financialTransaction.findMany(),
+    prisma.material.findMany(),
   ]);
 
   // 1. Calculate Total Fixed Costs (Monthly Operating Cost)

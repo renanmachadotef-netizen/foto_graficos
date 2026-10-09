@@ -7,7 +7,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SaasHeader } from "@/components/saas-header";
 import { getSession, ensureDefaultUsers } from "@/lib/auth";
-import { getCurrentTenant, TENANT_CONFIGS, ensureTenantInitialData } from "@/lib/tenant";
+import { COMPANY, ensureInitialData } from "@/lib/company";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,8 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const tenantId = await getCurrentTenant();
-  const config = TENANT_CONFIGS[tenantId];
+  const config = COMPANY;
 
   return {
     title: `${config.name} ERP Pro`,
@@ -35,11 +34,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   await connection(); // pagina dinamica: o banco so existe em runtime, nunca no build
-  const tenantId = await getCurrentTenant();
   await ensureDefaultUsers();
-  await ensureTenantInitialData(tenantId);
+  await ensureInitialData();
   
-  const tenantConfig = TENANT_CONFIGS[tenantId];
+  const company = COMPANY;
   const session = await getSession();
 
   return (
@@ -48,9 +46,9 @@ export default async function RootLayout({
         <TooltipProvider>
           {session ? (
             <SidebarProvider>
-              <AppSidebar userRole={session.role} tenantConfig={tenantConfig} />
+              <AppSidebar userRole={session.role} company={company} />
               <main className="w-full flex flex-col min-h-screen">
-                <SaasHeader user={session} tenantConfig={tenantConfig} />
+                <SaasHeader user={session} company={company} />
                 <div className="flex-1 p-4 sm:p-6 md:p-8">
                   {children}
                 </div>

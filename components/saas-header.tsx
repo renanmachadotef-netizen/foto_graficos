@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Role, ROLE_PERMISSIONS } from "@/lib/roles";
 import { logoutAction, quickLoginRole } from "@/app/login/actions";
-import { TenantConfig, TenantId } from "@/lib/tenant";
+import { CompanyConfig } from "@/lib/company";
 import {
   ShieldCheck,
   UserCheck,
@@ -25,10 +25,10 @@ interface SaasHeaderProps {
     role: Role;
     avatar?: string | null;
   } | null;
-  tenantConfig: TenantConfig;
+  company: CompanyConfig;
 }
 
-export function SaasHeader({ user, tenantConfig }: SaasHeaderProps) {
+export function SaasHeader({ user, company }: SaasHeaderProps) {
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
 
@@ -37,7 +37,7 @@ export function SaasHeader({ user, tenantConfig }: SaasHeaderProps) {
       <header className="h-14 border-b border-slate-200 bg-white px-4 flex items-center justify-between shadow-xs sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <SidebarTrigger />
-          <span className="font-semibold text-slate-800 text-sm">{tenantConfig.name}</span>
+          <span className="font-semibold text-slate-800 text-sm">{company.name}</span>
         </div>
         <a href="/login">
           <Button size="sm" variant="outline" className="text-xs">
@@ -69,14 +69,14 @@ export function SaasHeader({ user, tenantConfig }: SaasHeaderProps) {
             }`}
           >
             <Printer className="w-4 h-4 text-indigo-600" />
-            {tenantConfig.name}
+            {company.name}
           </span>
           <span className="text-slate-300 text-xs">•</span>
-          <span className="text-xs font-medium text-slate-500">{tenantConfig.tagline.split(" para ")[1] || "Gestão & Produção"}</span>
+          <span className="text-xs font-medium text-slate-500">{company.tagline.split(" para ")[1] || "Gestão & Produção"}</span>
         </div>
       </div>
 
-      {/* Right side: Tenant Switcher (for Admins) + User Card + Logout */}
+      {/* Right side: User Card + Logout */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* User Card with Role Badge */}
         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/90 rounded-lg px-2.5 py-1">

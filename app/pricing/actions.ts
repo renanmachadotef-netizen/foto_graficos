@@ -1,14 +1,11 @@
 "use server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentTenant } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 
 export async function saveQuote(data: any) {
-  const currentTenant = await getCurrentTenant();
 
   const quote = await prisma.quote.create({
     data: {
-      tenantId: currentTenant,
       clientId: data.clientId,
       title: data.title,
       totalCost: data.totalCost,

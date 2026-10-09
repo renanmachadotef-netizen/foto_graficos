@@ -2,7 +2,6 @@
 
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { getCurrentTenant } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 
 export interface PosCartItem {
@@ -104,7 +103,6 @@ export async function ensureDefaultProducts() {
 
 export async function createPosSaleAction(data: PosSaleInput) {
   const session = await getSession();
-  const currentTenant = await getCurrentTenant();
 
   if (!data.items || data.items.length === 0) {
     return { error: "O carrinho está vazio." };
@@ -117,13 +115,12 @@ export async function createPosSaleAction(data: PosSaleInput) {
 
   if (!clientId || clientId === "balcao") {
     let balcaoClient = await prisma.client.findFirst({
-      where: { name: "Cliente Balcão", tenantId: currentTenant },
+      where: { name: "Cliente Balcão" },
     });
 
     if (!balcaoClient) {
       balcaoClient = await prisma.client.create({
         data: {
-          tenantId: currentTenant,
           name: "Cliente Balcão",
           phone: clientPhone || null,
           email: "balcao@fotograficos.com.br",
@@ -154,7 +151,6 @@ export async function createPosSaleAction(data: PosSaleInput) {
   // 3. Create Quote and Items
   const quote = await prisma.quote.create({
     data: {
-      tenantId: currentTenant,
       clientId,
       sellerId: session?.id || null,
       title,
@@ -195,7 +191,6 @@ export async function createPosSaleAction(data: PosSaleInput) {
   if (actualPaidAmount > 0) {
     await prisma.financialTransaction.create({
       data: {
-        tenantId: currentTenant,
         quoteId: quote.id,
         clientId,
         description: `Venda PDV Balcão #${quote.id.slice(-5)}`,
@@ -215,7 +210,6 @@ export async function createPosSaleAction(data: PosSaleInput) {
   if (remaining > 0) {
     await prisma.financialTransaction.create({
       data: {
-        tenantId: currentTenant,
         quoteId: quote.id,
         clientId,
         description: `Saldo Restante PDV #${quote.id.slice(-5)} (A Receber)`,
@@ -229,7 +223,7 @@ export async function createPosSaleAction(data: PosSaleInput) {
   }
 
   // Generate WhatsApp Message
-  const company = await prisma.companySettings.findFirst({ where: { tenantId: currentTenant } });
+  const company = await prisma.companySettings.findFirst();
   const companyName = company?.companyName || "Foto & Gráficos";
 
   let whatsappText = `Olá *${clientName}*, seu pedido na *${companyName}* foi confirmado com sucesso!\n\n`;
@@ -286,11 +280,9 @@ export async function createProductAction(data: {
   unit?: string;
   description?: string;
 }) {
-  const currentTenant = await getCurrentTenant();
 
   await prisma.product.create({
     data: {
-      tenantId: currentTenant,
       name: data.name,
       category: data.category || "BALCAO",
       price: data.price,

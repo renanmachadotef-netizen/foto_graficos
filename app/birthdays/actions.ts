@@ -1,15 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentTenant, TENANT_CONFIGS } from "@/lib/tenant";
+import { COMPANY } from "@/lib/company";
 import { revalidatePath } from "next/cache";
 
 export async function getBirthdaysByMonth(month: number) {
-  const currentTenant = await getCurrentTenant();
 
   const clients = await prisma.client.findMany({
     where: {
-      tenantId: currentTenant,
       birthMonth: month,
     },
     orderBy: {
@@ -21,13 +19,10 @@ export async function getBirthdaysByMonth(month: number) {
 }
 
 export async function drawBirthdayWinnerAction(month: number, prizeDescription: string) {
-  const currentTenant = await getCurrentTenant();
-  const company = await prisma.companySettings.findFirst({ where: { tenantId: currentTenant } });
-  const tenantConfig = TENANT_CONFIGS[currentTenant];
+  const company = await prisma.companySettings.findFirst();
 
   const clients = await prisma.client.findMany({
     where: {
-      tenantId: currentTenant,
       birthMonth: month,
     },
   });
@@ -40,7 +35,7 @@ export async function drawBirthdayWinnerAction(month: number, prizeDescription: 
   const winnerIndex = Math.floor(Math.random() * clients.length);
   const winner = clients[winnerIndex];
 
-  const companyName = company?.companyName || tenantConfig.name;
+  const companyName = company?.companyName || COMPANY.name;
   const prize = prizeDescription || "1 Banner Personalizado 1x1m";
 
   const whatsappMessage = `🎉 *PARABÉNS, ${winner.name.toUpperCase()}!* 🎂🎈\n\n` +

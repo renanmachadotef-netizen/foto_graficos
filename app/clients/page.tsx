@@ -2,24 +2,21 @@ import { ClientForm } from "./ClientForm";
 import { Trash2, Cake, Gift, ArrowRight, Download, RefreshCw } from "lucide-react";
 import { deleteClient } from "./actions";
 import { prisma } from "@/lib/prisma";
-import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
+import { ensureInitialData } from "@/lib/company";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
-  const tenantId = await getCurrentTenant();
-  await ensureTenantInitialData(tenantId);
+  await ensureInitialData();
 
   const [clients, birthdayCount] = await Promise.all([
     prisma.client.findMany({
-      where: { tenantId },
       orderBy: { createdAt: "desc" },
     }),
     prisma.client.count({
       where: {
-        tenantId,
         birthMonth: { not: null },
       },
     }),

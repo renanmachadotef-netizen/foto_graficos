@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { loginAction, quickLoginRole } from "./actions";
 import { Role, ROLE_PERMISSIONS } from "@/lib/roles";
-import { TenantConfig } from "@/lib/tenant";
+import { CompanyConfig } from "@/lib/company";
 import {
   ShieldCheck,
   UserCheck,
@@ -21,10 +21,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 
 interface LoginFormProps {
-  tenantConfig: TenantConfig;
+  company: CompanyConfig;
 }
 
-export function LoginForm({ tenantConfig }: LoginFormProps) {
+export function LoginForm({ company }: LoginFormProps) {
   const defaultEmail = "admin@fotograficos.com.br";
   const defaultPassword = "admin123";
 
@@ -102,13 +102,13 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-semibold backdrop-blur-md">
               {<Sparkles className="w-3.5 h-3.5 text-indigo-400" />}
-              <span>{tenantConfig.name} • Gestão Inteligente</span>
+              <span>{company.name} • Gestão Inteligente</span>
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
-              {tenantConfig.name}
+              {company.name}
             </h1>
             <p className="text-sm sm:text-base text-slate-300 max-w-lg">
-              {tenantConfig.tagline}
+              {company.tagline}
             </p>
           </div>
 
@@ -170,7 +170,7 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
                 Entrar com E-mail
               </CardTitle>
               <CardDescription className="text-xs text-slate-400">
-                Digite suas credenciais de acesso para a empresa <strong>{tenantConfig.name}</strong>.
+                Digite suas credenciais de acesso para a empresa <strong>{company.name}</strong>.
               </CardDescription>
             </CardHeader>
 
@@ -231,7 +231,7 @@ export function LoginForm({ tenantConfig }: LoginFormProps) {
 
               <div className="mt-4 pt-4 border-t border-slate-800 text-center">
                 <p className="text-[11px] text-slate-500">
-                  {tenantConfig.name} © 2026 — Gestão Empresarial Isolada
+                  {company.name} © 2026 — Gestão Empresarial Isolada
                 </p>
               </div>
             </CardContent>

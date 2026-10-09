@@ -1,6 +1,5 @@
 "use server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentTenant } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 
 export async function createClient(data: {
@@ -12,7 +11,6 @@ export async function createClient(data: {
   gender?: string;
   birthDate?: string;
 }) {
-  const currentTenant = await getCurrentTenant();
 
   let birthDateObj: Date | null = null;
   let birthDay: number | null = null;
@@ -34,7 +32,6 @@ export async function createClient(data: {
 
   await prisma.client.create({
     data: {
-      tenantId: currentTenant,
       name: data.name,
       document: data.document || null,
       phone: data.phone || null,

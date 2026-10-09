@@ -104,7 +104,6 @@ export async function ensureDefaultUsers() {
         email: "producao@fotograficos.com.br",
         password: hashPassword("producao123"),
         role: "PRODUCTION" as Role,
-        tenantId: "FOTOGRAFICOS",
       },
     ];
 

@@ -10,14 +10,13 @@ import {
   Role,
   getSession,
 } from "@/lib/auth";
-import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
+import { ensureInitialData } from "@/lib/company";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 export async function loginAction(formData: FormData) {
-  const currentTenant = await getCurrentTenant();
   await ensureDefaultUsers();
-  await ensureTenantInitialData(currentTenant);
+  await ensureInitialData();
 
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
@@ -51,30 +50,14 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function quickLoginRole(role: Role) {
-  const currentTenant = await getCurrentTenant();
   await ensureDefaultUsers();
-  await ensureTenantInitialData(currentTenant);
+  await ensureInitialData();
 
   const user = await prisma.user.findFirst({
-    where: { role, tenantId: currentTenant, active: true },
+    where: { role, active: true },
   });
 
-  if (!user) {
-    // Fallback if tenant user not found
-    const anyUser = await prisma.user.findFirst({
-      where: { role, active: true },
-    });
-    if (!anyUser) return { error: "Usuário padrão desse perfil não encontrado." };
-
-    await setSession({
-      id: anyUser.id,
-      name: anyUser.name,
-      email: anyUser.email,
-      role: anyUser.role as Role,
-      avatar: anyUser.avatar,
-    });
-    redirect("/");
-  }
+  if (!user) return { error: "Usuário padrão desse perfil não encontrado." };
 
   await setSession({
     id: user.id,
@@ -98,11 +81,9 @@ export async function getUsersAction() {
     throw new Error("Acesso não autorizado");
   }
 
-  const currentTenant = await getCurrentTenant();
   await ensureDefaultUsers();
 
   return prisma.user.findMany({
-    where: { tenantId: currentTenant },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
@@ -121,7 +102,6 @@ export async function createUserAction(formData: FormData) {
     return { error: "Apenas administradores podem criar usuários." };
   }
 
-  const currentTenant = await getCurrentTenant();
   const name = formData.get("name") as string;
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
@@ -138,7 +118,6 @@ export async function createUserAction(formData: FormData) {
 
   await prisma.user.create({
     data: {
-      tenantId: currentTenant,
       name,
       email,
       password: hashPassword(password),

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
+import { ensureInitialData } from "@/lib/company";
 import { MachineForm } from "./MachineForm";
 import { Trash2 } from "lucide-react";
 import { deleteMachine } from "./actions";
@@ -8,11 +8,9 @@ import { EditMachineDialog } from "./EditMachineDialog";
 export const dynamic = "force-dynamic";
 
 export default async function MachinesPage() {
-  const tenantId = await getCurrentTenant();
-  await ensureTenantInitialData(tenantId);
+  await ensureInitialData();
 
   const machines = await prisma.machine.findMany({
-    where: { tenantId },
     orderBy: { createdAt: "desc" },
   });
 

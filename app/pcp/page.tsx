@@ -1,16 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
+import { ensureInitialData } from "@/lib/company";
 import { KanbanBoard } from "./KanbanBoard";
 
 export const dynamic = "force-dynamic";
 
 export default async function PcpPage() {
-  const tenantId = await getCurrentTenant();
-  await ensureTenantInitialData(tenantId);
+  await ensureInitialData();
 
   const orders = await prisma.serviceOrder.findMany({
     where: {
-      quote: { tenantId },
     },
     include: {
       quote: {

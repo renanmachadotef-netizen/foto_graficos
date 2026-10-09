@@ -63,7 +63,7 @@ interface Client {
   email?: string | null;
 }
 
-import { TenantConfig } from "@/lib/tenant";
+import { CompanyConfig } from "@/lib/company";
 
 interface PdvClientViewProps {
   initialProducts: Product[];
@@ -71,7 +71,7 @@ interface PdvClientViewProps {
   clients: Client[];
   companySettings: any;
   userName: string;
-  tenantConfig?: TenantConfig;
+  company?: CompanyConfig;
 }
 
 export function PdvClientView({
@@ -80,7 +80,7 @@ export function PdvClientView({
   clients,
   companySettings,
   userName,
-  tenantConfig,
+  company,
 }: PdvClientViewProps) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
@@ -261,7 +261,7 @@ export function PdvClientView({
 
   const categories = [
     { id: "ALL", label: "Todos os Itens" },
-    ...(tenantConfig?.categories || [
+    ...(company?.categories || [
       { id: "BALCAO", label: "Gráfica Rápida" },
       { id: "IMPRESSAO", label: "Banners & Lonas" },
       { id: "FOTOS", label: "Fotos & Estúdio" },
@@ -278,7 +278,7 @@ export function PdvClientView({
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             <ShoppingCart className={`w-6 h-6 text-indigo-600`} />
-            PDV Balcão • {tenantConfig?.shortName || "Venda Rápida"}
+            PDV Balcão • {company?.shortName || "Venda Rápida"}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             Frente de caixa ágil • Vendas express e recibo no WhatsApp

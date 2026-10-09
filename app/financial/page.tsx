@@ -1,20 +1,17 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
+import { ensureInitialData } from "@/lib/company";
 import { FinancialClientView } from "./FinancialClientView";
 
 export const dynamic = "force-dynamic";
 
 export default async function FinancialPage() {
-  const tenantId = await getCurrentTenant();
-  await ensureTenantInitialData(tenantId);
+  await ensureInitialData();
 
   const [fixedCosts, transactions, clients] = await Promise.all([
     prisma.fixedCost.findMany({
-      where: { tenantId },
       orderBy: { createdAt: "asc" },
     }),
     prisma.financialTransaction.findMany({
-      where: { tenantId },
       orderBy: [
         { dueDate: "desc" },
         { createdAt: "desc" },
@@ -26,7 +23,6 @@ export default async function FinancialPage() {
       },
     }),
     prisma.client.findMany({
-      where: { tenantId },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),

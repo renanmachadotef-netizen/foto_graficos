@@ -1,15 +1,14 @@
-import { getCurrentTenant, TENANT_CONFIGS, ensureTenantInitialData } from "@/lib/tenant";
+import { COMPANY, ensureInitialData } from "@/lib/company";
 import { ensureDefaultUsers } from "@/lib/auth";
 import { LoginForm } from "./LoginForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  const tenantId = await getCurrentTenant();
   await ensureDefaultUsers();
-  await ensureTenantInitialData(tenantId);
+  await ensureInitialData();
 
-  const tenantConfig = TENANT_CONFIGS[tenantId];
+  const company = COMPANY;
 
-  return <LoginForm tenantConfig={tenantConfig} />;
+  return <LoginForm company={company} />;
 }

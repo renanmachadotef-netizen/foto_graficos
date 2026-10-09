@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentTenant, ensureTenantInitialData, TENANT_CONFIGS } from "@/lib/tenant";
+import { COMPANY, ensureInitialData } from "@/lib/company";
 import { EmployeeForm } from "./EmployeeForm";
 import { Trash2, Crown, Users, DollarSign, Clock, Sparkles, UserCheck, Briefcase } from "lucide-react";
 import { deleteEmployee } from "./actions";
@@ -10,12 +10,10 @@ import { Badge } from "@/components/ui/badge";
 export const dynamic = "force-dynamic";
 
 export default async function EmployeesPage() {
-  const tenantId = await getCurrentTenant();
-  await ensureTenantInitialData(tenantId);
-  const tenantConfig = TENANT_CONFIGS[tenantId];
+  await ensureInitialData();
+  const company = COMPANY;
 
   const employees = await prisma.employee.findMany({
-    where: { tenantId },
     orderBy: { createdAt: "desc" },
   });
 

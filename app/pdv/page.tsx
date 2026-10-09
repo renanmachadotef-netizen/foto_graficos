@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getCurrentTenant, TENANT_CONFIGS, ensureTenantInitialData } from "@/lib/tenant";
+import { COMPANY, ensureInitialData } from "@/lib/company";
 import { PdvClientView } from "./PdvClientView";
 
 export const dynamic = "force-dynamic";
@@ -10,25 +10,21 @@ export default async function PdvPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const tenantId = await getCurrentTenant();
-  await ensureTenantInitialData(tenantId);
-  const tenantConfig = TENANT_CONFIGS[tenantId];
+  await ensureInitialData();
+  const company = COMPANY;
 
   const [products, materials, clients, companySettings] = await Promise.all([
     prisma.product.findMany({
-      where: { tenantId, active: true },
+      where: { active: true },
       orderBy: { name: "asc" },
     }),
     prisma.material.findMany({
-      where: { tenantId },
       orderBy: { name: "asc" },
     }),
     prisma.client.findMany({
-      where: { tenantId },
       orderBy: { name: "asc" },
     }),
     prisma.companySettings.findFirst({
-      where: { tenantId },
     }),
   ]);
 
@@ -39,7 +35,7 @@ export default async function PdvPage() {
       clients={clients}
       companySettings={companySettings}
       userName={session.name}
-      tenantConfig={tenantConfig}
+      company={company}
     />
   );
 }

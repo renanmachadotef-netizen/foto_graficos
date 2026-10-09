@@ -31,7 +31,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Role } from "@/lib/roles";
-import { TenantConfig } from "@/lib/tenant";
+import { CompanyConfig } from "@/lib/company";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 
@@ -50,10 +50,10 @@ interface MenuGroup {
 
 interface AppSidebarProps {
   userRole?: Role;
-  tenantConfig?: TenantConfig;
+  company?: CompanyConfig;
 }
 
-export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps) {
+export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
   const pathname = usePathname();
 
   const menuGroups: MenuGroup[] = [
@@ -173,7 +173,7 @@ export function AppSidebar({ userRole = "ADMIN", tenantConfig }: AppSidebarProps
           </div>
           <div>
             <h2 className="font-bold text-slate-900 text-sm tracking-tight leading-tight">
-              {tenantConfig?.name || "Foto & Gráficos"}
+              {company?.name || "Foto & Gráficos"}
             </h2>
             <p className="text-[11px] text-slate-500 font-medium">
               {"Sistema ERP Gráfico"}

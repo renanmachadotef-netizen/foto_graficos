@@ -9,7 +9,6 @@ datasource db {
 
 model CompanySettings {
   id          String   @id @default(cuid())
-  tenantId    String   @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   companyName String?
   document    String?  // CNPJ
   phone       String?
@@ -31,7 +30,6 @@ model CompanySettings {
 
 model User {
   id             String          @id @default(cuid())
-  tenantId       String          @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name           String
   email          String          @unique
   password       String
@@ -46,7 +44,6 @@ model User {
 
 model Client {
   id           String                 @id @default(cuid())
-  tenantId     String                 @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name         String
   code         String?
   document     String? // CPF/CNPJ
@@ -67,7 +64,6 @@ model Client {
 
 model Product {
   id          String   @id @default(cuid())
-  tenantId    String   @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name        String
   category    String   @default("BALCAO") // "BALCAO", "IMPRESSAO", "FOTOS", "BEBIDAS", "DOSES", "KITS", "BRINDES", "ACABAMENTO", "OUTROS"
   price       Float
@@ -81,7 +77,6 @@ model Product {
 
 model Quote {
   id           String                 @id @default(cuid())
-  tenantId     String                 @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   clientId     String
   client       Client                 @relation(fields: [clientId], references: [id])
   sellerId     String?
@@ -125,7 +120,6 @@ model QuoteItem {
 
 model Employee {
   id                   String @id @default(cuid())
-  tenantId             String @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name                 String
   contractType         String // "CLT_SIMPLES", "CLT_NORMAL", "PJ"
   baseSalary           Float
@@ -141,7 +135,6 @@ model Employee {
 
 model Machine {
   id               String @id @default(cuid())
-  tenantId         String @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name             String
   acquisitionValue Float
   usefulLifeMonths Int
@@ -158,7 +151,6 @@ model Machine {
 
 model Material {
   id           String          @id @default(cuid())
-  tenantId     String          @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name         String
   category     String          @default("VINIL_LONA") // "VINIL_LONA", "RIGIDOS_CHAPAS", "CACHACA_GRANEL", "GARRAFAS_VIDRO", "TAMPAS_ROLHAS", "ROTULOS_LACRES", "EMBALAGENS_CAIXAS", "OUTROS"
   unit         String          // "m2", "ml", "un", "litro", "lacre", "cx"
@@ -218,7 +210,6 @@ model Financing {
 
 model FinancialTransaction {
   id            String    @id @default(cuid())
-  tenantId      String    @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   date          DateTime  @default(now())
   dueDate       DateTime  @default(now())
   paymentDate   DateTime?
@@ -239,7 +230,6 @@ model FinancialTransaction {
 
 model FixedCost {
   id        String   @id @default(cuid())
-  tenantId  String   @default("FOTOGRAFICOS") // "FOTOGRAFICOS" | "PURABRASIL"
   name      String
   amount    Float
   createdAt DateTime @default(now())

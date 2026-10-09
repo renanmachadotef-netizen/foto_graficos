@@ -1,14 +1,11 @@
 "use server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentTenant } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 
 export async function createMachine(data: any) {
-  const currentTenant = await getCurrentTenant();
   await prisma.machine.create({
     data: {
       ...data,
-      tenantId: currentTenant,
     },
   });
   revalidatePath("/machines");

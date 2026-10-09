@@ -29,7 +29,7 @@ import {
   Layers,
 } from "lucide-react";
 
-import { getCurrentTenant, ensureTenantInitialData, TENANT_CONFIGS } from "@/lib/tenant";
+import { COMPANY, ensureInitialData } from "@/lib/company";
 
 export const dynamic = "force-dynamic";
 
@@ -37,18 +37,15 @@ export default async function MaterialsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const tenantId = await getCurrentTenant();
-  await ensureTenantInitialData(tenantId);
-  const tenantConfig = TENANT_CONFIGS[tenantId];
+  await ensureInitialData();
+  const company = COMPANY;
 
   const materials = await prisma.material.findMany({
-    where: { tenantId },
     orderBy: { name: "asc" },
   });
 
   const recentMovements = await prisma.stockMovement.findMany({
-    where: { material: { tenantId } },
-    take: 8,
+        take: 8,
     orderBy: { createdAt: "desc" },
     include: {
       material: true,

@@ -3,16 +3,14 @@ import { approveQuote, rejectQuote } from "./actions";
 import { Check, X, Printer, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getCurrentTenant, ensureTenantInitialData } from "@/lib/tenant";
+import { ensureInitialData } from "@/lib/company";
 
 export const dynamic = "force-dynamic";
 
 export default async function QuotesListPage() {
-  const tenantId = await getCurrentTenant();
-  await ensureTenantInitialData(tenantId);
+  await ensureInitialData();
 
   const quotes = await prisma.quote.findMany({
-    where: { tenantId },
     include: { client: true, items: true },
     orderBy: { createdAt: "desc" },
   });
