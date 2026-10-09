@@ -1,4 +1,4 @@
-# Production Dockerfile for Next.js with Prisma & SQLite
+# Production Dockerfile for Next.js with Prisma & PostgreSQL
 FROM node:20-alpine AS base
 
 # Install OpenSSL for Prisma

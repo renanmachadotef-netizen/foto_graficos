@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -33,6 +34,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await connection(); // pagina dinamica: o banco so existe em runtime, nunca no build
   const tenantId = await getCurrentTenant();
   await ensureDefaultUsers();
   await ensureTenantInitialData(tenantId);
