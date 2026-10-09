@@ -26,5 +26,5 @@ ENV HOSTNAME=0.0.0.0
 
 EXPOSE 3000
 
-# Start command ensures DB tables exist and launches Next.js
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npm start"]
+# Start: aplica migrations (scripts/start.sh) e sobe o Next.js
+CMD ["npm", "start"]
