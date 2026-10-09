@@ -68,7 +68,7 @@ model Product {
   category    String   @default("BALCAO") // "BALCAO", "IMPRESSAO", "FOTOS", "BEBIDAS", "DOSES", "KITS", "BRINDES", "ACABAMENTO", "OUTROS"
   price       Float
   cost        Float    @default(0)
-  unit        String   @default("un") // "un", "m2", "cento", "milheiro", "par", "garrafa", "dose", "cx"
+  unit        String   @default("un") // "un", "m2", "cento", "milheiro", "par", "cx"
   description String?
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -142,7 +142,7 @@ model Machine {
   powerConsumption Float // Watts
   kwhPrice         Float @default(0.95)
   workingHours     Int   @default(120) // Expected usage hours per month
-  productivity     Float @default(0) // m2 por hora (para plotters) ou garrafas/hora (para alambique/envasadora)
+  productivity     Float @default(0) // m2 por hora (plotters)
   hourlyCost       Float @default(0) // Custo hora final calculado
   steps            WorkflowStep[]
   createdAt        DateTime @default(now())
@@ -152,12 +152,12 @@ model Machine {
 model Material {
   id           String          @id @default(cuid())
   name         String
-  category     String          @default("VINIL_LONA") // "VINIL_LONA", "RIGIDOS_CHAPAS", "CACHACA_GRANEL", "GARRAFAS_VIDRO", "TAMPAS_ROLHAS", "ROTULOS_LACRES", "EMBALAGENS_CAIXAS", "OUTROS"
+  category     String          @default("VINIL_LONA") // "VINIL_LONA", "RIGIDOS_CHAPAS", "TINTAS_QUIMICOS", "ACESSORIOS", "OUTROS"
   unit         String          // "m2", "ml", "un", "litro", "lacre", "cx"
   unitCost     Float           // Custo por unidade
   currentStock Float           @default(0) // Estoque atual
   minStock     Float           @default(0) // Estoque de segurança/mínimo
-  width        Float?          // Largura do rolo em metros (para gráficas) ou capacidade em ml (para garrafas)
+  width        Float?          // Largura do rolo em metros
   wasteMargin  Float           @default(0) // % de perda técnica/evaporação
   movements    StockMovement[]
   createdAt    DateTime        @default(now())

@@ -15,10 +15,8 @@ import {
   Lock,
   ShoppingBag,
   Cake,
-  GlassWater,
   Layers,
   BookOpen,
-  Wheat,
   Flame,
 } from "lucide-react";
 import {
