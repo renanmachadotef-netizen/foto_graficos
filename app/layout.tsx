@@ -54,9 +54,9 @@ export default async function RootLayout({
           {session ? (
             <SidebarProvider>
               <AppSidebar userRole={session.role} company={company} />
-              <main className="w-full flex flex-col min-h-screen">
+              <main className="w-full min-w-0 flex flex-col min-h-screen">
                 <SaasHeader user={session} company={company} />
-                <div className="flex-1 p-4 sm:p-6 md:p-8">
+                <div className="flex-1 min-w-0 p-4 sm:p-6 md:p-8">
                   {children}
                 </div>
               </main>

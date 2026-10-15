@@ -224,6 +224,12 @@ model FinancialTransaction {
   quoteId       String?
   quote         Quote?    @relation(fields: [quoteId], references: [id], onDelete: SetNull)
   notes         String?
+  supplier      String?   // quem recebe (fornecedor / beneficiario)
+  barcode       String?   // linha digitavel do boleto
+  needsReview   Boolean   @default(false) // veio de upload e ainda nao foi conferido
+  recurringBillId String?
+  recurringBill RecurringBill? @relation(fields: [recurringBillId], references: [id], onDelete: SetNull)
+  files         BillFile[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -236,3 +242,28 @@ model FixedCost {
   updatedAt DateTime @updatedAt
 }
 
+// Conta que se repete todo mes (energia, agua, aluguel...). O sistema cria o lancamento do mes sozinho.
+model RecurringBill {
+  id             String   @id @default(cuid())
+  name           String
+  category       String?
+  dueDay         Int      // dia do vencimento (1 a 31)
+  expectedAmount Float    @default(0) // 0 = valor muda todo mes, informar quando chegar
+  active         Boolean  @default(true)
+  notes          String?
+  bills          FinancialTransaction[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// PDF ou foto do boleto/comprovante guardado no proprio banco.
+model BillFile {
+  id            String   @id @default(cuid())
+  transactionId String
+  transaction   FinancialTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  name          String
+  mime          String
+  size          Int
+  data          Bytes
+  createdAt     DateTime @default(now())
+}

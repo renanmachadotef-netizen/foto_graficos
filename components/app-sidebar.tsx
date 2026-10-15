@@ -18,6 +18,7 @@ import {
   Layers,
   BookOpen,
   Flame,
+  Receipt,
 } from "lucide-react";
 import {
   Sidebar,
@@ -118,6 +119,13 @@ export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
         {
           groupLabel: "Financeiro & Custos",
           items: [
+            {
+              title: "Contas a Pagar",
+              url: "/contas",
+              icon: Receipt,
+              allowedRoles: ["ADMIN", "MANAGER"],
+              badge: "NOVO",
+            },
             {
               title: "Fluxo Financeiro",
               url: "/financial",
