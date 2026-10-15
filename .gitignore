@@ -52,3 +52,6 @@ next-env.d.ts
 prisma/schema.local.prisma
 prisma/local-preview.db*
 .claude/launch.json
+
+# dados importados do NEX (nao versionar)
+dados/

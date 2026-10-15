@@ -19,6 +19,8 @@ import {
   BookOpen,
   Flame,
   Receipt,
+  HandCoins,
+  FileUp,
 } from "lucide-react";
 import {
   Sidebar,
@@ -127,6 +129,13 @@ export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
               badge: "NOVO",
             },
             {
+              title: "Contas a Receber",
+              url: "/receber",
+              icon: HandCoins,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+              badge: "FIADO",
+            },
+            {
               title: "Fluxo Financeiro",
               url: "/financial",
               icon: CircleDollarSign,
@@ -153,6 +162,12 @@ export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
               title: "Gestão de Usuários",
               url: "/users",
               icon: UserCog,
+              allowedRoles: ["ADMIN"],
+            },
+            {
+              title: "Trazer dados do NEX",
+              url: "/importar",
+              icon: FileUp,
               allowedRoles: ["ADMIN"],
             },
             {
