@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { lerClientes, lerProdutos } from "@/lib/nex-import";
 import { aplicarImportacao, previaBanco } from "@/lib/nex-apply";
+import { aplicarPedidos, lerPedidos, previaPedidos } from "@/lib/nex-pedidos";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -28,12 +29,18 @@ export async function POST(req: Request) {
 
     const bufC = await arquivo(form, "clientes");
     const bufP = await arquivo(form, "produtos");
-    if (!bufC && !bufP) {
-      return NextResponse.json({ ok: false, erro: "Escolha pelo menos uma planilha (clientes ou produtos)." }, { status: 400 });
+    const bufO = await arquivo(form, "pedidos");
+    const filaProducao = form.get("filaProducao") === "1";
+    if (!bufC && !bufP && !bufO) {
+      return NextResponse.json({ ok: false, erro: "Escolha pelo menos uma planilha (clientes, produtos ou pedidos)." }, { status: 400 });
     }
 
     const c = bufC ? lerClientes(bufC) : null;
     const p = bufP ? lerProdutos(bufP) : null;
+    const o = bufO ? lerPedidos(bufO) : null;
+    if (o && o.resumo.total === 0) {
+      return NextResponse.json({ ok: false, erro: "Nao achei pedidos nessa planilha. Ela veio do NEX (Pedidos em aberto)?" }, { status: 400 });
+    }
     if (c && c.resumo.unicos === 0) {
       return NextResponse.json({ ok: false, erro: "Nao achei clientes nessa planilha. Ela veio do NEX (Clientes)?" }, { status: 400 });
     }
@@ -48,6 +55,7 @@ export async function POST(req: Request) {
         clientes: c?.resumo ?? null,
         produtos: p?.resumo ?? null,
         banco,
+        pedidos: o ? { resumo: o.resumo, previa: await previaPedidos(o.pedidos) } : null,
       });
     }
 
@@ -56,7 +64,8 @@ export async function POST(req: Request) {
       produtos: p?.produtos ?? [],
       removerDemo,
     });
-    return NextResponse.json({ ok: true, relatorio });
+    const pedidos = o ? await aplicarPedidos({ pedidos: o.pedidos, filaProducao }) : null;
+    return NextResponse.json({ ok: true, relatorio, pedidos });
   } catch (e) {
     return NextResponse.json(
       { ok: false, erro: e instanceof Error ? e.message : "Nao consegui ler a planilha." },

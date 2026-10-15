@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, FileSpreadsheet, Loader2, Package, Users, Wallet } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, FileSpreadsheet, Loader2, Package, Users, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ResumoClientes {
@@ -30,6 +30,9 @@ interface PreviaBanco {
   demoClientes: number;
   demoProdutos: number;
 }
+interface ResumoPedidos { total: number; valorTotal: number; itens: number; vendedores: string[] }
+interface PreviaPedidos { jaImportados: number; novos: number; clientesEncontrados: number; clientesNovos: number; itensSemProduto: string[] }
+interface RelatorioPedidos { criados: number; jaExistiam: number; clientesCriados: number; valorTotal: number; itensSemProduto: string[]; naFilaDeProducao: number }
 interface Relatorio {
   clientesNovos: number;
   clientesAtualizados: number;
@@ -49,6 +52,10 @@ const num = (n: number) => n.toLocaleString("pt-BR");
 export function ImportarClientView() {
   const [arqClientes, setArqClientes] = useState<File | null>(null);
   const [arqProdutos, setArqProdutos] = useState<File | null>(null);
+  const [arqPedidos, setArqPedidos] = useState<File | null>(null);
+  const [filaProducao, setFilaProducao] = useState(false);
+  const [pedidosPrevia, setPedidosPrevia] = useState<{ resumo: ResumoPedidos; previa: PreviaPedidos } | null>(null);
+  const [pedidosRelatorio, setPedidosRelatorio] = useState<RelatorioPedidos | null>(null);
   const [lendo, setLendo] = useState(false);
   const [importando, setImportando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -57,12 +64,15 @@ export function ImportarClientView() {
   const [relatorio, setRelatorio] = useState<Relatorio | null>(null);
   const inC = useRef<HTMLInputElement>(null);
   const inP = useRef<HTMLInputElement>(null);
+  const inO = useRef<HTMLInputElement>(null);
 
   function montar(acao: "previa" | "aplicar") {
     const fd = new FormData();
     fd.append("acao", acao);
     if (arqClientes) fd.append("clientes", arqClientes);
     if (arqProdutos) fd.append("produtos", arqProdutos);
+    if (arqPedidos) fd.append("pedidos", arqPedidos);
+    if (filaProducao) fd.append("filaProducao", "1");
     if (acao === "aplicar" && removerDemo) fd.append("removerDemo", "1");
     return fd;
   }
@@ -71,12 +81,17 @@ export function ImportarClientView() {
     setErro(null);
     setPrevia(null);
     setRelatorio(null);
+    setPedidosPrevia(null);
+    setPedidosRelatorio(null);
     setLendo(true);
     try {
       const r = await fetch("/api/importar", { method: "POST", body: montar("previa") });
       const j = await r.json();
       if (!j.ok) setErro(j.erro || "Não consegui ler as planilhas.");
-      else setPrevia({ clientes: j.clientes, produtos: j.produtos, banco: j.banco });
+      else {
+        setPrevia({ clientes: j.clientes, produtos: j.produtos, banco: j.banco });
+        setPedidosPrevia(j.pedidos);
+      }
     } catch {
       setErro("Falha de conexão. Tente de novo.");
     }
@@ -92,7 +107,9 @@ export function ImportarClientView() {
       if (!j.ok) setErro(j.erro || "A importação falhou.");
       else {
         setRelatorio(j.relatorio);
+        setPedidosRelatorio(j.pedidos);
         setPrevia(null);
+        setPedidosPrevia(null);
       }
     } catch {
       setErro("Falha de conexão. A importação pode ter sido interrompida: confira clientes e produtos antes de repetir.");
@@ -100,7 +117,7 @@ export function ImportarClientView() {
     setImportando(false);
   }
 
-  const temArquivo = !!(arqClientes || arqProdutos);
+  const temArquivo = !!(arqClientes || arqProdutos || arqPedidos);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -111,7 +128,7 @@ export function ImportarClientView() {
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-3 gap-4">
         <Caixa
           icone={<Users className="size-8" />}
           titulo="Clientes"
@@ -126,6 +143,14 @@ export function ImportarClientView() {
           arquivo={arqProdutos}
           onEscolher={() => inP.current?.click()}
         />
+        <Caixa
+          icone={<ClipboardList className="size-8" />}
+          titulo="Pedidos em aberto"
+          dica="Planilha “orders” do NEX"
+          arquivo={arqPedidos}
+          onEscolher={() => inO.current?.click()}
+        />
+        <input ref={inO} type="file" accept=".xls,.xlsx,.csv" className="hidden" onChange={(e) => { setArqPedidos(e.target.files?.[0] ?? null); setPrevia(null); setRelatorio(null); setPedidosPrevia(null); setPedidosRelatorio(null); e.target.value = ""; }} />
         <input ref={inC} type="file" accept=".xls,.xlsx,.csv" className="hidden" onChange={(e) => { setArqClientes(e.target.files?.[0] ?? null); setPrevia(null); setRelatorio(null); e.target.value = ""; }} />
         <input ref={inP} type="file" accept=".xls,.xlsx,.csv" className="hidden" onChange={(e) => { setArqProdutos(e.target.files?.[0] ?? null); setPrevia(null); setRelatorio(null); e.target.value = ""; }} />
       </div>
@@ -179,6 +204,24 @@ export function ImportarClientView() {
             </div>
           )}
 
+          {pedidosPrevia && (
+            <div className="space-y-2">
+              <p className="font-semibold flex items-center gap-2"><ClipboardList className="size-5" /> Pedidos em aberto</p>
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                <li><b className="text-foreground">{num(pedidosPrevia.resumo.total)}</b> pedidos • {brl(pedidosPrevia.resumo.valorTotal)} • vendedores: {pedidosPrevia.resumo.vendedores.join(", ")}</li>
+                <li>{num(pedidosPrevia.previa.novos)} novos • {num(pedidosPrevia.previa.jaImportados)} já importados (não repetem)</li>
+                <li>{num(pedidosPrevia.previa.clientesEncontrados)} clientes já cadastrados • {num(pedidosPrevia.previa.clientesNovos)} serão cadastrados</li>
+                {pedidosPrevia.previa.itensSemProduto.length > 0 && (
+                  <li className="text-amber-700 font-medium">Itens que não estão no catálogo (entram como avulsos): {pedidosPrevia.previa.itensSemProduto.join(", ")}</li>
+                )}
+              </ul>
+              <label className="flex items-start gap-3 rounded-xl bg-muted/50 p-3 cursor-pointer">
+                <input type="checkbox" checked={filaProducao} onChange={(e) => setFilaProducao(e.target.checked)} className="mt-1 size-5" />
+                <span className="text-sm">Colocar esses pedidos também na <b>fila de produção</b>. (Deixe desmarcado se eles já estão sendo feitos.)</span>
+              </label>
+            </div>
+          )}
+
           {(previa.banco.demoClientes > 0 || previa.banco.demoProdutos > 0) && (
             <label className="flex items-start gap-3 rounded-xl bg-muted/50 p-3 cursor-pointer">
               <input type="checkbox" checked={removerDemo} onChange={(e) => setRemoverDemo(e.target.checked)} className="mt-1 size-5" />
@@ -200,14 +243,29 @@ export function ImportarClientView() {
             <CheckCircle2 className="size-6" /> Pronto! Dados importados.
           </p>
           <ul className="text-emerald-900 space-y-1">
-            <li>👥 {num(relatorio.clientesNovos)} clientes novos • {num(relatorio.clientesAtualizados)} atualizados</li>
-            <li>💸 {num(relatorio.fiadoCriado)} fiados criados ({brl(relatorio.totalFiadoCriado)}){relatorio.fiadoJaExistia > 0 && ` • ${num(relatorio.fiadoJaExistia)} já existiam`}</li>
-            <li>📦 {num(relatorio.produtosNovos)} produtos novos • {num(relatorio.produtosJaExistiam)} já existiam</li>
+            {(relatorio.clientesNovos > 0 || relatorio.clientesAtualizados > 0 || relatorio.fiadoCriado > 0) && (
+              <li>👥 {num(relatorio.clientesNovos)} clientes novos • {num(relatorio.clientesAtualizados)} atualizados</li>
+            )}
+            {relatorio.fiadoCriado + relatorio.fiadoJaExistia > 0 && <li>💸 {num(relatorio.fiadoCriado)} fiados criados ({brl(relatorio.totalFiadoCriado)}){relatorio.fiadoJaExistia > 0 && ` • ${num(relatorio.fiadoJaExistia)} já existiam`}</li>}
+            {relatorio.produtosNovos + relatorio.produtosJaExistiam > 0 && <li>📦 {num(relatorio.produtosNovos)} produtos novos • {num(relatorio.produtosJaExistiam)} já existiam</li>}
+            {pedidosRelatorio && (
+              <li>
+                📋 {num(pedidosRelatorio.criados)} pedidos em aberto importados ({brl(pedidosRelatorio.valorTotal)})
+                {pedidosRelatorio.jaExistiam > 0 && ` • ${num(pedidosRelatorio.jaExistiam)} já existiam`}
+                {pedidosRelatorio.clientesCriados > 0 && ` • ${num(pedidosRelatorio.clientesCriados)} clientes cadastrados`}
+                {pedidosRelatorio.naFilaDeProducao > 0 && ` • ${num(pedidosRelatorio.naFilaDeProducao)} na fila de produção`}
+              </li>
+            )}
             {(relatorio.demoClientesRemovidos > 0 || relatorio.demoProdutosRemovidos > 0) && (
               <li>🧹 {relatorio.demoClientesRemovidos} clientes e {relatorio.demoProdutosRemovidos} produtos de exemplo removidos</li>
             )}
           </ul>
           <div className="flex flex-wrap gap-2 pt-1">
+            {pedidosRelatorio && (
+              <Link href="/pdv" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 font-semibold text-primary-foreground">
+                Ver pedidos em aberto
+              </Link>
+            )}
             <Link href="/receber" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 font-semibold text-primary-foreground">
               Ver quem me deve
             </Link>

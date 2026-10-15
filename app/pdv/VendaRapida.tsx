@@ -75,7 +75,7 @@ export function VendaRapida({
   const [vendedorId, setVendedorId] = useState(vendedorInicial);
   const [desconto, setDesconto] = useState("");
   const [paraProducao, setParaProducao] = useState(true);
-  const [pedido, setPedido] = useState<{ id: string; numero: number | null; jaPago: number } | null>(null);
+  const [pedido, setPedido] = useState<{ id: string; numero: number | null; jaPago: number; notes: string | null } | null>(null);
 
   const [editando, setEditando] = useState<{ item: ItemCarrinho | null; produto: ProdutoPdv | null } | null>(null);
   const [escolhendoCliente, setEscolhendoCliente] = useState(false);
@@ -180,6 +180,7 @@ export function VendaRapida({
       fechar,
       paraProducao,
       vencimentoFiado,
+      notes: pedido ? pedido.notes : undefined,
     };
   }
 
@@ -223,7 +224,7 @@ export function VendaRapida({
     setCliente(p.clienteNome === "Cliente Balcão" ? null : { id: p.clientId, name: p.clienteNome, phone: p.clienteTelefone, deve: 0, credito: 0 });
     setVendedorId(p.sellerId || vendedorInicial);
     setDesconto(p.desconto > 0 ? texto2(p.desconto) : "");
-    setPedido({ id: p.id, numero: p.numero, jaPago: p.jaPago });
+    setPedido({ id: p.id, numero: p.numero, jaPago: p.jaPago, notes: p.notes });
     setVerPedidos(false);
     setErro(null);
   }
@@ -327,6 +328,8 @@ export function VendaRapida({
                 <h2 className="font-semibold text-lg">{pedido ? `Pedido #${pedido.numero}` : "Venda atual"}</h2>
                 <span className="ml-auto rounded-full bg-muted px-2.5 py-0.5 text-sm font-bold">{qtdTexto(qtdItens)}</span>
               </div>
+
+              {pedido?.notes && <p className="rounded-lg bg-amber-50 text-amber-900 text-sm px-3 py-2">📝 {pedido.notes}</p>}
 
               <button
                 type="button"
@@ -771,6 +774,7 @@ function PedidosAbertos({ onFechar, onContinuar }: { onFechar: () => void; onCon
                       #{p.numero} • {p.cliente}
                     </p>
                     <p className="text-sm text-muted-foreground line-clamp-2">{p.resumo}</p>
+                    {p.notes && <p className="text-sm text-amber-800 font-medium">📝 {p.notes}</p>}
                     <p className="text-xs text-muted-foreground">{new Date(p.criado).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p>
                   </div>
                   <div className="text-right">

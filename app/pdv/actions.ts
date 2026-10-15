@@ -92,7 +92,7 @@ export interface DadosVenda {
   fechar: boolean; // true = venda (tem que estar tudo pago ou fiado); false = deixar como pedido em aberto
   paraProducao: boolean;
   vencimentoFiado?: string; // YYYY-MM-DD
-  notes?: string;
+  notes?: string | null; // recado do pedido; se nao vier, mantem o que ja tinha
 }
 
 export interface ComprovanteVenda {
@@ -146,10 +146,10 @@ export async function salvarVenda(d: DadosVenda): Promise<Retorno> {
   }
 
   // 3) pedido em aberto que esta sendo continuado
-  let existente: { id: string; number: number | null; status: string } | null = null;
+  let existente: { id: string; number: number | null; status: string; notes: string | null } | null = null;
   let jaPago = 0;
   if (d.quoteId) {
-    existente = await prisma.quote.findUnique({ where: { id: d.quoteId }, select: { id: true, number: true, status: true } });
+    existente = await prisma.quote.findUnique({ where: { id: d.quoteId }, select: { id: true, number: true, status: true, notes: true } });
     if (!existente || existente.status !== "OPEN") return { ok: false, erro: "Esse pedido ja foi fechado ou nao existe mais." };
     const pagos = await prisma.financialTransaction.aggregate({
       where: { quoteId: existente.id, type: "INCOME", status: "PAID" },
@@ -211,6 +211,7 @@ export async function salvarVenda(d: DadosVenda): Promise<Retorno> {
       markup: totalCusto > 0 ? total / totalCusto : 1,
       finalPrice: total,
       netProfit: dinheiro(total - totalCusto),
+      notes: d.notes !== undefined ? d.notes?.trim() || null : existente?.notes ?? null,
     };
     let quoteId: string;
     if (existente) {
@@ -346,6 +347,7 @@ export interface PedidoAberto {
   jaPago: number;
   criado: string;
   resumo: string;
+  notes: string | null;
 }
 
 export async function listarPedidosAbertos(): Promise<PedidoAberto[]> {
@@ -370,6 +372,7 @@ export async function listarPedidosAbertos(): Promise<PedidoAberto[]> {
     jaPago: dinheiro(q.transactions.reduce((s, t) => s + t.amount, 0)),
     criado: q.createdAt.toISOString(),
     resumo: q.items.map((i) => `${i.quantity}x ${i.description}`).join(" • "),
+    notes: q.notes,
   }));
 }
 
@@ -382,6 +385,7 @@ export interface PedidoCarregado {
   sellerId: string | null;
   jaPago: number;
   desconto: number;
+  notes: string | null;
   itens: ItemVenda[];
 }
 
@@ -406,6 +410,7 @@ export async function carregarPedido(id: string): Promise<PedidoCarregado | null
     sellerId: q.sellerId,
     jaPago: dinheiro(q.transactions.reduce((s, t) => s + t.amount, 0)),
     desconto: dinheiro(Math.max(0, subtotal - q.finalPrice)),
+    notes: q.notes,
     itens: q.items.map((i) => ({
       productId: i.productId,
       name: i.description,
