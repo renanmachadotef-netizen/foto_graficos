@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 export interface CreateTransactionInput {
@@ -125,7 +126,15 @@ export async function uploadTransactions(
   revalidatePath("/financial");
 }
 
-export async function updateCompanySettings(data: any) {
+export async function updateCompanySettings(entrada: Record<string, unknown>) {
+  const sessao = await getSession();
+  if (!sessao || !['ADMIN', 'MANAGER'].includes(sessao.role)) return { success: false };
+  // so os campos conhecidos de texto da empresa; nada de gravar coisa arbitraria
+  const CAMPOS = ['companyName', 'document', 'phone', 'email', 'address', 'pixKey', 'pixKeySicoob', 'pixKeyBradesco', 'city'] as const;
+  const data: Record<string, string | null> = {};
+  for (const c of CAMPOS) {
+    if (c in entrada) data[c] = typeof entrada[c] === 'string' ? (entrada[c] as string).trim() || null : null;
+  }
   const existing = await prisma.companySettings.findFirst({
   });
   if (existing) {

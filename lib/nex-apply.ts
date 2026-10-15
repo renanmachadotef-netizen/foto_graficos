@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { normalizarBusca } from "./busca";
 import {
   CLIENTES_DEMO,
   PRODUTOS_DEMO,
@@ -77,6 +78,7 @@ function dadosCliente(c: ClienteNex) {
     notes: c.observacao,
     status: "Ativo",
     credit: c.saldo > 0 ? c.saldo : 0,
+    searchKey: normalizarBusca(c.nome, c.telefone, c.documento, c.codigo),
   };
 }
 
@@ -116,16 +118,43 @@ export async function aplicarImportacao(opcoes: {
   if (opcoes.clientes.length) {
     const existentes = await prisma.client.findMany({
       where: { code: { in: opcoes.clientes.map((c) => c.codigo) } },
-      select: { id: true, code: true },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        document: true,
+        phone: true,
+        address: true,
+        gender: true,
+        birthDate: true,
+        credit: true,
+        searchKey: true,
+      },
     });
     const idPorCodigo = new Map(existentes.map((e) => [e.code!, e.id]));
+    const atuais = new Map(existentes.map((e) => [e.code!, e]));
     const novos = opcoes.clientes.filter((c) => !idPorCodigo.has(c.codigo));
     for (const lote of fatias(novos, 500)) {
       await prisma.client.createMany({ data: lote.map(dadosCliente) });
     }
     rel.clientesNovos = novos.length;
 
-    const atualizar = opcoes.clientes.filter((c) => idPorCodigo.has(c.codigo));
+    // so mexe nos clientes que realmente mudaram (reimportar e rapido e nao pisa no que foi editado aqui)
+    const atualizar = opcoes.clientes.filter((c) => {
+      const e = atuais.get(c.codigo);
+      if (!e) return false;
+      const d = dadosCliente(c);
+      return (
+        e.name !== d.name ||
+        e.credit !== d.credit ||
+        e.searchKey !== d.searchKey ||
+        (d.document !== null && e.document !== d.document) ||
+        (d.phone !== null && e.phone !== d.phone) ||
+        (d.address !== null && e.address !== d.address) ||
+        (d.gender !== null && e.gender !== d.gender) ||
+        (d.birthDate !== null && e.birthDate?.getTime() !== d.birthDate.getTime())
+      );
+    });
     for (const lote of fatias(atualizar, 40)) {
       await Promise.all(
         lote.map((c) => {
@@ -143,6 +172,7 @@ export async function aplicarImportacao(opcoes: {
               birthDay: d.birthDay ?? undefined,
               birthMonth: d.birthMonth ?? undefined,
               credit: d.credit,
+              searchKey: d.searchKey,
             },
           });
         }),

@@ -18,6 +18,9 @@ export function SettingsForm({ settings }: { settings: any }) {
     email: settings?.email || "",
     address: settings?.address || "",
     pixKey: settings?.pixKey || "",
+    pixKeySicoob: settings?.pixKeySicoob || "",
+    pixKeyBradesco: settings?.pixKeyBradesco || "",
+    city: settings?.city || "",
   });
 
   const handleSave = async (e: React.FormEvent) => {
@@ -103,6 +106,25 @@ export function SettingsForm({ settings }: { settings: any }) {
                 placeholder="CNPJ, E-mail, Celular ou Aleatória"
                 className="text-sm border-teal-300 font-mono"
               />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-3">
+            <p className="font-semibold text-sm">PIX da Venda Rápida (QR Code com o valor)</p>
+            <p className="text-xs text-muted-foreground">Cada conta tem a sua chave. Na hora de cobrar, o sistema gera o QR Code já com o valor da venda.</p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Chave PIX — conta Sicoob</Label>
+                <Input value={formData.pixKeySicoob} onChange={(e) => setFormData({ ...formData, pixKeySicoob: e.target.value })} placeholder="CNPJ, e-mail, celular ou aleatória" className="text-sm font-mono" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Chave PIX — conta Bradesco</Label>
+                <Input value={formData.pixKeyBradesco} onChange={(e) => setFormData({ ...formData, pixKeyBradesco: e.target.value })} placeholder="CNPJ, e-mail, celular ou aleatória" className="text-sm font-mono" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Cidade da loja (aparece no PIX)</Label>
+              <Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="Araranguá" className="text-sm" />
             </div>
           </div>
 

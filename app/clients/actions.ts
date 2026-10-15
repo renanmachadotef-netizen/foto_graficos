@@ -1,5 +1,6 @@
 "use server";
 import { prisma } from "@/lib/prisma";
+import { normalizarBusca } from "@/lib/busca";
 import { revalidatePath } from "next/cache";
 
 export async function createClient(data: {
@@ -32,6 +33,7 @@ export async function createClient(data: {
 
   await prisma.client.create({
     data: {
+      searchKey: normalizarBusca(data.name, data.phone, data.document),
       name: data.name,
       document: data.document || null,
       phone: data.phone || null,

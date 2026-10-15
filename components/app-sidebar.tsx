@@ -68,7 +68,7 @@ export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
               allowedRoles: ["ADMIN", "MANAGER", "SELLER", "PRODUCTION"],
             },
             {
-              title: "PDV (Balcão Rápido)",
+              title: "Venda Rápida",
               url: "/pdv",
               icon: ShoppingBag,
               allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
