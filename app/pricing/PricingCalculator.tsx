@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { saveQuote } from "./actions";
+import { saveQuote, salvarNoProduto } from "./actions";
 import { askPricingAI } from "./ai-actions";
 import { Sparkles, Loader2, Trash2, Plus, Calculator, Save } from "lucide-react";
 
 type Material = { id: string; name: string; unitCost: number; unit: string; wasteMargin: number; width: number | null; };
 type Machine = { id: string; name: string; hourlyCost: number; productivity: number; };
 type Employee = { id: string; name: string; hourlyCost: number; };
+type Produto = { id: string; name: string; category: string; cost: number; price: number; };
 type Client = { id: string; name: string; document: string | null; };
 
 type ProcessStep = {
@@ -41,9 +42,9 @@ type MarkupTier = {
 };
 
 export function PricingCalculator({ 
-  materials, machines, employees, clients
+  materials, machines, employees, clients, produtos
 }: { 
-  materials: Material[], machines: Machine[], employees: Employee[], clients: Client[]
+  materials: Material[], machines: Machine[], employees: Employee[], clients: Client[], produtos: Produto[]
 }) {
   const router = useRouter();
   const [productName, setProductName] = useState("Produto Customizado");
@@ -62,6 +63,12 @@ export function PricingCalculator({
   const [targetQty, setTargetQty] = useState("1");
   const [selectedClientId, setSelectedClientId] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [produtoId, setProdutoId] = useState("");
+  const [buscaProduto, setBuscaProduto] = useState("");
+  const [categoriaNova, setCategoriaNova] = useState("OUTROS");
+  const [atualizarPreco, setAtualizarPreco] = useState(false);
+  const [salvandoProduto, setSalvandoProduto] = useState(false);
+  const [msgProduto, setMsgProduto] = useState<{ ok: boolean; texto: string } | null>(null);
   
   const [aiPrompt, setAiPrompt] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -197,6 +204,44 @@ export function PricingCalculator({
   };
 
   const simulationQuantities = [1, 10, 50, 100, 500];
+
+  const produtoEscolhido = produtos.find(p => p.id === produtoId) || null;
+  const produtosFiltrados = produtos.filter(p => !buscaProduto.trim() || p.name.toLowerCase().includes(buscaProduto.trim().toLowerCase())).slice(0, 80);
+
+  const escolherProduto = (id: string) => {
+    setProdutoId(id);
+    setMsgProduto(null);
+    const p = produtos.find(x => x.id === id);
+    if (p) {
+      setProductName(p.name);
+      setAtualizarPreco(false);
+    }
+  };
+
+  const handleSalvarProduto = async () => {
+    const um = simulateForQuantity(1);
+    setSalvandoProduto(true);
+    setMsgProduto(null);
+    const r = await salvarNoProduto({
+      productId: produtoId || null,
+      nome: productName,
+      categoria: categoriaNova,
+      custoUnit: um.unitCost,
+      precoUnit: um.finalPriceUnit,
+      atualizarPreco,
+      escala: simulationQuantities.map(q => {
+        const s = simulateForQuantity(q);
+        return { qtd: q, custoUnit: s.unitCost, precoUnit: s.finalPriceUnit };
+      }),
+    });
+    setSalvandoProduto(false);
+    if (r.ok) {
+      setMsgProduto({ ok: true, texto: r.criado ? `Produto "${r.nome}" criado. Já aparece na Venda Rápida.` : `Custo de "${r.nome}" atualizado${atualizarPreco ? " (e o preço de venda)" : ""}.` });
+      router.refresh();
+    } else {
+      setMsgProduto({ ok: false, texto: r.erro });
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -391,6 +436,31 @@ export function PricingCalculator({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
+              <Label className="text-slate-300">Puxar produto cadastrado</Label>
+              <Input
+                className="bg-slate-700 border-slate-600 text-white"
+                placeholder="Buscar produto pelo nome…"
+                value={buscaProduto}
+                onChange={e => setBuscaProduto(e.target.value)}
+              />
+              <select
+                className="w-full h-9 rounded-md bg-slate-700 border border-slate-600 text-white px-2 text-sm"
+                value={produtoId}
+                onChange={e => escolherProduto(e.target.value)}
+              >
+                <option value="">— produto novo (não puxar nenhum) —</option>
+                {produtoEscolhido && !produtosFiltrados.some(p => p.id === produtoEscolhido.id) && (
+                  <option value={produtoEscolhido.id}>{produtoEscolhido.name}</option>
+                )}
+                {produtosFiltrados.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              {produtoEscolhido && (
+                <p className="text-xs text-slate-400">
+                  Hoje no cadastro: custo R$ {produtoEscolhido.cost.toFixed(2)} • venda R$ {produtoEscolhido.price.toFixed(2)}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
               <Label className="text-slate-300">Produto</Label>
               <Input className="bg-slate-700 border-slate-600 text-white" value={productName} onChange={e => setProductName(e.target.value)} />
             </div>
@@ -482,6 +552,48 @@ export function PricingCalculator({
             </div>
           </CardContent>
         </Card>
+
+        {/* Guardar o resultado no cadastro de produtos */}
+        {(() => {
+          const um = simulateForQuantity(1);
+          const novoCusto = um.unitCost;
+          const novoPreco = um.finalPriceUnit;
+          return (
+            <Card className="border-2 border-emerald-200 bg-emerald-50/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-emerald-800 flex items-center gap-2"><Save size={20}/> Guardar no produto</CardTitle>
+                <p className="text-sm text-emerald-800/80">Grava o custo de <b>1 unidade</b> (com o setup inteiro). As faixas de quantidade vão na observação do produto.</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-md bg-card border p-3 text-sm space-y-1">
+                  <div className="flex justify-between"><span>Custo de 1 unidade</span><b>R$ {novoCusto.toFixed(2)}</b></div>
+                  <div className="flex justify-between"><span>Preço de venda de 1 unidade</span><b>R$ {novoPreco.toFixed(2)}</b></div>
+                  {produtoEscolhido && (
+                    <p className="text-xs text-muted-foreground pt-1">
+                      Custo: R$ {produtoEscolhido.cost.toFixed(2)} → R$ {novoCusto.toFixed(2)} • Venda: R$ {produtoEscolhido.price.toFixed(2)} → {atualizarPreco ? `R$ ${novoPreco.toFixed(2)}` : "não muda"}
+                    </p>
+                  )}
+                </div>
+                {produtoEscolhido ? (
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" checked={atualizarPreco} onChange={e => setAtualizarPreco(e.target.checked)} className="size-4" />
+                    Atualizar também o preço de venda (1 unidade)
+                  </label>
+                ) : (
+                  <div className="space-y-1">
+                    <Label className="text-emerald-900 font-semibold">Categoria do produto novo</Label>
+                    <Input className="bg-card" value={categoriaNova} onChange={e => setCategoriaNova(e.target.value)} />
+                  </div>
+                )}
+                <Button onClick={handleSalvarProduto} disabled={salvandoProduto || novoCusto <= 0} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+                  {salvandoProduto ? "Salvando..." : produtoEscolhido ? "Atualizar este produto" : "Criar produto novo"}
+                </Button>
+                {novoCusto <= 0 && <p className="text-xs text-amber-700">Monte a receita (materiais e etapas) para calcular o custo.</p>}
+                {msgProduto && <p className={`text-sm ${msgProduto.ok ? "text-green-700" : "text-red-600"}`}>{msgProduto.texto}</p>}
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Gerador de Proposta (Integração CRM) */}
         <Card className="border-2 border-blue-100 bg-blue-50/50">

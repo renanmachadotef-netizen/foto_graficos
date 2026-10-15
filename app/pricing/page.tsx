@@ -5,6 +5,7 @@ export default async function PricingPage() {
   const materials = await prisma.material.findMany();
   const machines = await prisma.machine.findMany();
   const employees = await prisma.employee.findMany();
+  const produtos = await prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' }, select: { id: true, name: true, category: true, cost: true, price: true } });
   const clients = await prisma.client.findMany({ orderBy: { name: 'asc' } });
 
   return (
@@ -19,6 +20,7 @@ export default async function PricingPage() {
         machines={machines} 
         employees={employees} 
         clients={clients}
+        produtos={produtos}
       />
     </div>
   );
