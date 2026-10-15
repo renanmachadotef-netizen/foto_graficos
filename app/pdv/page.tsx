@@ -5,7 +5,8 @@ import { VendaRapida, type ProdutoPdv } from "./VendaRapida";
 
 export const dynamic = "force-dynamic";
 
-export default async function PdvPage() {
+export default async function PdvPage({ searchParams }: { searchParams: Promise<{ pedido?: string }> }) {
+  const { pedido } = await searchParams;
   const session = await getSession();
   if (!session) redirect("/login");
   if (!["ADMIN", "MANAGER", "SELLER"].includes(session.role)) redirect("/");
@@ -45,6 +46,7 @@ export default async function PdvPage() {
       cidade={empresa?.city || "Araranguá"}
       pixSicoob={empresa?.pixKeySicoob || null}
       pixBradesco={empresa?.pixKeyBradesco || null}
+      pedidoInicial={pedido || null}
     />
   );
 }

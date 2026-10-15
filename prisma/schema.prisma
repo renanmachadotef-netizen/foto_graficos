@@ -101,6 +101,9 @@ model Quote {
   netProfit    Float                  @default(0)
   isPosSale    Boolean                @default(false)
   notes        String?                // recado do pedido (ex.: "ja buscou, dar baixa")
+  cancelledAt  DateTime?
+  cancelReason String?
+  cancelledBy  String?                // nome de quem cancelou
   items        QuoteItem[]
   serviceOrder ServiceOrder?
   transactions FinancialTransaction[]

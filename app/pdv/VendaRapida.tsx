@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   ClipboardList,
+  History,
   Loader2,
   Minus,
   PackagePlus,
@@ -59,6 +61,7 @@ export function VendaRapida({
   cidade,
   pixSicoob,
   pixBradesco,
+  pedidoInicial,
 }: {
   produtos: ProdutoPdv[];
   vendedores: { id: string; name: string }[];
@@ -67,6 +70,7 @@ export function VendaRapida({
   cidade: string;
   pixSicoob: string | null;
   pixBradesco: string | null;
+  pedidoInicial?: string | null;
 }) {
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState("TODAS");
@@ -90,6 +94,12 @@ export function VendaRapida({
   useEffect(() => {
     listarPedidosAbertos().then((l) => setTotalAbertos(l.length));
   }, [comprovante]);
+
+  // veio da tela Vendas do dia: abre o pedido escolhido
+  useEffect(() => {
+    if (pedidoInicial) continuarPedido(pedidoInicial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* catalogo */
   const categorias = useMemo(() => {
@@ -240,6 +250,9 @@ export function VendaRapida({
             {pedido ? `Continuando o pedido #${pedido.numero}` : "Toque no produto para colocar na venda."}
           </p>
         </div>
+        <Link href="/vendas" className="inline-flex h-12 items-center gap-2 rounded-xl border border-border bg-card px-5 font-semibold hover:bg-muted">
+          <History className="size-5" /> Vendas do dia
+        </Link>
         <Button variant="outline" size="lg" onClick={() => setVerPedidos(true)} className="cursor-pointer">
           <ClipboardList /> Pedidos em aberto{totalAbertos ? ` (${totalAbertos})` : ""}
         </Button>

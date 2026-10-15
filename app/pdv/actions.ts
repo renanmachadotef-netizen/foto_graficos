@@ -422,7 +422,9 @@ export async function carregarPedido(id: string): Promise<PedidoCarregado | null
 }
 
 export async function cancelarPedido(id: string): Promise<{ ok: boolean; erro?: string }> {
-  if (!(await sessaoVendedor())) return { ok: false, erro: "Sem permissao." };
+  const sessao = await sessaoVendedor();
+  if (!sessao) return { ok: false, erro: "Sem permissao." };
+  const nomeQuem = sessao.name;
   const q = await prisma.quote.findUnique({ where: { id }, select: { status: true } });
   if (!q || q.status !== "OPEN") return { ok: false, erro: "Esse pedido ja foi fechado ou nao existe." };
   const pagos = await prisma.financialTransaction.count({ where: { quoteId: id, type: "INCOME", status: "PAID" } });
@@ -430,7 +432,10 @@ export async function cancelarPedido(id: string): Promise<{ ok: boolean; erro?: 
   await prisma.$transaction([
     prisma.financialTransaction.deleteMany({ where: { quoteId: id } }),
     prisma.serviceOrder.deleteMany({ where: { quoteId: id } }),
-    prisma.quote.update({ where: { id }, data: { status: "CANCELLED" } }),
+    prisma.quote.update({
+      where: { id },
+      data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "Pedido cancelado na Venda Rápida", cancelledBy: nomeQuem },
+    }),
   ]);
   revalidatePath("/pdv");
   revalidatePath("/pcp");

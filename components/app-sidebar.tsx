@@ -20,6 +20,7 @@ import {
   Flame,
   Receipt,
   HandCoins,
+  History,
   FileUp,
 } from "lucide-react";
 import {
@@ -73,6 +74,12 @@ export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
               icon: ShoppingBag,
               allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
               badge: "Rápido",
+            },
+            {
+              title: "Vendas do dia",
+              url: "/vendas",
+              icon: History,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
             },
             {
               title: "Clientes (CRM)",
