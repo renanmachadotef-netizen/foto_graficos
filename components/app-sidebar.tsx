@@ -21,6 +21,7 @@ import {
   Receipt,
   HandCoins,
   History,
+  Wallet,
   FileUp,
 } from "lucide-react";
 import {
@@ -79,6 +80,12 @@ export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
               title: "Vendas do dia",
               url: "/vendas",
               icon: History,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+            },
+            {
+              title: "Caixa",
+              url: "/caixa",
+              icon: Wallet,
               allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
             },
             {

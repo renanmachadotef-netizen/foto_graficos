@@ -307,19 +307,18 @@ export function VendaRapida({
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+            <div className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
               {filtrados.slice(0, 120).map((p) => (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => adicionar(p)}
-                  className="text-left rounded-2xl border border-border bg-card p-3 shadow-xs hover:border-primary hover:shadow-md active:scale-[0.97] transition-all cursor-pointer flex flex-col gap-2 min-h-[104px]"
+                  className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/60 active:bg-muted transition-colors cursor-pointer"
                 >
-                  <span className="font-semibold leading-snug line-clamp-2">{p.name}</span>
-                  <span className="mt-auto flex items-baseline justify-between gap-2">
-                    <span className="text-xl font-bold tabular-nums">{p.price > 0 ? brl(p.price) : "Sem preço"}</span>
-                    <span className="text-xs text-muted-foreground">{p.unit === "un" ? "" : `/${p.unit}`}</span>
-                  </span>
+                  <span className="min-w-0 flex-1 font-medium leading-snug truncate">{p.name}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{p.unit === "un" ? "" : `/${p.unit}`}</span>
+                  <span className="text-lg font-bold tabular-nums shrink-0">{p.price > 0 ? brl(p.price) : "Sem preço"}</span>
+                  <Plus className="size-5 text-primary shrink-0" />
                 </button>
               ))}
             </div>

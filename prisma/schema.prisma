@@ -8,27 +8,27 @@ datasource db {
 }
 
 model CompanySettings {
-  id          String   @id @default(cuid())
-  companyName String?
-  document    String?  // CNPJ
-  phone       String?
-  email       String?
-  address     String?
-  pixKey      String?  // Chave Pix da empresa para o PDV
+  id             String  @id @default(cuid())
+  companyName    String?
+  document       String? // CNPJ
+  phone          String?
+  email          String?
+  address        String?
+  pixKey         String? // Chave Pix da empresa para o PDV
   pixKeySicoob   String? // chave PIX da conta Sicoob
   pixKeyBradesco String? // chave PIX da conta Bradesco
-  city        String?  // cidade (aparece no QR do PIX)
-  
-  rent        Float    @default(0)
-  energy      Float    @default(0)
-  internet    Float    @default(0)
-  otherFixed  Float    @default(0)
-  workingCap  Float    @default(0)
-  
-  taxRate     Float    @default(0)
-  cardFeeRate Float    @default(0)
+  city           String? // cidade (aparece no QR do PIX)
 
-  updatedAt   DateTime @updatedAt
+  rent       Float @default(0)
+  energy     Float @default(0)
+  internet   Float @default(0)
+  otherFixed Float @default(0)
+  workingCap Float @default(0)
+
+  taxRate     Float @default(0)
+  cardFeeRate Float @default(0)
+
+  updatedAt DateTime @updatedAt
 }
 
 model User {
@@ -79,7 +79,7 @@ model Product {
   description String?
   active      Boolean  @default(true)
   code        String?  @unique // codigo do produto (veio do NEX)
-  brand       String?  // maquina ou fornecedor (Noritsu, Konica, Plotter...)
+  brand       String? // maquina ou fornecedor (Noritsu, Konica, Plotter...)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -100,10 +100,10 @@ model Quote {
   cardFeeRate  Float                  @default(0)
   netProfit    Float                  @default(0)
   isPosSale    Boolean                @default(false)
-  notes        String?                // recado do pedido (ex.: "ja buscou, dar baixa")
+  notes        String? // recado do pedido (ex.: "ja buscou, dar baixa")
   cancelledAt  DateTime?
   cancelReason String?
-  cancelledBy  String?                // nome de quem cancelou
+  cancelledBy  String? // nome de quem cancelou
   items        QuoteItem[]
   serviceOrder ServiceOrder?
   transactions FinancialTransaction[]
@@ -112,14 +112,14 @@ model Quote {
 }
 
 model ServiceOrder {
-  id           String   @id @default(cuid())
-  quoteId      String   @unique
-  quote        Quote    @relation(fields: [quoteId], references: [id])
-  status       String   @default("WAITING") // WAITING, PREPRESS, PRINTING, FINISHING, READY, AGING, BOTTLING, PACKAGING
-  priority     String   @default("NORMAL")  // LOW, NORMAL, HIGH
+  id           String    @id @default(cuid())
+  quoteId      String    @unique
+  quote        Quote     @relation(fields: [quoteId], references: [id])
+  status       String    @default("WAITING") // WAITING, PREPRESS, PRINTING, FINISHING, READY, AGING, BOTTLING, PACKAGING
+  priority     String    @default("NORMAL") // LOW, NORMAL, HIGH
   deliveryDate DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model QuoteItem {
@@ -134,45 +134,45 @@ model QuoteItem {
 }
 
 model Employee {
-  id                   String @id @default(cuid())
+  id                   String         @id @default(cuid())
   name                 String
   contractType         String // "CLT_SIMPLES", "CLT_NORMAL", "PJ"
   baseSalary           Float
   benefits             Float
-  taxesPercentage      Float  // Ex: 40% (Simples), 70% (Lucro), 0% (PJ)
-  weeklyHours          Int    // Ex: 44
-  efficiencyPercentage Float  // Ex: 80% (Desconto de pausas, banheiro, etc)
-  hourlyCost           Float  // Custo Hora Real (Calculado)
+  taxesPercentage      Float // Ex: 40% (Simples), 70% (Lucro), 0% (PJ)
+  weeklyHours          Int // Ex: 44
+  efficiencyPercentage Float // Ex: 80% (Desconto de pausas, banheiro, etc)
+  hourlyCost           Float // Custo Hora Real (Calculado)
   steps                WorkflowStep[]
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 }
 
 model Machine {
-  id               String @id @default(cuid())
+  id               String         @id @default(cuid())
   name             String
   acquisitionValue Float
   usefulLifeMonths Int
   maintenanceCost  Float
   powerConsumption Float // Watts
-  kwhPrice         Float @default(0.95)
-  workingHours     Int   @default(120) // Expected usage hours per month
-  productivity     Float @default(0) // m2 por hora (plotters)
-  hourlyCost       Float @default(0) // Custo hora final calculado
+  kwhPrice         Float          @default(0.95)
+  workingHours     Int            @default(120) // Expected usage hours per month
+  productivity     Float          @default(0) // m2 por hora (plotters)
+  hourlyCost       Float          @default(0) // Custo hora final calculado
   steps            WorkflowStep[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 model Material {
   id           String          @id @default(cuid())
   name         String
   category     String          @default("VINIL_LONA") // "VINIL_LONA", "RIGIDOS_CHAPAS", "TINTAS_QUIMICOS", "ACESSORIOS", "OUTROS"
-  unit         String          // "m2", "ml", "un", "litro", "lacre", "cx"
-  unitCost     Float           // Custo por unidade
+  unit         String // "m2", "ml", "un", "litro", "lacre", "cx"
+  unitCost     Float // Custo por unidade
   currentStock Float           @default(0) // Estoque atual
   minStock     Float           @default(0) // Estoque de segurança/mínimo
-  width        Float?          // Largura do rolo em metros
+  width        Float? // Largura do rolo em metros
   wasteMargin  Float           @default(0) // % de perda técnica/evaporação
   movements    StockMovement[]
   createdAt    DateTime        @default(now())
@@ -183,7 +183,7 @@ model StockMovement {
   id         String   @id @default(cuid())
   materialId String
   material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  type       String   // "IN" (Entrada), "OUT" (Saída Manual), "OS_OUT" (Baixa Automática OS), "ADJUSTMENT" (Balanço)
+  type       String // "IN" (Entrada), "OUT" (Saída Manual), "OS_OUT" (Baixa Automática OS), "ADJUSTMENT" (Balanço)
   quantity   Float
   unitCost   Float?
   notes      String?
@@ -193,28 +193,28 @@ model StockMovement {
 }
 
 model ProductionWorkflow {
-  id           String @id @default(cuid())
-  name         String
-  steps        WorkflowStep[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String         @id @default(cuid())
+  name      String
+  steps     WorkflowStep[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 }
 
 model WorkflowStep {
-  id               String @id @default(cuid())
+  id               String             @id @default(cuid())
   workflowId       String
   workflow         ProductionWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   order            Int
   machineId        String?
-  machine          Machine? @relation(fields: [machineId], references: [id])
+  machine          Machine?           @relation(fields: [machineId], references: [id])
   employeeId       String?
-  employee         Employee? @relation(fields: [employeeId], references: [id])
-  setupTimeMinutes Float @default(0)
-  unitTimeMinutes  Float @default(0)
+  employee         Employee?          @relation(fields: [employeeId], references: [id])
+  setupTimeMinutes Float              @default(0)
+  unitTimeMinutes  Float              @default(0)
 }
 
 model Financing {
-  id               String @id @default(cuid())
+  id               String   @id @default(cuid())
   description      String
   totalValue       Float
   installments     Int
@@ -224,29 +224,29 @@ model Financing {
 }
 
 model FinancialTransaction {
-  id            String    @id @default(cuid())
-  date          DateTime  @default(now())
-  dueDate       DateTime  @default(now())
-  paymentDate   DateTime?
-  description   String
-  amount        Float
-  type          String    // "INCOME" (A Receber) ou "EXPENSE" (A Pagar)
-  status        String    @default("PENDING") // "PENDING", "PAID", "CANCELLED"
-  category      String?
-  paymentMethod String?   // "PIX", "BOLETO", "CARD_CREDIT", "CARD_DEBIT", "CASH", "TRANSFER", "OTHER"
-  clientId      String?
-  client        Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  quoteId       String?
-  quote         Quote?    @relation(fields: [quoteId], references: [id], onDelete: SetNull)
-  notes         String?
-  supplier      String?   // quem recebe (fornecedor / beneficiario)
-  barcode       String?   // linha digitavel do boleto
-  needsReview   Boolean   @default(false) // veio de upload e ainda nao foi conferido
+  id              String         @id @default(cuid())
+  date            DateTime       @default(now())
+  dueDate         DateTime       @default(now())
+  paymentDate     DateTime?
+  description     String
+  amount          Float
+  type            String // "INCOME" (A Receber) ou "EXPENSE" (A Pagar)
+  status          String         @default("PENDING") // "PENDING", "PAID", "CANCELLED"
+  category        String?
+  paymentMethod   String? // "PIX", "BOLETO", "CARD_CREDIT", "CARD_DEBIT", "CASH", "TRANSFER", "OTHER"
+  clientId        String?
+  client          Client?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  quoteId         String?
+  quote           Quote?         @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  notes           String?
+  supplier        String? // quem recebe (fornecedor / beneficiario)
+  barcode         String? // linha digitavel do boleto
+  needsReview     Boolean        @default(false) // veio de upload e ainda nao foi conferido
   recurringBillId String?
-  recurringBill RecurringBill? @relation(fields: [recurringBillId], references: [id], onDelete: SetNull)
-  files         BillFile[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  recurringBill   RecurringBill? @relation(fields: [recurringBillId], references: [id], onDelete: SetNull)
+  files           BillFile[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model FixedCost {
@@ -259,26 +259,54 @@ model FixedCost {
 
 // Conta que se repete todo mes (energia, agua, aluguel...). O sistema cria o lancamento do mes sozinho.
 model RecurringBill {
-  id             String   @id @default(cuid())
+  id             String                 @id @default(cuid())
   name           String
   category       String?
-  dueDay         Int      // dia do vencimento (1 a 31)
-  expectedAmount Float    @default(0) // 0 = valor muda todo mes, informar quando chegar
-  active         Boolean  @default(true)
+  dueDay         Int // dia do vencimento (1 a 31)
+  expectedAmount Float                  @default(0) // 0 = valor muda todo mes, informar quando chegar
+  active         Boolean                @default(true)
   notes          String?
   bills          FinancialTransaction[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
 }
 
 // PDF ou foto do boleto/comprovante guardado no proprio banco.
 model BillFile {
-  id            String   @id @default(cuid())
+  id            String               @id @default(cuid())
   transactionId String
   transaction   FinancialTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   name          String
   mime          String
   size          Int
   data          Bytes
-  createdAt     DateTime @default(now())
+  createdAt     DateTime             @default(now())
+}
+
+// Caixa da loja: um so, aberto de manha com o troco e fechado a noite com a contagem.
+model CashSession {
+  id            String         @id @default(cuid())
+  openedAt      DateTime       @default(now())
+  openedBy      String
+  openingAmount Float          @default(0)
+  closedAt      DateTime?
+  closedBy      String?
+  expectedCash  Float?
+  countedCash   Float?
+  difference    Float?
+  notes         String?
+  movements     CashMovement[]
+}
+
+model CashMovement {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   CashSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  type      String // "SANGRIA" (tirou dinheiro) ou "SUPRIMENTO" (colocou dinheiro)
+  amount    Float
+  reason    String
+  createdBy String
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId])
 }
