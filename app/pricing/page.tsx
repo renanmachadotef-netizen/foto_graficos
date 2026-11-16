@@ -1,7 +1,9 @@
+import { exigirPapel, exigirPapelAcao } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { PricingCalculator } from "./PricingCalculator";
 
 export default async function PricingPage() {
+  await exigirPapel(["ADMIN", "MANAGER", "SELLER"]);
   const materials = await prisma.material.findMany();
   const machines = await prisma.machine.findMany();
   const employees = await prisma.employee.findMany();

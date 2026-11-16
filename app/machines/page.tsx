@@ -1,3 +1,4 @@
+import { exigirPapel, exigirPapelAcao } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { ensureInitialData } from "@/lib/company";
 import { MachineForm } from "./MachineForm";
@@ -8,6 +9,7 @@ import { EditMachineDialog } from "./EditMachineDialog";
 export const dynamic = "force-dynamic";
 
 export default async function MachinesPage() {
+  await exigirPapel(["ADMIN"]);
   await ensureInitialData();
 
   const machines = await prisma.machine.findMany({

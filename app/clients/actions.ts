@@ -1,4 +1,5 @@
 "use server";
+import { exigirPapel, exigirPapelAcao } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { normalizarBusca } from "@/lib/busca";
 import { revalidatePath } from "next/cache";
@@ -12,6 +13,7 @@ export async function createClient(data: {
   gender?: string;
   birthDate?: string;
 }) {
+  await exigirPapelAcao(["ADMIN", "MANAGER", "SELLER"]);
 
   let birthDateObj: Date | null = null;
   let birthDay: number | null = null;
@@ -51,12 +53,14 @@ export async function createClient(data: {
 }
 
 export async function deleteClient(id: string) {
+  await exigirPapelAcao(["ADMIN", "MANAGER", "SELLER"]);
   await prisma.client.delete({ where: { id } });
   revalidatePath("/clients");
   revalidatePath("/birthdays");
 }
 
 export async function updateClient(id: string, data: any) {
+  await exigirPapelAcao(["ADMIN", "MANAGER", "SELLER"]);
   let updateData: any = { ...data };
   if (data.birthDate && typeof data.birthDate === "string") {
     const parts = data.birthDate.split("-");

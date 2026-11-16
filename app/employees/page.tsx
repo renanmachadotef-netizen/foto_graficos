@@ -1,3 +1,4 @@
+import { exigirPapel, exigirPapelAcao } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { COMPANY, ensureInitialData } from "@/lib/company";
 import { EmployeeForm } from "./EmployeeForm";
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 export const dynamic = "force-dynamic";
 
 export default async function EmployeesPage() {
+  await exigirPapel(["ADMIN"]);
   await ensureInitialData();
   const company = COMPANY;
 

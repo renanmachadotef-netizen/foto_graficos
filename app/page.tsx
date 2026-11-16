@@ -269,7 +269,7 @@ export default async function DashboardPage() {
                 <div className="p-2 bg-slate-50 rounded-lg">
                   <p className="text-[10px] text-slate-400 font-bold uppercase">Folha / Equipe</p>
                   <p className="font-bold text-slate-800">
-                    R$ {employeeSalaries.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    {session.role === "ADMIN" ? `R$ ${employeeSalaries.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
                   </p>
                 </div>
                 <div className="p-2 bg-slate-50 rounded-lg">

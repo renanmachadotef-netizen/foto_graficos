@@ -1,8 +1,10 @@
+import { exigirPapel, exigirPapelAcao } from "@/lib/guard";
 import { notFound } from "next/navigation";
 import { Printer } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
 export default async function QuotePage({ params }: { params: Promise<{ id: string }> }) {
+  await exigirPapel(["ADMIN", "MANAGER", "SELLER"]);
   const { id } = await params;
   const quote = await prisma.quote.findUnique({
     where: { id },

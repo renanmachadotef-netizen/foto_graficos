@@ -1,3 +1,4 @@
+import { exigirPapel, exigirPapelAcao } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { ensureInitialData } from "@/lib/company";
 import { FinancialClientView } from "./FinancialClientView";
@@ -5,6 +6,7 @@ import { FinancialClientView } from "./FinancialClientView";
 export const dynamic = "force-dynamic";
 
 export default async function FinancialPage() {
+  await exigirPapel(["ADMIN", "MANAGER"]);
   await ensureInitialData();
 
   const [fixedCosts, transactions, clients] = await Promise.all([

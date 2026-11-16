@@ -1,8 +1,10 @@
 "use server";
+import { exigirPapel, exigirPapelAcao } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function approveQuote(quoteId: string) {
+  await exigirPapelAcao(["ADMIN", "MANAGER", "SELLER"]);
   const quote = await prisma.quote.update({
     where: { id: quoteId },
     data: { status: "APPROVED" },
@@ -43,6 +45,7 @@ export async function approveQuote(quoteId: string) {
 }
 
 export async function rejectQuote(quoteId: string) {
+  await exigirPapelAcao(["ADMIN", "MANAGER", "SELLER"]);
   await prisma.quote.update({
     where: { id: quoteId },
     data: { status: "REJECTED" }

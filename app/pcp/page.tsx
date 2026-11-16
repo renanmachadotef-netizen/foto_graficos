@@ -1,3 +1,4 @@
+import { exigirPapel, exigirPapelAcao } from "@/lib/guard";
 import { prisma } from "@/lib/prisma";
 import { ensureInitialData } from "@/lib/company";
 import { KanbanBoard } from "./KanbanBoard";
@@ -5,6 +6,7 @@ import { KanbanBoard } from "./KanbanBoard";
 export const dynamic = "force-dynamic";
 
 export default async function PcpPage() {
+  await exigirPapel(["ADMIN", "MANAGER", "PRODUCTION"]);
   await ensureInitialData();
 
   const orders = await prisma.serviceOrder.findMany({

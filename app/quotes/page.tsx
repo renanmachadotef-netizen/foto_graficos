@@ -1,3 +1,4 @@
+import { exigirPapel, exigirPapelAcao } from "@/lib/guard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { approveQuote, rejectQuote } from "./actions";
 import { Check, X, Printer, ArrowRight } from "lucide-react";
@@ -8,6 +9,7 @@ import { ensureInitialData } from "@/lib/company";
 export const dynamic = "force-dynamic";
 
 export default async function QuotesListPage() {
+  await exigirPapel(["ADMIN", "MANAGER", "SELLER"]);
   await ensureInitialData();
 
   const quotes = await prisma.quote.findMany({

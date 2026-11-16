@@ -1,10 +1,12 @@
 "use server";
+import { exigirPapel, exigirPapelAcao } from "@/lib/guard";
 
 import { prisma } from "@/lib/prisma";
 import { COMPANY } from "@/lib/company";
 import { revalidatePath } from "next/cache";
 
 export async function getBirthdaysByMonth(month: number) {
+  await exigirPapelAcao(["ADMIN", "MANAGER", "SELLER"]);
 
   const clients = await prisma.client.findMany({
     where: {
@@ -19,6 +21,7 @@ export async function getBirthdaysByMonth(month: number) {
 }
 
 export async function drawBirthdayWinnerAction(month: number, prizeDescription: string) {
+  await exigirPapelAcao(["ADMIN", "MANAGER", "SELLER"]);
   const company = await prisma.companySettings.findFirst();
 
   const clients = await prisma.client.findMany({
@@ -60,6 +63,7 @@ export async function drawBirthdayWinnerAction(month: number, prizeDescription: 
 }
 
 export async function saveClientBirthdayAction(clientId: string, birthDateStr: string) {
+  await exigirPapelAcao(["ADMIN", "MANAGER", "SELLER"]);
   if (!birthDateStr) return { error: "Data inválida" };
 
   const parts = birthDateStr.split("-"); // YYYY-MM-DD
