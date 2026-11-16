@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { ComprovanteVenda } from "./actions";
+import { papelDoRecibo } from "@/app/settings/actions";
 import { brl, qtdTexto } from "./venda-tipos";
 
 export function whatsLink(c: ComprovanteVenda): string | null {
@@ -13,6 +15,11 @@ export function whatsLink(c: ComprovanteVenda): string | null {
 
 /** O que sai na impressora termica (80 mm). So aparece no papel: na tela fica escondido. */
 export function Recibo({ c, empresa }: { c: ComprovanteVenda; empresa: string }) {
+  const [papel, setPapel] = useState<"58" | "80">("80");
+  useEffect(() => {
+    papelDoRecibo().then(setPapel).catch(() => {});
+  }, []);
+  const largura = papel === "58" ? "46mm" : "72mm";
   const dataTxt = new Date(c.data).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
   return (
     <>
@@ -71,8 +78,8 @@ export function Recibo({ c, empresa }: { c: ComprovanteVenda; empresa: string })
         @media print {
           body * { visibility: hidden !important; }
           #recibo-impressao, #recibo-impressao * { visibility: visible !important; }
-          #recibo-impressao { display: block !important; position: absolute; left: 0; top: 0; width: 72mm; padding: 2mm; }
-          @page { margin: 0; size: 80mm auto; }
+          #recibo-impressao { display: block !important; position: absolute; left: 0; top: 0; width: ${largura}; padding: 2mm; overflow-wrap: anywhere; }
+          @page { margin: 0; size: ${papel}mm auto; }
         }
       `}</style>
     </>

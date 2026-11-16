@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { COMPANY, ensureInitialData } from "@/lib/company";
 import { SettingsForm } from "./SettingsForm";
 import { RegrasLoja } from "./RegrasLoja";
+import { BaixarDados } from "./BaixarDados";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ export default async function SettingsPage() {
         receiptPaper={(settings as any).receiptPaper ?? "80"}
         admin={session.role === "ADMIN"}
       />
+      {session.role === "ADMIN" && <BaixarDados />}
     </div>
   );
 }

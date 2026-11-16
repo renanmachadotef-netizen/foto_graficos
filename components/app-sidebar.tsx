@@ -157,6 +157,13 @@ export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
               badge: "FIADO",
             },
             {
+              title: "Relatórios",
+              url: "/relatorios",
+              icon: FileText,
+              allowedRoles: ["ADMIN", "MANAGER"],
+              badge: "NOVO",
+            },
+            {
               title: "Fluxo Financeiro",
               url: "/financial",
               icon: CircleDollarSign,

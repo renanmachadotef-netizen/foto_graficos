@@ -28,3 +28,9 @@ export async function definirLimiteFiado(clientId: string, limite: number | null
   revalidatePath("/receber");
   return { ok: true };
 }
+
+/** Papel do recibo ("58" ou "80"), para a impressao. */
+export async function papelDoRecibo(): Promise<"58" | "80"> {
+  const c = await prisma.companySettings.findFirst({ select: { receiptPaper: true } });
+  return c?.receiptPaper === "58" ? "58" : "80";
+}
