@@ -138,7 +138,7 @@ export function VendaRapida({
   const qtdItens = itens.reduce((s, i) => s + (Number.isInteger(i.quantity) ? i.quantity : 1), 0);
 
   function adicionar(p: ProdutoPdv) {
-    if (p.unit === "m") {
+    if (p.unit === "m" || p.unit === "m2") {
       setEditando({ item: null, produto: p });
       return;
     }
@@ -558,7 +558,7 @@ function EditarItem({
   const p = alvo.produto;
   const avulso = !base && !p;
   const unidade = base?.unit ?? p?.unit ?? "un";
-  const porMetro = unidade === "m";
+  const porMetro = unidade === "m" || unidade === "m2";
 
   const [nome, setNome] = useState(base?.name ?? p?.name ?? "");
   const [qtd, setQtd] = useState(base ? String(base.quantity).replace(".", ",") : "1");

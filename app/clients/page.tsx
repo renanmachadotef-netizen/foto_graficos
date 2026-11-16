@@ -1,4 +1,6 @@
 import { ClientForm } from "./ClientForm";
+import { LimiteFiado } from "./LimiteFiado";
+import { getSession } from "@/lib/auth";
 import { Trash2, Cake, Gift, ArrowRight, Download, RefreshCw } from "lucide-react";
 import { deleteClient } from "./actions";
 import { prisma } from "@/lib/prisma";
@@ -10,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
   await ensureInitialData();
+  const session = await getSession();
 
   const [clients, birthdayCount] = await Promise.all([
     prisma.client.findMany({
@@ -85,6 +88,7 @@ export default async function ClientsPage() {
                     {client.email && <p>Email: <strong className="text-slate-700">{client.email}</strong></p>}
                   </div>
                   {client.address && <p className="text-[11px] text-slate-400 mt-1 truncate max-w-md">{client.address}</p>}
+                  {session?.role === "ADMIN" && <div className="mt-1"><LimiteFiado clientId={client.id} limite={client.creditLimit} /></div>}
                 </div>
                 
                 <div className="text-right border-l pl-4 ml-4">

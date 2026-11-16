@@ -28,6 +28,10 @@ model CompanySettings {
   taxRate     Float @default(0)
   cardFeeRate Float @default(0)
 
+  // Trazido do nexcopy: limite de desconto da equipe (em %) e papel do recibo (58 ou 80 mm)
+  staffDiscountMax Float  @default(100)
+  receiptPaper     String @default("80")
+
   updatedAt DateTime @updatedAt
 }
 
@@ -60,6 +64,7 @@ model Client {
   notes        String?
   status       String                 @default("Ativo")
   credit       Float                  @default(0) // credito do cliente (adiantamento)
+  creditLimit  Float? // limite do fiado (so ADMIN muda); vazio = sem limite
   searchKey    String                 @default("") // nome+telefone+documento em minusculas e sem acento, para a busca rapida
   quotes       Quote[]
   transactions FinancialTransaction[]
@@ -80,8 +85,29 @@ model Product {
   active      Boolean  @default(true)
   code        String?  @unique // codigo do produto (veio do NEX)
   brand       String? // maquina ou fornecedor (Noritsu, Konica, Plotter...)
+  trackStock  Boolean  @default(false) // controla estoque deste produto
+  stockQty    Float    @default(0)
+  moves       ProductStockMove[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// Historico do estoque do produto acabado: cada mudanca vira uma linha (saldo inicial, venda, cancelamento, entrada, ajuste).
+model ProductStockMove {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  kind      String // initial, sale, cancel, entry, adjust
+  qtyDelta  Float
+  qtyAfter  Float
+  quoteId   String?
+  unitCost  Float?
+  notes     String?
+  createdBy String?
+  createdAt DateTime @default(now())
+
+  @@index([productId, createdAt])
+  @@index([quoteId])
 }
 
 model Quote {

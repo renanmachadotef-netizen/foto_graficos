@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { rotuloPagamento } from "@/lib/pagamentos";
+import { devolverVenda } from "@/lib/estoque";
 import { revalidatePath } from "next/cache";
 
 const r2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
@@ -161,6 +162,7 @@ export async function cancelarVenda(id: string, motivo: string): Promise<{ ok: t
       data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: razao, cancelledBy: quem },
     });
     if (q.serviceOrder && q.serviceOrder.status === "WAITING") await tx.serviceOrder.delete({ where: { id: q.serviceOrder.id } });
+    await devolverVenda(tx, id, razao, quem);
   });
 
   revalidatePath("/vendas");

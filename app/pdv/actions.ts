@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { normalizarBusca } from "@/lib/busca";
 import { rotuloPagamento } from "@/lib/pagamentos";
+import { baixarVenda } from "@/lib/estoque";
 import { revalidatePath } from "next/cache";
 
 const dinheiro = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
@@ -131,6 +132,15 @@ export async function salvarVenda(d: DadosVenda): Promise<Retorno> {
   const desconto = Math.min(Math.max(dinheiro(d.discount), 0), subtotal);
   const total = dinheiro(subtotal - desconto);
 
+  // limite de desconto da equipe (vendedor); gerente e administrador nao tem limite
+  if (sessao.role === "SELLER" && desconto > 0 && subtotal > 0) {
+    const cfg = await prisma.companySettings.findFirst({ select: { staffDiscountMax: true } });
+    const maximo = cfg?.staffDiscountMax ?? 100;
+    if ((desconto / subtotal) * 100 > maximo + 0.005) {
+      return { ok: false, erro: `O desconto maximo para vendedor e ${maximo.toLocaleString("pt-BR")}% do valor dos itens. Chame o gerente para dar mais.` };
+    }
+  }
+
   // 2) cliente (sem cliente = "Cliente Balcao")
   let clientId = d.clientId || null;
   let ehBalcao = false;
@@ -163,6 +173,24 @@ export async function salvarVenda(d: DadosVenda): Promise<Retorno> {
   const fiado = dinheiro(pagamentos.filter((p) => p.method === "FIADO").reduce((s, p) => s + p.amount, 0));
   const agora0 = dinheiro(pagamentos.filter((p) => p.method !== "FIADO").reduce((s, p) => s + p.amount, 0));
   if (fiado > 0 && ehBalcao) return { ok: false, erro: "Para vender fiado, escolha o cliente." };
+  if (fiado > 0) {
+    // limite do fiado deste cliente (vazio = sem limite)
+    const cli = await prisma.client.findUnique({ where: { id: clientId }, select: { creditLimit: true, name: true } });
+    if (cli?.creditLimit != null) {
+      const aberto = await prisma.financialTransaction.aggregate({
+        where: { clientId, type: "INCOME", status: "PENDING", ...(existente ? { quoteId: { not: existente.id } } : {}) },
+        _sum: { amount: true },
+      });
+      const jaDeve = dinheiro(aberto._sum.amount ?? 0);
+      if (jaDeve + fiado > cli.creditLimit + 0.005) {
+        const cabe = dinheiro(Math.max(0, cli.creditLimit - jaDeve));
+        return {
+          ok: false,
+          erro: `${cli.name} ja deve ${jaDeve.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} e o limite do fiado e ${cli.creditLimit.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}. Cabem mais ${cabe.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+        };
+      }
+    }
+  }
 
   const recebido = dinheiro(jaPago + agora0 + fiado);
   let troco = 0;
@@ -267,6 +295,11 @@ export async function salvarVenda(d: DadosVenda): Promise<Retorno> {
           },
         });
       }
+    }
+
+    // baixa de estoque so quando a venda fecha (pedido em aberto ainda nao tirou nada)
+    if (d.fechar) {
+      await baixarVenda(tx, quoteId, itens, sessao.name);
     }
 
     // fila de producao

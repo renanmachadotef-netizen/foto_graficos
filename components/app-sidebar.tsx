@@ -89,6 +89,13 @@ export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
               allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
             },
             {
+              title: "Produtos",
+              url: "/produtos",
+              icon: Layers,
+              allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+              badge: "NOVO",
+            },
+            {
               title: "Clientes (CRM)",
               url: "/clients",
               icon: Users,
