@@ -237,6 +237,7 @@ export default async function DashboardPage() {
 
             <CardContent className="p-5 pt-0 space-y-4">
               <div className="space-y-2">
+                {session.role === "ADMIN" ? (
                 <div className="flex justify-between text-xs font-semibold">
                   <span className="text-slate-600">
                     Faturado: <strong>R$ {revenueForBreakEven.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
@@ -245,6 +246,9 @@ export default async function DashboardPage() {
                     Custo Fixo Total: <strong>R$ {totalMonthlyFixedCosts.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
                   </span>
                 </div>
+                ) : (
+                  <p className="text-xs font-semibold text-slate-600">Os valores dos custos ficam só com o administrador.</p>
+                )}
 
                 {/* Visual Progress Bar */}
                 <div className="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden p-0.5 border border-slate-200">
@@ -259,6 +263,7 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
+              {session.role === "ADMIN" && (
               <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-center text-xs">
                 <div className="p-2 bg-slate-50 rounded-lg">
                   <p className="text-[10px] text-slate-400 font-bold uppercase">Custos Infra</p>
@@ -279,6 +284,7 @@ export default async function DashboardPage() {
                   </p>
                 </div>
               </div>
+              )}
             </CardContent>
           </Card>
         </div>
