@@ -9,7 +9,11 @@ export default async function ProdutosPage() {
   const s = await getSession();
   if (!s || !["ADMIN", "MANAGER", "SELLER"].includes(s.role)) redirect("/login");
 
-  const lista = await prisma.product.findMany({ orderBy: { name: "asc" } });
+  const [lista, comFoto] = await Promise.all([
+    prisma.product.findMany({ orderBy: { name: "asc" } }),
+    prisma.productPhoto.findMany({ select: { productId: true } }),
+  ]);
+  const fotos = new Set(comFoto.map((x) => x.productId));
   const produtos: ProdutoLinha[] = lista.map((p) => ({
     id: p.id,
     name: p.name,
@@ -23,6 +27,7 @@ export default async function ProdutosPage() {
     active: p.active,
     trackStock: p.trackStock,
     stockQty: p.stockQty,
+    temFoto: fotos.has(p.id),
   }));
 
   return <ProdutosView produtos={produtos} gestor={s.role === "ADMIN" || s.role === "MANAGER"} />;

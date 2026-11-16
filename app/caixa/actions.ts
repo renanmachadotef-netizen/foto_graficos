@@ -154,6 +154,17 @@ export async function movimentarCaixa(tipo: "SANGRIA" | "SUPRIMENTO", valor: num
   if (motivo.trim().length < 3) return { ok: false, erro: "Escreva o motivo." };
   const aberta = await prisma.cashSession.findFirst({ where: { closedAt: null } });
   if (!aberta) return { ok: false, erro: "Abra o caixa primeiro." };
+  if (tipo === "SANGRIA") {
+    const estado = await estadoCaixa();
+    if (estado?.aberto && r2(valor) > estado.aberto.esperado + 0.004) {
+      return { ok: false, erro: "A sangria nao pode passar do dinheiro que ha na gaveta (" + estado.aberto.esperado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) + ")." };
+    }
+  }
+  // clique duplo: mesmo lancamento nos ultimos 10 segundos nao entra de novo
+  const repetido = await prisma.cashMovement.findFirst({
+    where: { sessionId: aberta.id, type: tipo, amount: r2(valor), reason: motivo.trim(), createdAt: { gte: new Date(Date.now() - 10_000) } },
+  });
+  if (repetido) return { ok: true };
   await prisma.cashMovement.create({ data: { sessionId: aberta.id, type: tipo, amount: r2(valor), reason: motivo.trim(), createdBy: s.name } });
   revalidatePath("/caixa");
   return { ok: true };

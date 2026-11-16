@@ -1,5 +1,6 @@
 import { ClientForm } from "./ClientForm";
 import { LimiteFiado } from "./LimiteFiado";
+import { Etiquetas } from "./Etiquetas";
 import { getSession } from "@/lib/auth";
 import { Trash2, Cake, Gift, ArrowRight, Download, RefreshCw } from "lucide-react";
 import { deleteClient } from "./actions";
@@ -87,6 +88,7 @@ export default async function ClientsPage() {
                     {client.document && <p>Doc: <strong className="text-slate-700">{client.document}</strong></p>}
                     {client.email && <p>Email: <strong className="text-slate-700">{client.email}</strong></p>}
                   </div>
+                  <Etiquetas clientId={client.id} inicial={client.tags} />
                   {client.address && <p className="text-[11px] text-slate-400 mt-1 truncate max-w-md">{client.address}</p>}
                   {session?.role === "ADMIN" && <div className="mt-1"><LimiteFiado clientId={client.id} limite={client.creditLimit} /></div>}
                 </div>

@@ -10,6 +10,19 @@ const r3 = (n: number) => Math.round((Number(n) || 0) * 1000) / 1000;
 
 const UNIDADES = ["un", "m2", "cento", "milheiro", "par", "cx"];
 
+/** Troca o nome de uma categoria em todos os produtos (se o novo nome ja existe, as duas se juntam). */
+export async function renomearCategoria(de: string, para: string): Promise<{ ok: true; total: number } | { ok: false; erro: string }> {
+  const s = await getSession();
+  if (!s || !["ADMIN", "MANAGER"].includes(s.role)) return { ok: false, erro: "So gerente ou administrador mexe nas categorias." };
+  const novo = para.trim().replace(/\s+/g, " ").toUpperCase();
+  if (novo.length < 2) return { ok: false, erro: "Escreva o novo nome da categoria." };
+  if (novo === de) return { ok: false, erro: "O nome e o mesmo de agora." };
+  const r = await prisma.product.updateMany({ where: { category: de }, data: { category: novo } });
+  revalidatePath("/produtos");
+  revalidatePath("/pdv");
+  return { ok: true, total: r.count };
+}
+
 async function gestor() {
   const s = await getSession();
   return s && ["ADMIN", "MANAGER"].includes(s.role) ? s : null;

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { normalizarBusca } from "@/lib/busca";
+import { FORMAS_PAGAMENTO } from "@/lib/pagamentos";
 import {
   buscarClientes,
   cancelarPedido,
@@ -79,6 +80,9 @@ export function VendaRapida({
   const [vendedorId, setVendedorId] = useState(vendedorInicial);
   const [desconto, setDesconto] = useState("");
   const [paraProducao, setParaProducao] = useState(true);
+  const [prazo, setPrazo] = useState("");
+  const [sinal, setSinal] = useState("");
+  const [sinalForma, setSinalForma] = useState("CASH");
   const [pedido, setPedido] = useState<{ id: string; numero: number | null; jaPago: number; notes: string | null } | null>(null);
 
   const [editando, setEditando] = useState<{ item: ItemCarrinho | null; produto: ProdutoPdv | null } | null>(null);
@@ -165,6 +169,8 @@ export function VendaRapida({
     setCliente(null);
     setDesconto("");
     setPedido(null);
+    setPrazo("");
+    setSinal("");
     setErro(null);
     setParaProducao(true);
     setBusca("");
@@ -190,6 +196,7 @@ export function VendaRapida({
       fechar,
       paraProducao,
       vencimentoFiado,
+      prazo: prazo || undefined,
       notes: pedido ? pedido.notes : undefined,
     };
   }
@@ -207,7 +214,8 @@ export function VendaRapida({
   async function salvarComoPedido() {
     setSalvando(true);
     setErro(null);
-    const r = await salvarVenda(payload(false, []));
+    const valorSinal = Math.round((parseFloat(sinal.replace(",", ".")) || 0) * 100) / 100;
+    const r = await salvarVenda(payload(false, valorSinal > 0 ? [{ method: sinalForma, amount: valorSinal }] : []));
     setSalvando(false);
     if (!r.ok) return setErro(r.erro);
     setComprovante(r.comprovante);
@@ -234,6 +242,7 @@ export function VendaRapida({
     setCliente(p.clienteNome === "Cliente Balcão" ? null : { id: p.clientId, name: p.clienteNome, phone: p.clienteTelefone, deve: 0, credito: 0 });
     setVendedorId(p.sellerId || vendedorInicial);
     setDesconto(p.desconto > 0 ? texto2(p.desconto) : "");
+    setPrazo(p.prazo ?? "");
     setPedido({ id: p.id, numero: p.numero, jaPago: p.jaPago, notes: p.notes });
     setVerPedidos(false);
     setErro(null);
@@ -451,6 +460,24 @@ export function VendaRapida({
               >
                 <Wallet className="size-6" /> Cobrar {brl(restante || total)}
               </Button>
+              <div className="rounded-xl border border-border p-3 space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Para deixar como pedido em aberto</p>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm text-muted-foreground">Prazo</Label>
+                  <Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} className="ml-auto w-40" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm text-muted-foreground">Sinal (R$)</Label>
+                  <Input inputMode="decimal" value={sinal} onChange={(e) => setSinal(e.target.value)} placeholder="0,00" className="ml-auto w-24 text-right" />
+                  <select value={sinalForma} onChange={(e) => setSinalForma(e.target.value)} className="h-9 rounded-lg border border-input bg-background px-2 text-sm">
+                    {FORMAS_PAGAMENTO.map((f) => (
+                      <option key={f.v} value={f.v}>
+                        {f.l}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <Button variant="outline" disabled={carrinhoVazio || salvando} onClick={salvarComoPedido} className="w-full cursor-pointer">
                 {salvando ? <Loader2 className="animate-spin" /> : <Save />} Salvar como pedido em aberto
               </Button>

@@ -65,6 +65,7 @@ model Client {
   status       String                 @default("Ativo")
   credit       Float                  @default(0) // credito do cliente (adiantamento)
   creditLimit  Float? // limite do fiado (so ADMIN muda); vazio = sem limite
+  tags         String[]               @default([]) // etiquetas coloridas (VIP, Revenda...)
   searchKey    String                 @default("") // nome+telefone+documento em minusculas e sem acento, para a busca rapida
   quotes       Quote[]
   transactions FinancialTransaction[]
@@ -88,6 +89,7 @@ model Product {
   trackStock  Boolean  @default(false) // controla estoque deste produto
   stockQty    Float    @default(0)
   moves       ProductStockMove[]
+  photo       ProductPhoto?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -357,4 +359,13 @@ model QuoteArt {
   createdAt       DateTime  @default(now())
 
   @@index([quoteId])
+}
+
+// Foto do produto (guardada a parte para as listas nao carregarem os bytes)
+model ProductPhoto {
+  productId String   @id
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  mime      String
+  data      Bytes
+  updatedAt DateTime @updatedAt
 }

@@ -259,9 +259,14 @@ function Cartao({
       </p>
 
       {pago ? (
-        <Button variant="outline" onClick={onDesfazer} className="cursor-pointer">
-          <Undo2 /> Desfazer
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <a href={`/recibo/fiado/${conta.id}`} target="_blank" rel="noopener" className="inline-flex h-9 items-center justify-center rounded-lg border border-border text-sm font-semibold hover:bg-muted">
+            Recibo
+          </a>
+          <Button variant="outline" onClick={onDesfazer} className="cursor-pointer">
+            <Undo2 /> Desfazer
+          </Button>
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
           <Button

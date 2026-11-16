@@ -94,6 +94,7 @@ export interface DadosVenda {
   paraProducao: boolean;
   vencimentoFiado?: string; // YYYY-MM-DD
   notes?: string | null; // recado do pedido; se nao vier, mantem o que ja tinha
+  prazo?: string; // YYYY-MM-DD: prazo de entrega (obrigatorio ao abrir pedido)
 }
 
 export interface ComprovanteVenda {
@@ -139,6 +140,17 @@ export async function salvarVenda(d: DadosVenda): Promise<Retorno> {
     if ((desconto / subtotal) * 100 > maximo + 0.005) {
       return { ok: false, erro: `O desconto maximo para vendedor e ${maximo.toLocaleString("pt-BR")}% do valor dos itens. Chame o gerente para dar mais.` };
     }
+  }
+
+  // pedido em aberto: precisa de cliente, prazo (hoje ou depois) e o sinal nao pode ser fiado
+  let prazoData: Date | null = null;
+  if (d.prazo && /^\d{4}-\d{2}-\d{2}$/.test(d.prazo)) prazoData = new Date(d.prazo + "T12:00:00");
+  if (!d.fechar) {
+    if (!d.clientId) return { ok: false, erro: "Para abrir um pedido, escolha o cliente." };
+    if (!prazoData) return { ok: false, erro: "Informe o prazo de entrega do pedido." };
+    const hojeBR = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    if (d.prazo! < hojeBR) return { ok: false, erro: "O prazo de entrega nao pode ser antes de hoje." };
+    if ((d.payments || []).some((p) => p?.method === "FIADO" && dinheiro(p.amount) > 0)) return { ok: false, erro: "O sinal do pedido nao pode ser fiado." };
   }
 
   // 2) cliente (sem cliente = "Cliente Balcao")
@@ -307,8 +319,10 @@ export async function salvarVenda(d: DadosVenda): Promise<Retorno> {
       const so = await tx.serviceOrder.findUnique({ where: { quoteId }, select: { id: true } });
       if (!so) {
         await tx.serviceOrder.create({
-          data: { quoteId, status: "WAITING", priority: "NORMAL", deliveryDate: new Date(agora.getTime() + 86400000) },
+          data: { quoteId, status: "WAITING", priority: "NORMAL", deliveryDate: prazoData ?? new Date(agora.getTime() + 86400000) },
         });
+      } else if (prazoData) {
+        await tx.serviceOrder.update({ where: { quoteId }, data: { deliveryDate: prazoData } });
       }
     }
     return { quoteId, numero };
@@ -419,6 +433,7 @@ export interface PedidoCarregado {
   jaPago: number;
   desconto: number;
   notes: string | null;
+  prazo: string | null;
   itens: ItemVenda[];
 }
 
@@ -429,6 +444,7 @@ export async function carregarPedido(id: string): Promise<PedidoCarregado | null
     include: {
       client: { select: { id: true, name: true, phone: true } },
       items: true,
+      serviceOrder: { select: { deliveryDate: true } },
       transactions: { where: { type: "INCOME", status: "PAID" }, select: { amount: true } },
     },
   });
@@ -444,6 +460,7 @@ export async function carregarPedido(id: string): Promise<PedidoCarregado | null
     jaPago: dinheiro(q.transactions.reduce((s, t) => s + t.amount, 0)),
     desconto: dinheiro(Math.max(0, subtotal - q.finalPrice)),
     notes: q.notes,
+    prazo: q.serviceOrder?.deliveryDate ? q.serviceOrder.deliveryDate.toISOString().slice(0, 10) : null,
     itens: q.items.map((i) => ({
       productId: i.productId,
       name: i.description,

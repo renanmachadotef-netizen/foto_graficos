@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { estadoCaixa } from "@/app/caixa/actions";
 
 type Resultado = { ok: true } | { ok: false; erro: string };
 
@@ -105,18 +106,32 @@ export async function pagarConta(
   p: { valor: number; data: string; forma: string },
 ): Promise<Resultado> {
   if (!(await permitido())) return NEGADO;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(p.data)) return { ok: false, erro: "Escolha o dia do pagamento." };
+  const hojeBR = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  if (p.data > hojeBR) return { ok: false, erro: "O dia do pagamento nao pode ser depois de hoje." };
+  const atual = await prisma.financialTransaction.findUnique({ where: { id }, select: { status: true } });
+  if (!atual) return { ok: false, erro: "Conta nao encontrada." };
+  if (atual.status === "PAID") return { ok: false, erro: "Essa conta ja foi paga." };
+  const valorPago = Math.abs(Number(p.valor) || 0);
+  if (p.forma === "CASH") {
+    const cx = await estadoCaixa();
+    if (!cx?.aberto) return { ok: false, erro: "Para pagar em dinheiro do caixa, abra o caixa primeiro." };
+    if (p.data !== hojeBR) return { ok: false, erro: "Pagar do caixa so vale para hoje." };
+    if (valorPago > cx.aberto.esperado + 0.004) return { ok: false, erro: "Nao ha dinheiro suficiente na gaveta para essa conta." };
+  }
   await prisma.financialTransaction.update({
     where: { id },
     data: {
       status: "PAID",
       paymentDate: data(p.data),
       paymentMethod: p.forma || null,
-      amount: Math.abs(Number(p.valor) || 0),
+      amount: valorPago,
       needsReview: false,
     },
   });
   revalidatePath("/contas");
   revalidatePath("/financial");
+  revalidatePath("/caixa");
   return { ok: true };
 }
 

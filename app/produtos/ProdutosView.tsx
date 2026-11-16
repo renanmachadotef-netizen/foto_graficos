@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Boxes, History, AlertTriangle } from "lucide-react";
+import { Plus, Search, Boxes, History, AlertTriangle, Tags } from "lucide-react";
+import { FotoProduto, GerenciarCategorias } from "./FotoECategorias";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ export interface ProdutoLinha {
   active: boolean;
   trackStock: boolean;
   stockQty: number;
+  temFoto: boolean;
 }
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -58,6 +60,7 @@ export function ProdutosView({ produtos, gestor }: { produtos: ProdutoLinha[]; g
   const [soEstoque, setSoEstoque] = useState(false);
   const [edicao, setEdicao] = useState<ProdutoLinha | "novo" | null>(null);
   const [estoqueDe, setEstoqueDe] = useState<ProdutoLinha | null>(null);
+  const [gerCats, setGerCats] = useState(false);
 
   const categorias = useMemo(() => {
     const m = new Map<string, number>();
@@ -88,9 +91,14 @@ export function ProdutosView({ produtos, gestor }: { produtos: ProdutoLinha[]; g
           </p>
         </div>
         {gestor && (
-          <Button onClick={() => setEdicao("novo")} className="gap-2">
-            <Plus className="w-4 h-4" /> Novo produto
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setGerCats(true)} className="gap-2">
+              <Tags className="w-4 h-4" /> Categorias
+            </Button>
+            <Button onClick={() => setEdicao("novo")} className="gap-2">
+              <Plus className="w-4 h-4" /> Novo produto
+            </Button>
+          </div>
         )}
       </div>
 
@@ -116,6 +124,10 @@ export function ProdutosView({ produtos, gestor }: { produtos: ProdutoLinha[]; g
         {filtrados.length === 0 && <p className="p-6 text-center text-sm text-slate-500">Nenhum produto encontrado.</p>}
         {filtrados.slice(0, 300).map((p) => (
           <div key={p.id} className={`p-3 flex items-center gap-3 ${p.active ? "" : "opacity-50"}`}>
+            {p.temFoto && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={`/api/produto-foto/${p.id}`} alt="" loading="lazy" className="size-12 rounded-lg object-cover bg-slate-100 shrink-0" />
+            )}
             <button className="flex-1 text-left min-w-0" onClick={() => (gestor ? setEdicao(p) : setEstoqueDe(p))}>
               <p className="font-semibold text-slate-800 truncate">{p.name}</p>
               <p className="text-xs text-slate-500 truncate">
@@ -154,6 +166,7 @@ export function ProdutosView({ produtos, gestor }: { produtos: ProdutoLinha[]; g
           }}
         />
       )}
+      {gerCats && <GerenciarCategorias categorias={categorias} onFechar={() => setGerCats(false)} onMudou={() => router.refresh()} />}
       {estoqueDe && <PainelEstoque produto={estoqueDe} gestor={gestor} onFechar={() => setEstoqueDe(null)} onMudou={() => router.refresh()} />}
     </div>
   );
@@ -269,6 +282,7 @@ function FormProduto({ produto, categorias, onFechar, onSalvo }: { produto: Prod
               <Input value={stockQty} onChange={(e) => setStockQty(e.target.value)} inputMode="decimal" />
             </div>
           )}
+          {produto ? <FotoProduto produto={produto} onMudou={onSalvo} /> : <p className="text-xs text-slate-500">Para pôr foto, salve o produto e abra de novo.</p>}
           {erro && <p className="text-sm text-red-600 font-medium">{erro}</p>}
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={onFechar}>
