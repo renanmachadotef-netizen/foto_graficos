@@ -131,6 +131,7 @@ model Quote {
   cancelReason String?
   cancelledBy  String? // nome de quem cancelou
   items        QuoteItem[]
+  arts         QuoteArt[]
   serviceOrder ServiceOrder?
   transactions FinancialTransaction[]
   createdAt    DateTime               @default(now())
@@ -335,4 +336,25 @@ model CashMovement {
   createdAt DateTime    @default(now())
 
   @@index([sessionId])
+}
+
+// Arte enviada para o cliente aprovar por link (sem login). Cada versao enviada tem o proprio link.
+model QuoteArt {
+  id              String    @id @default(cuid())
+  quoteId         String
+  quote           Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  token           String    @unique
+  name            String
+  mime            String
+  size            Int
+  data            Bytes
+  version         Int       @default(1)
+  uploadedBy      String?
+  response        String? // "approved" ou "changes"
+  responseComment String?
+  respondedAt     DateTime?
+  seenAt          DateTime? // quando alguem da loja abriu o pedido e viu a resposta
+  createdAt       DateTime  @default(now())
+
+  @@index([quoteId])
 }

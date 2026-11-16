@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { cancelarVenda, listarVendas, type ResumoCaixa, type VendaLinha } from "./actions";
 import type { ComprovanteVenda } from "../pdv/actions";
 import { Recibo, whatsLink } from "../pdv/Recibo";
+import { PainelArte } from "./PainelArte";
 import { brl, qtdTexto } from "../pdv/venda-tipos";
 
 type Papel = "ADMIN" | "MANAGER" | "SELLER";
@@ -467,6 +468,8 @@ function Detalhe({
             </Button>
           </div>
         )}
+
+        {v.status === "OPEN" && <PainelArte quoteId={v.id} telefone={v.clienteTelefone} />}
 
         {v.status === "OPEN" && (
           <Link href={`/pdv?pedido=${v.id}`} className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-4 font-semibold text-primary-foreground">

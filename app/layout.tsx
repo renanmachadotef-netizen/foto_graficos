@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SaasHeader } from "@/components/saas-header";
 import { getSession, ensureDefaultUsers } from "@/lib/auth";
 import { COMPANY, ensureInitialData } from "@/lib/company";
+import { artesNaoVistas } from "@/app/arte/actions";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default async function RootLayout({
   
   const company = COMPANY;
   const session = await getSession();
+  const avisoArte = session && session.role !== "PRODUCTION" ? await artesNaoVistas().catch(() => 0) : 0;
 
   return (
     <html lang="pt-BR" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
@@ -53,7 +55,7 @@ export default async function RootLayout({
         <TooltipProvider>
           {session ? (
             <SidebarProvider>
-              <AppSidebar userRole={session.role} company={company} />
+              <AppSidebar userRole={session.role} company={company} avisoArte={avisoArte} />
               <main className="w-full min-w-0 flex flex-col min-h-screen">
                 <SaasHeader user={session} company={company} />
                 <div className="flex-1 min-w-0 p-4 sm:p-6 md:p-8">

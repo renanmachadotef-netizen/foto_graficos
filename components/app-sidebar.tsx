@@ -54,9 +54,10 @@ interface MenuGroup {
 interface AppSidebarProps {
   userRole?: Role;
   company?: CompanyConfig;
+  avisoArte?: number;
 }
 
-export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
+export function AppSidebar({ userRole = "ADMIN", company, avisoArte = 0 }: AppSidebarProps) {
   const pathname = usePathname();
 
   const menuGroups: MenuGroup[] = [
@@ -81,6 +82,7 @@ export function AppSidebar({ userRole = "ADMIN", company }: AppSidebarProps) {
               url: "/vendas",
               icon: History,
               allowedRoles: ["ADMIN", "MANAGER", "SELLER"],
+              badge: avisoArte > 0 ? `${avisoArte} arte${avisoArte > 1 ? "s" : ""} respondida${avisoArte > 1 ? "s" : ""}` : undefined,
             },
             {
               title: "Caixa",
