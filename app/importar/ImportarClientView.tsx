@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, ClipboardList, FileSpreadsheet, Loader2, Package, Users, Wallet } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, FileSpreadsheet, Loader2, Package, Receipt, Users, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ResumoClientes {
@@ -33,6 +33,9 @@ interface PreviaBanco {
 interface ResumoPedidos { total: number; valorTotal: number; itens: number; vendedores: string[] }
 interface PreviaPedidos { jaImportados: number; novos: number; clientesEncontrados: number; clientesNovos: number; itensSemProduto: string[] }
 interface RelatorioPedidos { criados: number; jaExistiam: number; clientesCriados: number; valorTotal: number; itensSemProduto: string[]; naFilaDeProducao: number }
+interface ResumoContas { linhas: number; pagas: number; abertas: number; totalPago: number; totalAberto: number; de: string | null; ate: string | null }
+interface PreviaContas { novas: number; jaImportadas: number; jaDigitadas: number; novasAbertas: number }
+interface RelatorioContas { criadas: number; jaExistiam: number; abertasCriadas: number }
 interface Relatorio {
   clientesNovos: number;
   clientesAtualizados: number;
@@ -53,6 +56,13 @@ export function ImportarClientView() {
   const [arqClientes, setArqClientes] = useState<File | null>(null);
   const [arqProdutos, setArqProdutos] = useState<File | null>(null);
   const [arqPedidos, setArqPedidos] = useState<File | null>(null);
+  const [arqContas, setArqContas] = useState<File | null>(null);
+  const [arqEstoque, setArqEstoque] = useState<File | null>(null);
+  const [incluirAbertas, setIncluirAbertas] = useState(true);
+  const [contasPrevia, setContasPrevia] = useState<{ resumo: ResumoContas; previa: PreviaContas } | null>(null);
+  const [custosPrevia, setCustosPrevia] = useState<{ total: number; aAtualizar: number } | null>(null);
+  const [contasRelatorio, setContasRelatorio] = useState<RelatorioContas | null>(null);
+  const [custosRelatorio, setCustosRelatorio] = useState<number | null>(null);
   const [filaProducao, setFilaProducao] = useState(false);
   const [pedidosPrevia, setPedidosPrevia] = useState<{ resumo: ResumoPedidos; previa: PreviaPedidos } | null>(null);
   const [pedidosRelatorio, setPedidosRelatorio] = useState<RelatorioPedidos | null>(null);
@@ -65,6 +75,8 @@ export function ImportarClientView() {
   const inC = useRef<HTMLInputElement>(null);
   const inP = useRef<HTMLInputElement>(null);
   const inO = useRef<HTMLInputElement>(null);
+  const inT = useRef<HTMLInputElement>(null);
+  const inE = useRef<HTMLInputElement>(null);
 
   function montar(acao: "previa" | "aplicar") {
     const fd = new FormData();
@@ -72,6 +84,9 @@ export function ImportarClientView() {
     if (arqClientes) fd.append("clientes", arqClientes);
     if (arqProdutos) fd.append("produtos", arqProdutos);
     if (arqPedidos) fd.append("pedidos", arqPedidos);
+    if (arqContas) fd.append("contas", arqContas);
+    if (arqEstoque) fd.append("estoque", arqEstoque);
+    if (incluirAbertas) fd.append("incluirAbertas", "1");
     if (filaProducao) fd.append("filaProducao", "1");
     if (acao === "aplicar" && removerDemo) fd.append("removerDemo", "1");
     return fd;
@@ -83,6 +98,10 @@ export function ImportarClientView() {
     setRelatorio(null);
     setPedidosPrevia(null);
     setPedidosRelatorio(null);
+    setContasPrevia(null);
+    setCustosPrevia(null);
+    setContasRelatorio(null);
+    setCustosRelatorio(null);
     setLendo(true);
     try {
       const r = await fetch("/api/importar", { method: "POST", body: montar("previa") });
@@ -91,6 +110,8 @@ export function ImportarClientView() {
       else {
         setPrevia({ clientes: j.clientes, produtos: j.produtos, banco: j.banco });
         setPedidosPrevia(j.pedidos);
+        setContasPrevia(j.contas);
+        setCustosPrevia(j.custos);
       }
     } catch {
       setErro("Falha de conexão. Tente de novo.");
@@ -108,8 +129,12 @@ export function ImportarClientView() {
       else {
         setRelatorio(j.relatorio);
         setPedidosRelatorio(j.pedidos);
+        setContasRelatorio(j.contas);
+        setCustosRelatorio(j.custos);
         setPrevia(null);
         setPedidosPrevia(null);
+        setContasPrevia(null);
+        setCustosPrevia(null);
       }
     } catch {
       setErro("Falha de conexão. A importação pode ter sido interrompida: confira clientes e produtos antes de repetir.");
@@ -117,7 +142,7 @@ export function ImportarClientView() {
     setImportando(false);
   }
 
-  const temArquivo = !!(arqClientes || arqProdutos || arqPedidos);
+  const temArquivo = !!(arqClientes || arqProdutos || arqPedidos || arqContas || arqEstoque);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -150,6 +175,22 @@ export function ImportarClientView() {
           arquivo={arqPedidos}
           onEscolher={() => inO.current?.click()}
         />
+        <Caixa
+          icone={<Receipt className="size-8" />}
+          titulo="Contas a pagar"
+          dica="Planilha “Contas a pagar” do NEX"
+          arquivo={arqContas}
+          onEscolher={() => inT.current?.click()}
+        />
+        <Caixa
+          icone={<Package className="size-8" />}
+          titulo="Estoque (só custos)"
+          dica="Planilha “Estoque” do NEX"
+          arquivo={arqEstoque}
+          onEscolher={() => inE.current?.click()}
+        />
+        <input ref={inT} type="file" accept=".xls,.xlsx,.csv" className="hidden" onChange={(e) => { setArqContas(e.target.files?.[0] ?? null); setPrevia(null); setContasPrevia(null); setRelatorio(null); e.target.value = ""; }} />
+        <input ref={inE} type="file" accept=".xls,.xlsx,.csv" className="hidden" onChange={(e) => { setArqEstoque(e.target.files?.[0] ?? null); setPrevia(null); setCustosPrevia(null); setRelatorio(null); e.target.value = ""; }} />
         <input ref={inO} type="file" accept=".xls,.xlsx,.csv" className="hidden" onChange={(e) => { setArqPedidos(e.target.files?.[0] ?? null); setPrevia(null); setRelatorio(null); setPedidosPrevia(null); setPedidosRelatorio(null); e.target.value = ""; }} />
         <input ref={inC} type="file" accept=".xls,.xlsx,.csv" className="hidden" onChange={(e) => { setArqClientes(e.target.files?.[0] ?? null); setPrevia(null); setRelatorio(null); e.target.value = ""; }} />
         <input ref={inP} type="file" accept=".xls,.xlsx,.csv" className="hidden" onChange={(e) => { setArqProdutos(e.target.files?.[0] ?? null); setPrevia(null); setRelatorio(null); e.target.value = ""; }} />
@@ -222,6 +263,29 @@ export function ImportarClientView() {
             </div>
           )}
 
+          {contasPrevia && (
+            <div className="space-y-2">
+              <p className="font-semibold flex items-center gap-2"><Receipt className="size-5" /> Contas a pagar</p>
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                <li><b className="text-foreground">{num(contasPrevia.resumo.pagas)}</b> já pagas ({brl(contasPrevia.resumo.totalPago)}) e <b className="text-foreground">{num(contasPrevia.resumo.abertas)}</b> ainda a pagar ({brl(contasPrevia.resumo.totalAberto)}), de {contasPrevia.resumo.de?.split("-").reverse().join("/")} até {contasPrevia.resumo.ate?.split("-").reverse().join("/")}</li>
+                <li>{num(contasPrevia.previa.novas)} vão entrar • {num(contasPrevia.previa.jaImportadas)} já importadas antes • {num(contasPrevia.previa.jaDigitadas)} iguais a contas que você já lançou aqui (não repetem)</li>
+              </ul>
+              <label className="flex items-start gap-3 rounded-xl bg-muted/50 p-3 cursor-pointer">
+                <input type="checkbox" checked={incluirAbertas} onChange={(e) => { setIncluirAbertas(e.target.checked); setContasPrevia(null); setPrevia(null); }} className="mt-1 size-5" />
+                <span className="text-sm">Trazer também as contas <b>ainda a pagar</b> (empréstimos, parcelas futuras). Se você já lançou essas aqui, o sistema pula as iguais.</span>
+              </label>
+            </div>
+          )}
+
+          {custosPrevia && (
+            <div className="space-y-2">
+              <p className="font-semibold flex items-center gap-2"><Package className="size-5" /> Estoque</p>
+              <p className="text-sm text-muted-foreground">
+                {num(custosPrevia.total)} produtos com custo na planilha • <b className="text-foreground">{num(custosPrevia.aAtualizar)}</b> estão sem custo aqui e vão receber o custo. As quantidades não vêm: no NEX estavam negativas e erradas.
+              </p>
+            </div>
+          )}
+
           {(previa.banco.demoClientes > 0 || previa.banco.demoProdutos > 0) && (
             <label className="flex items-start gap-3 rounded-xl bg-muted/50 p-3 cursor-pointer">
               <input type="checkbox" checked={removerDemo} onChange={(e) => setRemoverDemo(e.target.checked)} className="mt-1 size-5" />
@@ -248,6 +312,13 @@ export function ImportarClientView() {
             )}
             {relatorio.fiadoCriado + relatorio.fiadoJaExistia > 0 && <li>💸 {num(relatorio.fiadoCriado)} fiados criados ({brl(relatorio.totalFiadoCriado)}){relatorio.fiadoJaExistia > 0 && ` • ${num(relatorio.fiadoJaExistia)} já existiam`}</li>}
             {relatorio.produtosNovos + relatorio.produtosJaExistiam > 0 && <li>📦 {num(relatorio.produtosNovos)} produtos novos • {num(relatorio.produtosJaExistiam)} já existiam</li>}
+            {contasRelatorio && (
+              <li>
+                🧾 {num(contasRelatorio.criadas)} contas a pagar importadas ({num(contasRelatorio.abertasCriadas)} ainda a pagar)
+                {contasRelatorio.jaExistiam > 0 && ` • ${num(contasRelatorio.jaExistiam)} já existiam`}
+              </li>
+            )}
+            {custosRelatorio != null && <li>💲 {num(custosRelatorio)} produtos receberam o custo</li>}
             {pedidosRelatorio && (
               <li>
                 📋 {num(pedidosRelatorio.criados)} pedidos em aberto importados ({brl(pedidosRelatorio.valorTotal)})

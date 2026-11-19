@@ -66,10 +66,36 @@ function lerLinhas(buffer: Buffer): Record<string, string>[] {
 const txt = (v: unknown) => String(v ?? "").replace(/\s+/g, " ").trim();
 
 export function brlParaNumero(v: unknown): number {
-  const t = String(v ?? "").replace(/[^\d,.-]/g, "");
+  const bruto = String(v ?? "");
+  const t = bruto.replace(/[^\d,.-]/g, "");
   if (!t) return 0;
-  const n = Number(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t);
-  return Number.isFinite(n) ? n : 0;
+  // com virgula e ponto juntos, o ultimo e o separador de decimais: "1.234,56" ou "1,234.56"
+  const ultV = t.lastIndexOf(",");
+  const ultP = t.lastIndexOf(".");
+  let n: number;
+  if (ultV >= 0 && ultP >= 0) {
+    n = ultV > ultP ? Number(t.replace(/\./g, "").replace(",", ".")) : Number(t.replace(/,/g, ""));
+  } else {
+    n = Number(t.includes(",") ? t.replace(",", ".") : t);
+  }
+  if (!Number.isFinite(n)) return 0;
+  // "Debito- R$ 10,00": o NEX escreve a palavra, o sinal pode vir separado do numero
+  if (n > 0 && /d[eé]bito/i.test(bruto) && !t.startsWith("-")) n = -n;
+  return n;
+}
+
+const semAcentoChave = (k: string) => k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/** Pega a coluna por qualquer um dos nomes (sem ligar para acento, espaco, barra ou maiuscula). */
+export function pegar(r: Record<string, unknown>, ...nomes: string[]): string {
+  const alvo = nomes.map(semAcentoChave);
+  for (const k of Object.keys(r)) {
+    if (alvo.includes(semAcentoChave(k))) {
+      const v = r[k];
+      if (v !== "" && v != null) return String(v);
+    }
+  }
+  return "";
 }
 
 function dataBR(v: unknown): string | null {
@@ -92,11 +118,12 @@ export function lerClientes(buffer: Buffer): { clientes: ClienteNex[]; resumo: R
     // sem codigo: usa o nome como identidade (raro)
     const codigo = txt(r["Código"]) || `sem-codigo:${nome.toLowerCase()}`;
     if (!txt(r["Código"])) semCodigo++;
-    const saldo = brlParaNumero(r["Débito/Crédito"]);
-    const doc = txt(r["CPF/CNPJ"]).replace(/\D/g, "") || null;
-    const tel = txt(r["Telefone"]) || null;
-    const end = txt(r["Endereço"]) || null;
-    const g = txt(r["Gênero"]).toUpperCase();
+    const saldo = brlParaNumero(pegar(r, "Débito/Crédito", "Debito / Credito"));
+    const doc = txt(pegar(r, "CPF/CNPJ", "CPF / CNPJ")).replace(/\D/g, "") || null;
+    const tel = txt(pegar(r, "Celular")) || txt(pegar(r, "Telefone")) || null;
+    const partesEnd = [pegar(r, "Endereço"), pegar(r, "Número"), pegar(r, "Complemento"), pegar(r, "Bairro"), pegar(r, "Cidade"), pegar(r, "Estado")].map(txt).filter(Boolean);
+    const end = partesEnd.length ? partesEnd.join(", ") : null;
+    const g = txt(pegar(r, "Gênero", "Sexo")).toUpperCase();
     const novo: ClienteNex = {
       codigo,
       nome,
@@ -104,8 +131,8 @@ export function lerClientes(buffer: Buffer): { clientes: ClienteNex[]; resumo: R
       telefone: tel,
       endereco: end,
       genero: g === "M" || g === "F" ? g : null,
-      nascimento: dataBR(r["Data de nascimento"]),
-      observacao: txt(r["Observação"]) || null,
+      nascimento: dataBR(pegar(r, "Data de nascimento", "Nascimento")),
+      observacao: txt(pegar(r, "Observação", "Observações")) || null,
       saldo,
       linhasJuntadas: 1,
     };
@@ -162,16 +189,16 @@ export function lerProdutos(buffer: Buffer): { produtos: ProdutoNex[]; resumo: R
     const nome = txt(r["Nome"]);
     const codigo = txt(r["Código"]);
     if (!nome || !codigo) continue;
-    const status = txt(r["status"]).toLowerCase();
+    const status = txt(pegar(r, "status")).toLowerCase();
     porCodigo.set(codigo, {
       codigo,
       nome,
       preco: brlParaNumero(r["Preço"]),
-      custo: brlParaNumero(r["Preço de custo"]),
+      custo: brlParaNumero(pegar(r, "Preço de custo", "Custo")),
       categoria: txt(r["Categoria"]) || "Sem categoria",
       unidade: unidadePadrao(txt(r["Unidade"])),
       marca: txt(r["Marca"]) || null,
-      observacao: txt(r["Observação"]) || null,
+      observacao: txt(pegar(r, "Observação", "Observações")) || null,
       ativo: !(status.includes("inativ") || status.includes("desativ")),
     });
   }
@@ -206,4 +233,16 @@ export const PRODUTOS_DEMO = [
 
 export function dataIso(ymd: string): Date {
   return new Date(`${ymd}T12:00:00`);
+}
+
+/** Planilha de estoque do NEX: so o custo unitario por codigo (as quantidades vieram negativas e nao servem). */
+export function lerEstoqueCustos(buffer: Buffer): { custos: { codigo: string; custo: number }[]; linhas: number } {
+  const linhas = lerLinhas(buffer);
+  const custos: { codigo: string; custo: number }[] = [];
+  for (const r of linhas) {
+    const codigo = txt(pegar(r, "Código"));
+    const custo = brlParaNumero(pegar(r, "Custo"));
+    if (codigo && custo > 0) custos.push({ codigo, custo });
+  }
+  return { custos, linhas: linhas.length };
 }
