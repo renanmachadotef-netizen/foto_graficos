@@ -7,18 +7,30 @@ import { deleteClient } from "./actions";
 import { prisma } from "@/lib/prisma";
 import { ensureInitialData } from "@/lib/company";
 import Link from "next/link";
+import { normalizarBusca } from "@/lib/busca";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientsPage() {
+const POR_PAGINA = 30;
+
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ q?: string; n?: string }> }) {
   await ensureInitialData();
   const session = await getSession();
+  const { q = "", n } = await searchParams;
+  const termo = q.trim();
+  const limite = Math.min(Math.max(parseInt(n ?? "", 10) || POR_PAGINA, POR_PAGINA), 3000);
+  const palavras = normalizarBusca(termo).split(" ").filter(Boolean);
+  const where = palavras.length ? { AND: palavras.map((w) => ({ searchKey: { contains: w } })) } : {};
 
-  const [clients, birthdayCount] = await Promise.all([
+  const [clients, totalFiltrado, totalGeral, birthdayCount] = await Promise.all([
     prisma.client.findMany({
+      where,
       orderBy: { createdAt: "desc" },
+      take: limite,
     }),
+    prisma.client.count({ where }),
+    prisma.client.count(),
     prisma.client.count({
       where: {
         birthMonth: { not: null },
@@ -33,7 +45,7 @@ export default async function ClientsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-800">Clientes (CRM)</h1>
           <p className="text-muted-foreground">
-            Gerencie sua carteira com <strong>{clients.length} clientes</strong> cadastrados.
+            Gerencie sua carteira com <strong>{totalGeral} clientes</strong> cadastrados.
           </p>
         </div>
 
@@ -55,13 +67,30 @@ export default async function ClientsPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-slate-700">Carteira de Clientes</h2>
             <span className="text-xs text-slate-500 font-medium">
-              Exibindo <strong>{clients.length}</strong> contatos
+              Mostrando <strong>{clients.length}</strong> de <strong>{totalFiltrado}</strong>
             </span>
           </div>
+
+          <form action="/clients" method="get" className="flex gap-2">
+            <input
+              type="search"
+              name="q"
+              defaultValue={termo}
+              aria-label="Buscar cliente"
+              placeholder="Buscar por nome, telefone ou CPF/CNPJ"
+              className="h-11 flex-1 rounded-xl border border-input bg-background px-3 text-base"
+            />
+            <Button type="submit" className="h-11 cursor-pointer">Buscar</Button>
+            {termo && (
+              <Link href="/clients" className="inline-flex h-11 items-center rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted">
+                Limpar
+              </Link>
+            )}
+          </form>
           
           {clients.length === 0 && (
             <div className="p-8 text-center border-2 border-dashed rounded-xl bg-slate-50">
-              <p className="text-sm text-slate-500">Nenhum cliente cadastrado nesta empresa ainda.</p>
+              <p className="text-sm text-slate-500">{termo ? "Nenhum cliente encontrado com essa busca." : "Nenhum cliente cadastrado ainda."}</p>
             </div>
           )}
           
@@ -103,6 +132,17 @@ export default async function ClientsPage() {
               </div>
             ))}
           </div>
+
+          {clients.length < totalFiltrado && (
+            <div className="text-center">
+              <Link
+                href={`/clients?${new URLSearchParams({ ...(termo ? { q: termo } : {}), n: String(limite + POR_PAGINA) }).toString()}`}
+                className="inline-flex h-11 items-center rounded-xl border border-border bg-card px-6 font-semibold hover:bg-muted"
+              >
+                Ver mais 30 clientes
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>
