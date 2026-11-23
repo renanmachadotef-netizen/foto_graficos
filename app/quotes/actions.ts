@@ -59,3 +59,32 @@ export async function rejectQuote(quoteId: string) {
   revalidatePath("/quotes");
   revalidatePath("/financial");
 }
+
+/** Apaga um orçamento que nunca virou venda. Só gerente e administrador. */
+export async function excluirOrcamento(quoteId: string): Promise<{ ok: true } | { ok: false; erro: string }> {
+  await exigirPapelAcao(["ADMIN", "MANAGER"]);
+  const q = await prisma.quote.findUnique({
+    where: { id: quoteId },
+    select: {
+      status: true,
+      isPosSale: true,
+      serviceOrder: { select: { id: true } },
+      transactions: { select: { status: true } },
+    },
+  });
+  if (!q) return { ok: false, erro: "Orçamento não encontrado (talvez já tenha sido excluído)." };
+  if (q.isPosSale) return { ok: false, erro: "Isso é uma venda do balcão. Em Vendas você pode cancelar." };
+  if (q.status !== "DRAFT" && q.status !== "REJECTED") return { ok: false, erro: "Orçamento aprovado não pode ser excluído. Cancele a venda em Vendas." };
+  if (q.serviceOrder) return { ok: false, erro: "Esse orçamento já tem ordem de produção." };
+  if (q.transactions.some((t) => t.status === "PAID")) return { ok: false, erro: "Esse orçamento já tem pagamento registrado." };
+
+  // lançamentos pendentes ligados ao orçamento saem junto (o banco só solta o vínculo, não apaga)
+  await prisma.$transaction([
+    prisma.financialTransaction.deleteMany({ where: { quoteId, status: { in: ["PENDING", "CANCELLED"] } } }),
+    prisma.quote.delete({ where: { id: quoteId } }),
+  ]);
+
+  revalidatePath("/quotes");
+  revalidatePath("/financial");
+  return { ok: true };
+}

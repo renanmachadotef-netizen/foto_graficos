@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { approveQuote, rejectQuote } from "./actions";
 import { Check, X, Printer, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { getSession } from "@/lib/auth";
+import { ExcluirOrcamento } from "./ExcluirOrcamento";
 import { prisma } from "@/lib/prisma";
 import { ensureInitialData } from "@/lib/company";
 
@@ -10,6 +12,8 @@ export const dynamic = "force-dynamic";
 
 export default async function QuotesListPage() {
   await exigirPapel(["ADMIN", "MANAGER", "SELLER"]);
+  const sessao = await getSession();
+  const gerente = sessao?.role === "ADMIN" || sessao?.role === "MANAGER";
   await ensureInitialData();
 
   const quotes = await prisma.quote.findMany({
@@ -95,6 +99,10 @@ export default async function QuotesListPage() {
                       </button>
                     </form>
                   </>
+                )}
+
+                {gerente && !quote.isPosSale && (quote.status === "DRAFT" || quote.status === "REJECTED") && (
+                  <ExcluirOrcamento id={quote.id} titulo={quote.title} />
                 )}
               </div>
 
