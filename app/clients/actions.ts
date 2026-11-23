@@ -52,11 +52,20 @@ export async function createClient(data: {
   revalidatePath("/birthdays");
 }
 
-export async function deleteClient(id: string) {
+export async function deleteClient(id: string): Promise<{ ok: true } | { ok: false; erro: string }> {
   await exigirPapelAcao(["ADMIN", "MANAGER", "SELLER"]);
+  const c = await prisma.client.findUnique({
+    where: { id },
+    select: { _count: { select: { quotes: true } } },
+  });
+  if (!c) return { ok: false, erro: "Cliente não encontrado (talvez já tenha sido excluído)." };
+  if (c._count.quotes > 0) return { ok: false, erro: "Esse cliente tem vendas ou orçamentos no histórico, por isso não pode ser excluído." };
+  const aberto = await prisma.financialTransaction.count({ where: { clientId: id, status: "PENDING" } });
+  if (aberto > 0) return { ok: false, erro: "Esse cliente tem conta em aberto (fiado ou a receber). Resolva antes de excluir." };
   await prisma.client.delete({ where: { id } });
   revalidatePath("/clients");
   revalidatePath("/birthdays");
+  return { ok: true };
 }
 
 export async function updateClient(id: string, data: any) {

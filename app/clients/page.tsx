@@ -2,8 +2,8 @@ import { ClientForm } from "./ClientForm";
 import { LimiteFiado } from "./LimiteFiado";
 import { Etiquetas } from "./Etiquetas";
 import { getSession } from "@/lib/auth";
-import { Trash2, Cake, Gift, ArrowRight, Download, RefreshCw } from "lucide-react";
-import { deleteClient } from "./actions";
+import { Cake, Gift, ArrowRight, Download, RefreshCw } from "lucide-react";
+import { ExcluirCliente } from "./ExcluirCliente";
 import { prisma } from "@/lib/prisma";
 import { ensureInitialData } from "@/lib/company";
 import Link from "next/link";
@@ -123,11 +123,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                 </div>
                 
                 <div className="text-right border-l pl-4 ml-4">
-                  <form action={async () => { "use server"; await deleteClient(client.id); }}>
-                    <button type="submit" className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50 cursor-pointer">
-                      <Trash2 size={18}/>
-                    </button>
-                  </form>
+                  <ExcluirCliente id={client.id} nome={client.name} />
                 </div>
               </div>
             ))}
