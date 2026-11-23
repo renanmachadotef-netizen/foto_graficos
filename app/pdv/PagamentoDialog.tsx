@@ -16,14 +16,32 @@ export interface LinhaPagamento {
   valor: string;
 }
 
-const METODOS: { v: string; l: string; icone: React.ReactNode; cor: string }[] = [
-  { v: "PIX_SICOOB", l: "PIX Sicoob", icone: <QrCode className="size-5" />, cor: "bg-emerald-600" },
-  { v: "PIX_BRADESCO", l: "PIX Bradesco", icone: <QrCode className="size-5" />, cor: "bg-rose-600" },
-  { v: "CASH", l: "Dinheiro", icone: <Banknote className="size-5" />, cor: "bg-green-700" },
-  { v: "CARD_DEBIT", l: "Débito", icone: <CreditCard className="size-5" />, cor: "bg-sky-600" },
-  { v: "CARD_CREDIT", l: "Crédito", icone: <CreditCard className="size-5" />, cor: "bg-indigo-600" },
-  { v: "FIADO", l: "Fiado", icone: <UserRound className="size-5" />, cor: "bg-amber-600" },
+// Botões neutros: a cor fica reservada para estado (falta, troco, erro). O que muda é o ícone e o grupo.
+const GRUPOS: { titulo: string; metodos: { v: string; l: string; icone: React.ReactNode }[] }[] = [
+  {
+    titulo: "PIX",
+    metodos: [
+      { v: "PIX_SICOOB", l: "Sicoob", icone: <QrCode className="size-5" /> },
+      { v: "PIX_BRADESCO", l: "Bradesco", icone: <QrCode className="size-5" /> },
+    ],
+  },
+  {
+    titulo: "Cartão",
+    metodos: [
+      { v: "CARD_DEBIT", l: "Débito", icone: <CreditCard className="size-5" /> },
+      { v: "CARD_CREDIT", l: "Crédito", icone: <CreditCard className="size-5" /> },
+    ],
+  },
+  {
+    titulo: "Outros",
+    metodos: [
+      { v: "CASH", l: "Dinheiro", icone: <Banknote className="size-5" /> },
+      { v: "FIADO", l: "Fiado", icone: <UserRound className="size-5" /> },
+    ],
+  },
 ];
+const METODOS = GRUPOS.flatMap((g) => g.metodos.map((m) => ({ ...m, l: g.titulo === "PIX" ? `PIX ${m.l}` : m.l })));
+const NOTAS = [20, 50, 100, 200];
 
 const rotulo = (v: string) => METODOS.find((m) => m.v === v)?.l ?? v;
 
@@ -85,7 +103,7 @@ export function PagamentoDialog({
   }
 
   return (
-    <Dialog open onOpenChange={(a) => !a && !salvando && onFechar()}>
+    <Dialog open disablePointerDismissal onOpenChange={(a) => !a && !salvando && onFechar()}>
       <DialogContent className="sm:max-w-lg max-h-[94vh] overflow-y-auto">
         <DialogTitle className="text-xl font-semibold">Receber pagamento</DialogTitle>
         <DialogDescription>Toque na forma de pagamento. Pode misturar (ex.: parte no PIX, parte no dinheiro).</DialogDescription>
@@ -96,17 +114,22 @@ export function PagamentoDialog({
           {jaPago > 0 && <p className="text-sm text-emerald-700 font-medium mt-1">Já pago antes: {brl(jaPago)}</p>}
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          {METODOS.map((m) => (
-            <button
-              key={m.v}
-              type="button"
-              onClick={() => adicionar(m.v)}
-              className={`${m.cor} text-white rounded-xl py-3 px-2 flex flex-col items-center gap-1 text-sm font-semibold cursor-pointer active:scale-95 transition-transform`}
-            >
-              {m.icone}
-              {m.l}
-            </button>
+        <div className="grid grid-cols-3 gap-3">
+          {GRUPOS.map((g) => (
+            <div key={g.titulo} className="space-y-1.5">
+              <p className="text-sm font-semibold text-muted-foreground">{g.titulo}</p>
+              {g.metodos.map((m) => (
+                <button
+                  key={m.v}
+                  type="button"
+                  onClick={() => adicionar(m.v)}
+                  className="flex min-h-12 w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-2 text-sm font-semibold hover:border-primary hover:bg-muted active:scale-95 transition-transform cursor-pointer"
+                >
+                  {m.icone}
+                  {m.l}
+                </button>
+              ))}
+            </div>
           ))}
         </div>
 
@@ -130,7 +153,7 @@ export function PagamentoDialog({
                       type="button"
                       aria-label="Remover"
                       onClick={() => setLinhas((x) => x.filter((y) => y.id !== l.id))}
-                      className="text-rose-600 p-1 cursor-pointer"
+                      className="text-rose-600 size-11 flex items-center justify-center rounded-xl hover:bg-muted cursor-pointer"
                     >
                       <Trash2 className="size-5" />
                     </button>
@@ -161,14 +184,50 @@ export function PagamentoDialog({
                       </p>
                     ))}
 
-                  {l.method === "CASH" && valor > 0 && arred(Math.max(0, pagoTotal - total)) > 0 && trocoOk && (
-                    <p className="text-sm font-semibold text-green-700">Troco: {brl(arred(pagoTotal - total))}</p>
+                  {l.method === "CASH" && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Digite quanto o cliente deu, ou toque na nota.</p>
+                      <div className="flex flex-wrap gap-2">
+                        {NOTAS.map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setLinhas((x) => x.map((y) => (y.id === l.id ? { ...y, valor: texto2(n) } : y)))}
+                            className="h-11 min-w-16 rounded-xl border border-border bg-card px-3 font-semibold tabular-nums hover:border-primary cursor-pointer"
+                          >
+                            R$ {n}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setLinhas((x) =>
+                              x.map((y) => (y.id === l.id ? { ...y, valor: texto2(arred(Math.max(0, total - jaPago - (soma - paraNumero(l.valor))))) } : y)),
+                            )
+                          }
+                          className="h-11 rounded-xl border border-border bg-card px-3 font-semibold hover:border-primary cursor-pointer"
+                        >
+                          Valor exato
+                        </button>
+                      </div>
+                      {valor > 0 && arred(Math.max(0, pagoTotal - total)) > 0 && trocoOk && (
+                        <p className="rounded-xl bg-muted px-3 py-2 text-center">
+                          <span className="block text-sm text-muted-foreground">Devolver ao cliente</span>
+                          <span className="block text-4xl font-bold tabular-nums text-green-700">{brl(arred(pagoTotal - total))}</span>
+                        </p>
+                      )}
+                    </div>
                   )}
 
                   {l.method === "FIADO" && (
                     <div className="space-y-1">
                       {clienteBalcao ? (
-                        <p className="text-sm text-rose-600 font-medium">Para vender fiado, volte e escolha o cliente.</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm text-rose-600 font-medium">Fiado precisa de cliente cadastrado.</p>
+                          <Button type="button" variant="outline" size="sm" onClick={onFechar} className="cursor-pointer">
+                            Voltar e escolher o cliente
+                          </Button>
+                        </div>
                       ) : (
                         <label className="text-sm flex items-center gap-2">
                           <span className="font-medium">Vai pagar até</span>
@@ -189,9 +248,8 @@ export function PagamentoDialog({
         )}
 
         <div className="rounded-xl border border-border p-3 space-y-1 text-base">
-          <Linha rotulo="Total" valor={brl(total)} />
           {jaPago > 0 && <Linha rotulo="Já pago" valor={brl(jaPago)} />}
-          <Linha rotulo="Agora" valor={brl(soma)} />
+          <Linha rotulo="Recebendo agora" valor={brl(soma)} />
           {falta > 0.005 ? (
             <Linha rotulo="Falta" valor={brl(falta)} forte cor="text-rose-600" />
           ) : excesso > 0.005 ? (
@@ -212,10 +270,21 @@ export function PagamentoDialog({
               venc,
             )
           }
-          className="w-full cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700 hover:brightness-100"
+          className="w-full h-12 cursor-pointer bg-emerald-700 text-white hover:bg-emerald-800 hover:brightness-100"
         >
           {salvando ? <Loader2 className="animate-spin" /> : <Check />} Finalizar venda
         </Button>
+        {!podeFechar && !salvando && (
+          <p className="text-center text-sm text-muted-foreground">
+            {linhas.length === 0
+              ? "Escolha como o cliente vai pagar."
+              : temFiado && clienteBalcao
+                ? "Fiado precisa de cliente. Volte e escolha o cliente."
+                : falta > 0.005
+                  ? `Ainda falta ${brl(falta)}.`
+                  : "O valor passou do total e não há dinheiro para dar troco."}
+          </p>
+        )}
       </DialogContent>
     </Dialog>
   );

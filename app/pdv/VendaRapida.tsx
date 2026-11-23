@@ -40,7 +40,6 @@ import { ComprovanteDialog } from "./ComprovanteDialog";
 import {
   arred,
   brl,
-  emojiCategoria,
   paraNumero,
   qtdTexto,
   texto2,
@@ -56,6 +55,7 @@ const novaChave = () => `i${Date.now()}-${contador++}`;
 
 export function VendaRapida({
   produtos,
+  maisVendidos,
   vendedores,
   vendedorInicial,
   empresa,
@@ -63,8 +63,10 @@ export function VendaRapida({
   pixSicoob,
   pixBradesco,
   pedidoInicial,
+  limiteDesconto,
 }: {
   produtos: ProdutoPdv[];
+  maisVendidos: string[];
   vendedores: { id: string; name: string }[];
   vendedorInicial: string;
   empresa: string;
@@ -72,6 +74,7 @@ export function VendaRapida({
   pixSicoob: string | null;
   pixBradesco: string | null;
   pedidoInicial?: string | null;
+  limiteDesconto: number | null;
 }) {
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState("TODAS");
@@ -79,6 +82,8 @@ export function VendaRapida({
   const [cliente, setCliente] = useState<ClienteEscolhido | null>(null);
   const [vendedorId, setVendedorId] = useState(vendedorInicial);
   const [desconto, setDesconto] = useState("");
+  const [descontoEmPct, setDescontoEmPct] = useState(false);
+  const [confirmaLimpar, setConfirmaLimpar] = useState(false);
   const [paraProducao, setParaProducao] = useState(true);
   const [prazo, setPrazo] = useState("");
   const [sinal, setSinal] = useState("");
@@ -135,8 +140,22 @@ export function VendaRapida({
 
   /* carrinho */
   const subtotal = arred(itens.reduce((s, i) => s + arred(i.quantity * i.unitPrice), 0));
-  const descontoNum = Math.min(Math.max(arred(paraNumero(desconto)), 0), subtotal);
+  const descontoDigitado = descontoEmPct ? (subtotal * Math.min(Math.max(paraNumero(desconto), 0), 100)) / 100 : paraNumero(desconto);
+  const descontoNum = Math.min(Math.max(arred(descontoDigitado), 0), subtotal);
+  const descontoPct = subtotal > 0 ? (descontoNum / subtotal) * 100 : 0;
+  const passouLimite = limiteDesconto !== null && descontoPct > limiteDesconto + 0.005;
   const total = arred(subtotal - descontoNum);
+  const maisVendidosLista = useMemo(
+    () => maisVendidos.map((id) => produtos.find((p) => p.id === id)).filter((p): p is ProdutoPdv => !!p),
+    [maisVendidos, produtos],
+  );
+
+  function focarBusca() {
+    // no celular o foco abriria o teclado a cada toque, entao so no computador
+    if (typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches) {
+      setTimeout(() => campoBusca.current?.focus(), 50);
+    }
+  }
   const jaPago = pedido?.jaPago ?? 0;
   const restante = arred(Math.max(0, total - jaPago));
   const qtdItens = itens.reduce((s, i) => s + (Number.isInteger(i.quantity) ? i.quantity : 1), 0);
@@ -154,6 +173,7 @@ export function VendaRapida({
         { chave: novaChave(), productId: p.id, name: p.name, unit: p.unit, quantity: 1, unitPrice: p.price, unitCost: p.cost, notes: "" },
       ];
     });
+    focarBusca();
   }
 
   function mudarQtd(chave: string, delta: number) {
@@ -168,6 +188,8 @@ export function VendaRapida({
     setItens([]);
     setCliente(null);
     setDesconto("");
+    setDescontoEmPct(false);
+    setConfirmaLimpar(false);
     setPedido(null);
     setPrazo("");
     setSinal("");
@@ -232,13 +254,14 @@ export function VendaRapida({
         chave: novaChave(),
         productId: i.productId ?? null,
         name: i.name,
-        unit: "un",
+        unit: produtos.find((x) => x.id === i.productId)?.unit ?? "un",
         quantity: i.quantity,
         unitPrice: i.unitPrice,
         unitCost: i.unitCost,
         notes: "",
       })),
     );
+    setDescontoEmPct(false);
     setCliente(p.clienteNome === "Cliente Balcão" ? null : { id: p.clientId, name: p.clienteNome, phone: p.clienteTelefone, deve: 0, credito: 0 });
     setVendedorId(p.sellerId || vendedorInicial);
     setDesconto(p.desconto > 0 ? texto2(p.desconto) : "");
@@ -265,11 +288,22 @@ export function VendaRapida({
         <Button variant="outline" size="lg" onClick={() => setVerPedidos(true)} className="cursor-pointer">
           <ClipboardList /> Pedidos em aberto{totalAbertos ? ` (${totalAbertos})` : ""}
         </Button>
-        {!carrinhoVazio && (
-          <Button variant="ghost" size="lg" onClick={limpar} className="cursor-pointer">
-            <X /> Limpar
-          </Button>
-        )}
+        {!carrinhoVazio &&
+          (confirmaLimpar ? (
+            <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/5 px-3 py-1.5">
+              <span className="text-sm font-semibold">Apagar a venda inteira?</span>
+              <Button variant="destructive" onClick={limpar} className="cursor-pointer">
+                Sim, apagar
+              </Button>
+              <Button variant="outline" onClick={() => setConfirmaLimpar(false)} className="cursor-pointer">
+                Não
+              </Button>
+            </div>
+          ) : (
+            <Button variant="ghost" size="lg" onClick={() => setConfirmaLimpar(true)} className="cursor-pointer">
+              <X /> Limpar
+            </Button>
+          ))}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_410px]">
@@ -293,15 +327,43 @@ export function VendaRapida({
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <Chip ativo={categoria === "TODAS"} onClick={() => setCategoria("TODAS")}>
-              Todos ({produtos.length})
-            </Chip>
-            {categorias.map((c) => (
-              <Chip key={c} ativo={categoria === c} onClick={() => setCategoria(c)}>
-                {emojiCategoria(c)} {c}
+          {maisVendidosLista.length > 0 && !busca.trim() && categoria === "TODAS" && (
+            <div>
+              <h2 className="mb-1.5 text-sm font-semibold text-muted-foreground">Mais vendidos</h2>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {maisVendidosLista.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => adicionar(p)}
+                    className="flex min-h-16 items-center gap-2 rounded-xl border border-border bg-card p-2 text-left hover:border-primary active:bg-muted cursor-pointer"
+                  >
+                    {p.temFoto && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={`/api/produto-foto/${p.id}`} alt="" loading="lazy" className="size-12 shrink-0 rounded-lg object-cover" />
+                    )}
+                    <span className="min-w-0">
+                      <span className="line-clamp-2 text-sm font-semibold leading-tight">{p.name}</span>
+                      <span className="text-sm tabular-nums text-muted-foreground">{p.price > 0 ? brl(p.price) : "Sem preço"}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="relative">
+            <div className="flex gap-2 overflow-x-auto pb-1 pr-8">
+              <Chip ativo={categoria === "TODAS"} onClick={() => setCategoria("TODAS")}>
+                Todos ({produtos.length})
               </Chip>
-            ))}
+              {categorias.map((c) => (
+                <Chip key={c} ativo={categoria === c} onClick={() => setCategoria(c)}>
+                  {c}
+                </Chip>
+              ))}
+            </div>
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
           </div>
 
           {produtos.length === 0 ? (
@@ -325,7 +387,7 @@ export function VendaRapida({
                   className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/60 active:bg-muted transition-colors cursor-pointer"
                 >
                   <span className="min-w-0 flex-1 font-medium leading-snug truncate">{p.name}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">{p.unit === "un" ? "" : `/${p.unit}`}</span>
+                  <span className="text-sm text-muted-foreground shrink-0">{p.unit === "un" ? "" : `/${p.unit}`}</span>
                   <span className="text-lg font-bold tabular-nums shrink-0">{p.price > 0 ? brl(p.price) : "Sem preço"}</span>
                   <Plus className="size-5 text-primary shrink-0" />
                 </button>
@@ -350,7 +412,7 @@ export function VendaRapida({
                 <span className="ml-auto rounded-full bg-muted px-2.5 py-0.5 text-sm font-bold">{qtdTexto(qtdItens)}</span>
               </div>
 
-              {pedido?.notes && <p className="rounded-lg bg-amber-50 text-amber-900 text-sm px-3 py-2">📝 {pedido.notes}</p>}
+              {pedido?.notes && <p className="rounded-lg bg-accent text-accent-foreground text-sm px-3 py-2">Recado: {pedido.notes}</p>}
 
               <button
                 type="button"
@@ -379,7 +441,7 @@ export function VendaRapida({
                       vendedorId === v.id ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"
                     }`}
                   >
-                    {v.name.split(" ")[0]}
+                    {nomeCurto(v.name, vendedores)}
                   </button>
                 ))}
               </div>
@@ -403,7 +465,7 @@ export function VendaRapida({
                           {i.unit !== "un" ? `/${i.unit}` : ""} <Pencil className="inline size-3" />
                         </p>
                       </button>
-                      <button type="button" aria-label="Tirar da venda" onClick={() => setItens((c) => c.filter((x) => x.chave !== i.chave))} className="text-rose-600 p-1 cursor-pointer">
+                      <button type="button" aria-label="Tirar da venda" onClick={() => setItens((c) => c.filter((x) => x.chave !== i.chave))} className="text-rose-600 size-11 -mr-1 -mt-1 flex items-center justify-center rounded-xl hover:bg-muted cursor-pointer">
                         <Trash2 className="size-5" />
                       </button>
                     </div>
@@ -427,18 +489,18 @@ export function VendaRapida({
             </div>
 
             <div className="p-4 border-t border-border space-y-3">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="ml-auto tabular-nums">{brl(subtotal)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-sm text-muted-foreground">Desconto (R$)</Label>
-                <Input inputMode="decimal" value={desconto} onChange={(e) => setDesconto(e.target.value)} placeholder="0,00" className="ml-auto w-28 text-right" />
-              </div>
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" checked={paraProducao} onChange={(e) => setParaProducao(e.target.checked)} className="size-4" />
-                Precisa produzir (vai para a fila de produção)
-              </label>
+              {descontoNum > 0 && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span className="ml-auto tabular-nums">{brl(subtotal)}</span>
+                </div>
+              )}
+              {descontoNum > 0 && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Desconto ({descontoPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)</span>
+                  <span className="ml-auto tabular-nums">− {brl(descontoNum)}</span>
+                </div>
+              )}
               <div className="flex items-end justify-between">
                 <span className="text-muted-foreground font-medium">TOTAL</span>
                 <span className="text-4xl font-bold tabular-nums">{brl(total)}</span>
@@ -451,36 +513,105 @@ export function VendaRapida({
               {erro && <p className="rounded-xl bg-rose-100 text-rose-800 px-3 py-2 text-sm font-semibold">{erro}</p>}
               <Button
                 size="lg"
-                disabled={carrinhoVazio || salvando}
+                disabled={carrinhoVazio || salvando || passouLimite}
                 onClick={() => {
                   setErro(null);
                   setPagando(true);
                 }}
-                className="w-full h-14 text-lg cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700 hover:brightness-100"
+                className="w-full h-14 text-lg cursor-pointer bg-emerald-700 text-white hover:bg-emerald-800 hover:brightness-100"
               >
                 <Wallet className="size-6" /> Cobrar {brl(restante || total)}
               </Button>
-              <div className="rounded-xl border border-border p-3 space-y-2">
-                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Para deixar como pedido em aberto</p>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-muted-foreground">Prazo</Label>
-                  <Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} className="ml-auto w-40" />
+              {carrinhoVazio && <p className="text-center text-sm text-muted-foreground">Coloque um item na venda para cobrar.</p>}
+              {passouLimite && (
+                <p className="text-center text-sm font-semibold text-destructive">
+                  Desconto acima do limite de {limiteDesconto?.toLocaleString("pt-BR")}%. Diminua o desconto ou chame o gerente.
+                </p>
+              )}
+
+              <details className="group rounded-xl border border-border">
+                <summary className="flex cursor-pointer items-center justify-between px-3 py-3 text-sm font-semibold marker:content-none">
+                  Desconto e produção
+                  <span className="text-muted-foreground group-open:rotate-180 transition-transform" aria-hidden>
+                    ▾
+                  </span>
+                </summary>
+                <div className="space-y-3 border-t border-border p-3">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="pdv-desconto" className="text-sm text-muted-foreground">
+                      Desconto
+                    </Label>
+                    <Input
+                      id="pdv-desconto"
+                      inputMode="decimal"
+                      value={desconto}
+                      onChange={(e) => setDesconto(e.target.value)}
+                      placeholder="0,00"
+                      className="ml-auto h-11 w-24 text-right"
+                    />
+                    <div className="flex overflow-hidden rounded-lg border border-input" role="group" aria-label="Desconto em reais ou em porcentagem">
+                      {[
+                        { pct: false, l: "R$" },
+                        { pct: true, l: "%" },
+                      ].map((o) => (
+                        <button
+                          key={o.l}
+                          type="button"
+                          aria-pressed={descontoEmPct === o.pct}
+                          onClick={() => setDescontoEmPct(o.pct)}
+                          className={`h-11 w-11 text-sm font-semibold cursor-pointer ${descontoEmPct === o.pct ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}
+                        >
+                          {o.l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {limiteDesconto !== null && <p className="text-sm text-muted-foreground">Seu limite de desconto é {limiteDesconto.toLocaleString("pt-BR")}%.</p>}
+                  <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
+                    <input type="checkbox" checked={paraProducao} onChange={(e) => setParaProducao(e.target.checked)} className="size-5" />
+                    Enviar para a produção
+                  </label>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-muted-foreground">Sinal (R$)</Label>
-                  <Input inputMode="decimal" value={sinal} onChange={(e) => setSinal(e.target.value)} placeholder="0,00" className="ml-auto w-24 text-right" />
-                  <select value={sinalForma} onChange={(e) => setSinalForma(e.target.value)} className="h-9 rounded-lg border border-input bg-background px-2 text-sm">
-                    {FORMAS_PAGAMENTO.map((f) => (
-                      <option key={f.v} value={f.v}>
-                        {f.l}
-                      </option>
-                    ))}
-                  </select>
+              </details>
+
+              <details className="group rounded-xl border border-border">
+                <summary className="flex cursor-pointer items-center justify-between px-3 py-3 text-sm font-semibold marker:content-none">
+                  Deixar como pedido em aberto
+                  <span className="text-muted-foreground group-open:rotate-180 transition-transform" aria-hidden>
+                    ▾
+                  </span>
+                </summary>
+                <div className="space-y-3 border-t border-border p-3">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="pdv-prazo" className="text-sm text-muted-foreground">
+                      Entregar até
+                    </Label>
+                    <Input id="pdv-prazo" type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} className="ml-auto h-11 w-44" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="pdv-sinal" className="text-sm text-muted-foreground">
+                      Sinal (R$)
+                    </Label>
+                    <Input id="pdv-sinal" inputMode="decimal" value={sinal} onChange={(e) => setSinal(e.target.value)} placeholder="0,00" className="ml-auto h-11 w-24 text-right" />
+                    <select
+                      aria-label="Forma de pagamento do sinal"
+                      value={sinalForma}
+                      onChange={(e) => setSinalForma(e.target.value)}
+                      className="h-11 rounded-lg border border-input bg-background px-2 text-sm"
+                    >
+                      {FORMAS_PAGAMENTO.map((f) => (
+                        <option key={f.v} value={f.v}>
+                          {f.l}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-sm text-muted-foreground">O pedido fica guardado até o cliente pagar o resto. Precisa escolher o cliente.</p>
+                  <Button variant="outline" disabled={carrinhoVazio || salvando} onClick={salvarComoPedido} className="w-full h-11 cursor-pointer">
+                    {salvando ? <Loader2 className="animate-spin" /> : <Save />} Salvar pedido em aberto
+                  </Button>
                 </div>
-              </div>
-              <Button variant="outline" disabled={carrinhoVazio || salvando} onClick={salvarComoPedido} className="w-full cursor-pointer">
-                {salvando ? <Loader2 className="animate-spin" /> : <Save />} Salvar como pedido em aberto
-              </Button>
+              </details>
             </div>
           </div>
         </aside>
@@ -546,7 +677,7 @@ export function VendaRapida({
             <p className="text-sm text-muted-foreground">{qtdTexto(qtdItens)} item(ns)</p>
             <p className="text-2xl font-bold tabular-nums">{brl(total)}</p>
           </div>
-          <Button size="lg" onClick={() => setPagando(true)} className="cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700 hover:brightness-100">
+          <Button size="lg" disabled={passouLimite} onClick={() => setPagando(true)} className="h-12 cursor-pointer bg-emerald-700 text-white hover:bg-emerald-800 hover:brightness-100">
             <Wallet /> Cobrar
           </Button>
         </div>
@@ -554,6 +685,13 @@ export function VendaRapida({
       <div className="h-20 lg:hidden" />
     </div>
   );
+}
+
+/** Primeiro nome; se dois vendedores têm o mesmo, acrescenta a inicial do sobrenome. */
+function nomeCurto(nome: string, todos: { name: string }[]) {
+  const partes = nome.trim().split(/\s+/);
+  const igual = todos.filter((x) => x.name.trim().split(/\s+/)[0] === partes[0]).length > 1;
+  return igual && partes[1] ? `${partes[0]} ${partes[1][0]}.` : partes[0];
 }
 
 function Chip({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -591,11 +729,15 @@ function EditarItem({
   const [qtd, setQtd] = useState(base ? String(base.quantity).replace(".", ",") : "1");
   const [preco, setPreco] = useState(texto2(base?.unitPrice ?? p?.price ?? 0));
   const [obs, setObs] = useState(base?.notes ?? "");
-  const [larg, setLarg] = useState("");
-  const [alt, setAlt] = useState("");
+  const [larg, setLarg] = useState(base?.larg ?? "");
+  const [alt, setAlt] = useState(base?.alt ?? "");
+  const [pecas, setPecas] = useState(base?.pecas ?? "1");
   const [erro, setErro] = useState<string | null>(null);
 
-  const area = arred(paraNumero(larg) * paraNumero(alt) * 1000) / 1000;
+  const nPecas = Math.max(1, Math.floor(paraNumero(pecas)) || 1);
+  const area = arred(paraNumero(larg) * paraNumero(alt) * nPecas * 1000) / 1000;
+  // medida que parece centímetro digitado no lugar de metro (ex.: 120 em vez de 1,20)
+  const medidaSuspeita = paraNumero(larg) > 20 || paraNumero(alt) > 20;
   useEffect(() => {
     if (porMetro && area > 0) setQtd(String(area).replace(".", ","));
   }, [area, porMetro]);
@@ -604,6 +746,8 @@ function EditarItem({
     const q = paraNumero(qtd);
     if (!nome.trim()) return setErro("Escreva o nome do item.");
     if (!(q > 0)) return setErro("A quantidade precisa ser maior que zero.");
+    if (porMetro && medidaSuspeita) return setErro("Medida acima de 20 m. As medidas são em metros: 1,20 e não 120.");
+    const medidas = `${larg.replace(".", ",")} x ${alt.replace(".", ",")} m`;
     onSalvar({
       chave: base?.chave ?? novaChave(),
       productId: base?.productId ?? p?.id ?? null,
@@ -612,7 +756,10 @@ function EditarItem({
       quantity: q,
       unitPrice: arred(paraNumero(preco)),
       unitCost: base?.unitCost ?? p?.cost ?? 0,
-      notes: porMetro && area > 0 && !obs ? `${larg.replace(".", ",")} x ${alt.replace(".", ",")} m` : obs,
+      notes: porMetro && area > 0 && !obs ? (nPecas > 1 ? `${nPecas} peças de ${medidas}` : medidas) : obs,
+      larg,
+      alt,
+      pecas,
     });
   }
 
@@ -621,7 +768,13 @@ function EditarItem({
       <DialogContent className="sm:max-w-md max-h-[94vh] overflow-y-auto">
         <DialogTitle className="text-xl font-semibold">{avulso ? "Item avulso" : base ? "Ajustar item" : "Adicionar à venda"}</DialogTitle>
         <DialogDescription>{avulso ? "Para algo que não está no catálogo." : nome}</DialogDescription>
-        <div className="space-y-4">
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            salvar();
+          }}
+        >
           {(avulso || base) && (
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">Nome</Label>
@@ -631,12 +784,27 @@ function EditarItem({
 
           {porMetro && (
             <div className="rounded-xl bg-muted/50 p-3 space-y-2">
-              <p className="text-sm font-semibold">Medidas (em metros) — o sistema calcula os m²</p>
-              <div className="grid grid-cols-2 gap-3">
-                <Input inputMode="decimal" value={larg} onChange={(e) => setLarg(e.target.value)} placeholder="Largura (ex.: 1,20)" />
-                <Input inputMode="decimal" value={alt} onChange={(e) => setAlt(e.target.value)} placeholder="Altura (ex.: 0,80)" />
+              <p className="text-sm font-semibold">Medidas em metros. O sistema calcula os m².</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="pdv-larg" className="text-sm">Largura (m)</Label>
+                  <Input id="pdv-larg" inputMode="decimal" value={larg} onChange={(e) => setLarg(e.target.value)} placeholder="1,20" autoFocus />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="pdv-alt" className="text-sm">Altura (m)</Label>
+                  <Input id="pdv-alt" inputMode="decimal" value={alt} onChange={(e) => setAlt(e.target.value)} placeholder="0,80" />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="pdv-pecas" className="text-sm">Peças</Label>
+                  <Input id="pdv-pecas" inputMode="numeric" value={pecas} onChange={(e) => setPecas(e.target.value)} />
+                </div>
               </div>
-              {area > 0 && <p className="text-sm text-muted-foreground">= {qtdTexto(area)} m²</p>}
+              {medidaSuspeita && (
+                <p className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground">
+                  Isso dá mais de 20 m. Era {paraNumero(larg) > 20 ? qtdTexto(paraNumero(larg) / 100) : qtdTexto(paraNumero(alt) / 100)} m?
+                </p>
+              )}
+              {area > 0 && <p className="text-lg font-bold tabular-nums">= {qtdTexto(area)} m²</p>}
             </div>
           )}
 
@@ -657,10 +825,10 @@ function EditarItem({
           </div>
 
           {erro && <p className="text-rose-600 font-semibold">{erro}</p>}
-          <Button size="lg" onClick={salvar} className="w-full cursor-pointer">
+          <Button size="lg" type="submit" className="w-full cursor-pointer">
             <Plus /> {base ? "Salvar" : "Colocar na venda"} • {brl(arred(paraNumero(qtd) * paraNumero(preco)))}
           </Button>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
@@ -802,7 +970,7 @@ function PedidosAbertos({ onFechar, onContinuar }: { onFechar: () => void; onCon
             <Loader2 className="size-5 animate-spin" /> Carregando…
           </p>
         ) : lista.length === 0 ? (
-          <p className="rounded-xl bg-muted/60 p-6 text-center text-muted-foreground">Nenhum pedido em aberto. 🎉</p>
+          <p className="rounded-xl bg-muted/60 p-6 text-center text-muted-foreground">Nenhum pedido em aberto.</p>
         ) : (
           <ul className="space-y-3">
             {lista.map((p) => (
@@ -813,8 +981,8 @@ function PedidosAbertos({ onFechar, onContinuar }: { onFechar: () => void; onCon
                       #{p.numero} • {p.cliente}
                     </p>
                     <p className="text-sm text-muted-foreground line-clamp-2">{p.resumo}</p>
-                    {p.notes && <p className="text-sm text-amber-800 font-medium">📝 {p.notes}</p>}
-                    <p className="text-xs text-muted-foreground">{new Date(p.criado).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p>
+                    {p.notes && <p className="text-sm text-amber-800 font-medium">Recado: {p.notes}</p>}
+                    <p className="text-sm text-muted-foreground">{new Date(p.criado).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xl font-bold tabular-nums">{brl(p.total)}</p>

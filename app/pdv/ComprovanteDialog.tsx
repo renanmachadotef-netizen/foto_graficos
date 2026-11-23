@@ -19,18 +19,24 @@ export function ComprovanteDialog({
   const zap = whatsLink(c);
 
   return (
-    <Dialog open onOpenChange={(a) => !a && onNova()}>
-      <DialogContent className="sm:max-w-md max-h-[94vh] overflow-y-auto">
+    // Só fecha pelos botões: um clique fora não pode apagar a venda antes de imprimir o comprovante.
+    <Dialog open disablePointerDismissal onOpenChange={() => {}}>
+      <DialogContent showCloseButton={false} className="sm:max-w-md max-h-[94vh] overflow-y-auto">
         <DialogTitle className="sr-only">Comprovante</DialogTitle>
         <DialogDescription className="sr-only">Resumo da venda registrada</DialogDescription>
 
         <div className="text-center space-y-1">
-          <CheckCircle2 className="size-14 mx-auto text-emerald-600" />
-          <p className="text-2xl font-semibold">{c.aberto ? "Pedido salvo!" : "Venda registrada!"}</p>
+          {c.troco > 0 && (
+            <div className="mb-2 rounded-2xl bg-muted px-4 py-3">
+              <p className="text-sm text-muted-foreground">Devolver ao cliente</p>
+              <p className="text-5xl font-bold tabular-nums text-green-700">{brl(c.troco)}</p>
+            </div>
+          )}
+          <CheckCircle2 className="size-10 mx-auto text-emerald-700" />
+          <p className="text-lg font-semibold">{c.aberto ? "Pedido salvo" : "Venda registrada"}</p>
           <p className="text-muted-foreground">
             {c.aberto ? "Pedido" : "Venda"} #{c.numero} • {brl(c.total)}
           </p>
-          {c.troco > 0 && <p className="text-xl font-bold text-green-700">Troco: {brl(c.troco)}</p>}
           {c.aberto && c.falta > 0 && <p className="font-semibold text-amber-700">Falta receber {brl(c.falta)}</p>}
           {c.fiado > 0 && <p className="font-semibold text-amber-700">{brl(c.fiado)} ficaram como fiado de {c.cliente.nome}</p>}
         </div>

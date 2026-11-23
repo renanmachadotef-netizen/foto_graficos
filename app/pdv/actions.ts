@@ -136,7 +136,7 @@ export async function salvarVenda(d: DadosVenda): Promise<Retorno> {
   // limite de desconto da equipe (vendedor); gerente e administrador nao tem limite
   if (sessao.role === "SELLER" && desconto > 0 && subtotal > 0) {
     const cfg = await prisma.companySettings.findFirst({ select: { staffDiscountMax: true } });
-    const maximo = cfg?.staffDiscountMax ?? 100;
+    const maximo = cfg?.staffDiscountMax ?? 50;
     if ((desconto / subtotal) * 100 > maximo + 0.005) {
       return { ok: false, erro: `O desconto maximo para vendedor e ${maximo.toLocaleString("pt-BR")}% do valor dos itens. Chame o gerente para dar mais.` };
     }

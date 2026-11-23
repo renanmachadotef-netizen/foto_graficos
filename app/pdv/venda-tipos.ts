@@ -6,6 +6,7 @@ export interface ProdutoPdv {
   price: number;
   cost: number;
   unit: string;
+  temFoto?: boolean;
 }
 
 export interface ItemCarrinho {
@@ -17,6 +18,9 @@ export interface ItemCarrinho {
   unitPrice: number;
   unitCost: number;
   notes: string;
+  larg?: string;
+  alt?: string;
+  pecas?: string;
 }
 
 export interface ClienteEscolhido {

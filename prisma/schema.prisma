@@ -29,7 +29,7 @@ model CompanySettings {
   cardFeeRate Float @default(0)
 
   // Trazido do nexcopy: limite de desconto da equipe (em %) e papel do recibo (58 ou 80 mm)
-  staffDiscountMax Float  @default(100)
+  staffDiscountMax Float  @default(50)
   receiptPaper     String @default("80")
 
   updatedAt DateTime @updatedAt

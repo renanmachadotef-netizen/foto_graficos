@@ -11,7 +11,7 @@ import {
   CircleDollarSign,
   PackageSearch,
   UserCog,
-  Sparkles,
+  Camera,
   Lock,
   ShoppingBag,
   Cake,
@@ -216,11 +216,9 @@ export function AppSidebar({ userRole = "ADMIN", company, avisoArte = 0 }: AppSi
         {/* Brand Header */}
         <div className="px-3 py-4 flex items-center gap-2.5 border-b border-slate-100">
           <div
-            className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-md ${
-              "bg-gradient-to-tr from-indigo-600 to-cyan-500 shadow-indigo-500/20"
-            }`}
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary text-primary-foreground"
           >
-            {<Sparkles className="w-5 h-5" />}
+            {<Camera className="w-5 h-5" />}
           </div>
           <div>
             <h2 className="font-bold text-slate-900 text-sm tracking-tight leading-tight">
