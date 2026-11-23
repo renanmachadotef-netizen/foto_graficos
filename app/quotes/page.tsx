@@ -14,6 +14,7 @@ export default async function QuotesListPage() {
   await exigirPapel(["ADMIN", "MANAGER", "SELLER"]);
   const sessao = await getSession();
   const gerente = sessao?.role === "ADMIN" || sessao?.role === "MANAGER";
+  const admin = sessao?.role === "ADMIN";
   await ensureInitialData();
 
   const quotes = await prisma.quote.findMany({
@@ -45,10 +46,10 @@ export default async function QuotesListPage() {
                   <h3 className="font-bold text-xl text-slate-800">{quote.client.name}</h3>
                   <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
                     quote.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 
-                    quote.status === 'REJECTED' ? 'bg-red-100 text-red-700' : 
+                    quote.status === 'REJECTED' || quote.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 
                     'bg-blue-100 text-blue-700'
                   }`}>
-                    {quote.status === 'APPROVED' ? 'APROVADO' : quote.status === 'REJECTED' ? 'RECUSADO' : 'AGUARDANDO'}
+                    {quote.status === 'APPROVED' ? 'APROVADO' : quote.status === 'REJECTED' ? 'RECUSADO' : quote.status === 'CANCELLED' ? 'CANCELADO' : 'AGUARDANDO'}
                   </span>
                   {quote.isPosSale && (
                     <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-700 uppercase">
@@ -101,7 +102,7 @@ export default async function QuotesListPage() {
                   </>
                 )}
 
-                {gerente && !quote.isPosSale && (quote.status === "DRAFT" || quote.status === "REJECTED") && (
+                {((gerente && !quote.isPosSale && (quote.status === "DRAFT" || quote.status === "REJECTED")) || (admin && quote.status === "CANCELLED")) && (
                   <ExcluirOrcamento id={quote.id} titulo={quote.title} />
                 )}
               </div>

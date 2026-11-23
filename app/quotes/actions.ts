@@ -60,9 +60,9 @@ export async function rejectQuote(quoteId: string) {
   revalidatePath("/financial");
 }
 
-/** Apaga um orçamento que nunca virou venda. Só gerente e administrador. */
+/** Apaga orçamento que nunca virou venda (gerente ou administrador) ou venda já cancelada (só administrador). */
 export async function excluirOrcamento(quoteId: string): Promise<{ ok: true } | { ok: false; erro: string }> {
-  await exigirPapelAcao(["ADMIN", "MANAGER"]);
+  const sessao = await exigirPapelAcao(["ADMIN", "MANAGER"]);
   const q = await prisma.quote.findUnique({
     where: { id: quoteId },
     select: {
@@ -73,8 +73,14 @@ export async function excluirOrcamento(quoteId: string): Promise<{ ok: true } | 
     },
   });
   if (!q) return { ok: false, erro: "Orçamento não encontrado (talvez já tenha sido excluído)." };
-  if (q.isPosSale) return { ok: false, erro: "Isso é uma venda do balcão. Em Vendas você pode cancelar." };
-  if (q.status !== "DRAFT" && q.status !== "REJECTED") return { ok: false, erro: "Orçamento aprovado não pode ser excluído. Cancele a venda em Vendas." };
+  if (q.status === "CANCELLED") {
+    // venda ou pedido já cancelado em Vendas (estoque e caixa já foram acertados): só o administrador apaga de vez
+    if (sessao.role !== "ADMIN") return { ok: false, erro: "Só o administrador pode apagar de vez uma venda cancelada." };
+  } else if (q.isPosSale) {
+    return { ok: false, erro: "Isso é uma venda do balcão. Cancele em Vendas primeiro; depois o administrador pode apagar aqui." };
+  } else if (q.status !== "DRAFT" && q.status !== "REJECTED") {
+    return { ok: false, erro: "Orçamento aprovado não pode ser excluído. Cancele a venda em Vendas." };
+  }
   if (q.serviceOrder) return { ok: false, erro: "Esse orçamento já tem ordem de produção." };
   if (q.transactions.some((t) => t.status === "PAID")) return { ok: false, erro: "Esse orçamento já tem pagamento registrado." };
 
