@@ -2,30 +2,42 @@
 
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
+import { ConfirmarDialog } from "@/components/confirmar-dialog";
 import { excluirOrcamento } from "./actions";
 
 export function ExcluirOrcamento({ id, titulo }: { id: string; titulo: string }) {
   const [pendente, comecar] = useTransition();
+  const [aberto, setAberto] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col items-end">
+    <>
       <button
         type="button"
-        disabled={pendente}
-        onClick={() => {
-          if (!window.confirm(`Excluir o orçamento "${titulo}"? Não dá para desfazer.`)) return;
+        aria-label={`Excluir o orçamento ${titulo}`}
+        onClick={() => { setErro(null); setAberto(true); }}
+        className="flex h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+      >
+        <Trash2 size={16} /> Excluir
+      </button>
+      <ConfirmarDialog
+        aberto={aberto}
+        aoFechar={() => setAberto(false)}
+        titulo="Excluir este orçamento?"
+        descricao={<>“{titulo}” será apagado de vez e não dá para desfazer.</>}
+        rotuloConfirmar="Excluir orçamento"
+        perigo
+        pendente={pendente}
+        erro={erro}
+        aoConfirmar={() => {
           setErro(null);
           comecar(async () => {
             const r = await excluirOrcamento(id);
             if (!r.ok) setErro(r.erro);
+            else setAberto(false);
           });
         }}
-        className="flex items-center gap-1.5 bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-700 px-3 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
-      >
-        <Trash2 size={16} /> {pendente ? "Excluindo…" : "Excluir"}
-      </button>
-      {erro && <p className="mt-1 max-w-56 text-right text-xs font-semibold text-red-700">{erro}</p>}
-    </div>
+      />
+    </>
   );
 }

@@ -2,31 +2,43 @@
 
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
+import { ConfirmarDialog } from "@/components/confirmar-dialog";
 import { deleteClient } from "./actions";
 
 export function ExcluirCliente({ id, nome }: { id: string; nome: string }) {
   const [pendente, comecar] = useTransition();
+  const [aberto, setAberto] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col items-end">
+    <>
       <button
         type="button"
         aria-label={`Excluir o cliente ${nome}`}
-        disabled={pendente}
-        onClick={() => {
-          if (!window.confirm(`Excluir o cliente "${nome}"? Não dá para desfazer.`)) return;
+        title="Excluir cliente"
+        onClick={() => { setErro(null); setAberto(true); }}
+        className="text-muted-foreground hover:text-destructive transition-colors size-11 flex items-center justify-center rounded-full hover:bg-destructive/10 cursor-pointer"
+      >
+        <Trash2 size={18} />
+      </button>
+      <ConfirmarDialog
+        aberto={aberto}
+        aoFechar={() => setAberto(false)}
+        titulo="Excluir este cliente?"
+        descricao={<>O cadastro de <strong>{nome}</strong> será apagado e não dá para desfazer. Cliente com vendas ou conta em aberto não pode ser excluído.</>}
+        rotuloConfirmar="Excluir cliente"
+        perigo
+        pendente={pendente}
+        erro={erro}
+        aoConfirmar={() => {
           setErro(null);
           comecar(async () => {
             const r = await deleteClient(id);
             if (!r.ok) setErro(r.erro);
+            else setAberto(false);
           });
         }}
-        className="text-slate-400 hover:text-red-500 transition-colors size-11 flex items-center justify-center rounded-full hover:bg-red-50 cursor-pointer disabled:opacity-50"
-      >
-        <Trash2 size={18} />
-      </button>
-      {erro && <p className="mt-1 max-w-48 text-right text-xs font-semibold text-red-700">{erro}</p>}
-    </div>
+      />
+    </>
   );
 }
