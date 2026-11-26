@@ -36,7 +36,9 @@ export const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency",
 export function paraNumero(txt: string): number {
   const l = txt.replace(/[^\d,.-]/g, "");
   if (!l) return 0;
-  const n = Number(l.includes(",") ? l.replace(/\./g, "").replace(",", ".") : l);
+  // Sem vírgula, um ponto seguido de exatamente 3 dígitos é separador de milhar ("1.500" = 1500).
+  const milhar = !l.includes(",") && /^-?\d{1,3}(\.\d{3})+$/.test(l);
+  const n = Number(l.includes(",") ? l.replace(/\./g, "").replace(",", ".") : milhar ? l.replace(/\./g, "") : l);
   return Number.isFinite(n) ? n : 0;
 }
 

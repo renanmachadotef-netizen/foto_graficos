@@ -65,6 +65,12 @@ export function Recibo({ c, empresa }: { c: ComprovanteVenda; empresa: string })
             <span>{brl(c.troco)}</span>
           </div>
         )}
+        {c.fiado > 0 && (
+          <div className="flex justify-between font-bold">
+            <span>FIADO (A PAGAR)</span>
+            <span>{brl(c.fiado)}</span>
+          </div>
+        )}
         {c.aberto && c.falta > 0 && (
           <div className="flex justify-between font-bold">
             <span>FALTA PAGAR</span>

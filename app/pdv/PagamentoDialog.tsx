@@ -55,6 +55,8 @@ export function PagamentoDialog({
   jaPago,
   numeroVenda,
   clienteBalcao,
+  clienteNome,
+  clienteDeve,
   empresa,
   cidade,
   pixSicoob,
@@ -68,6 +70,8 @@ export function PagamentoDialog({
   jaPago: number;
   numeroVenda: number | null;
   clienteBalcao: boolean;
+  clienteNome: string | null;
+  clienteDeve: number;
   empresa: string;
   cidade: string;
   pixSicoob: string | null;
@@ -89,9 +93,18 @@ export function PagamentoDialog({
   const dinheiroVivo = arred(linhas.filter((l) => l.method === "CASH").reduce((s, l) => s + paraNumero(l.valor), 0));
   const trocoOk = excesso <= dinheiroVivo + 0.005;
   const temFiado = linhas.some((l) => l.method === "FIADO" && paraNumero(l.valor) > 0);
-  const podeFechar = falta <= 0.005 && trocoOk && linhas.length > 0 && !(temFiado && clienteBalcao);
+  const valorFiado = arred(linhas.filter((l) => l.method === "FIADO").reduce((s, l) => s + paraNumero(l.valor), 0));
+  // PIX só conta depois que o operador conferiu no app do banco
+  const [pixConferido, setPixConferido] = useState<number[]>([]);
+  const pixPendente = linhas.some((l) => l.method.startsWith("PIX") && paraNumero(l.valor) > 0 && !pixConferido.includes(l.id));
+  const podeFechar = falta <= 0.005 && trocoOk && linhas.length > 0 && !(temFiado && clienteBalcao) && !pixPendente;
 
   function adicionar(method: string) {
+    if (linhas.some((l) => l.method === method)) {
+      // já existe uma linha dessa forma: o toque repetido não cria outra vazia
+      document.getElementById(`pag-valor-${linhas.find((l) => l.method === method)!.id}`)?.focus();
+      return;
+    }
     const restante = arred(Math.max(0, total - pagoTotal));
     setLinhas((l) => [...l, { id: seq, method, valor: restante > 0 ? texto2(restante) : "" }]);
     setSeq((s) => s + 1);
@@ -103,7 +116,8 @@ export function PagamentoDialog({
   }
 
   return (
-    <Dialog open disablePointerDismissal onOpenChange={(a) => !a && !salvando && onFechar()}>
+    // Esc com pagamento já montado não apaga tudo sem querer: só o botão "Voltar" sai.
+    <Dialog open disablePointerDismissal onOpenChange={(a) => !a && !salvando && linhas.length === 0 && onFechar()}>
       <DialogContent className="sm:max-w-lg max-h-[94vh] overflow-y-auto">
         <DialogTitle className="text-xl font-semibold">Receber pagamento</DialogTitle>
         <DialogDescription>Toque na forma de pagamento. Pode misturar (ex.: parte no PIX, parte no dinheiro).</DialogDescription>
@@ -112,6 +126,10 @@ export function PagamentoDialog({
           <p className="text-sm text-muted-foreground">Total da venda{numeroVenda ? ` #${numeroVenda}` : ""}</p>
           <p className="text-4xl font-bold tabular-nums">{brl(total)}</p>
           {jaPago > 0 && <p className="text-sm text-emerald-700 font-medium mt-1">Já pago antes: {brl(jaPago)}</p>}
+          <p className="mt-1 text-sm text-muted-foreground">
+            Cliente: <span className="font-semibold text-foreground">{clienteNome ?? "Consumidor (balcão)"}</span>
+            {clienteDeve > 0 && <span className="font-semibold text-rose-600"> • já deve {brl(clienteDeve)}</span>}
+          </p>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -143,15 +161,17 @@ export function PagamentoDialog({
                   <div className="flex items-center gap-2">
                     <span className="font-semibold flex-1">{rotulo(l.method)}</span>
                     <Input
+                      id={`pag-valor-${l.id}`}
                       inputMode="decimal"
                       value={l.valor}
                       onChange={(e) => setLinhas((x) => x.map((y) => (y.id === l.id ? { ...y, valor: e.target.value } : y)))}
+                      onFocus={(e) => e.currentTarget.select()}
                       className="w-32 text-right font-semibold"
                       aria-label={`Valor em ${rotulo(l.method)}`}
                     />
                     <button
                       type="button"
-                      aria-label="Remover"
+                      aria-label={`Remover ${rotulo(l.method)}`}
                       onClick={() => setLinhas((x) => x.filter((y) => y.id !== l.id))}
                       className="text-rose-600 size-11 flex items-center justify-center rounded-xl hover:bg-muted cursor-pointer"
                     >
@@ -183,6 +203,18 @@ export function PagamentoDialog({
                         </Link>
                       </p>
                     ))}
+
+                  {l.method.startsWith("PIX") && (
+                    <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg bg-muted/60 px-3 text-sm font-semibold">
+                      <input
+                        type="checkbox"
+                        className="size-5"
+                        checked={pixConferido.includes(l.id)}
+                        onChange={(e) => setPixConferido((c) => (e.target.checked ? [...c, l.id] : c.filter((x) => x !== l.id)))}
+                      />
+                      Conferi no app do banco: o PIX caiu
+                    </label>
+                  )}
 
                   {l.method === "CASH" && (
                     <div className="space-y-2">
@@ -229,15 +261,23 @@ export function PagamentoDialog({
                           </Button>
                         </div>
                       ) : (
-                        <label className="text-sm flex items-center gap-2">
-                          <span className="font-medium">Vai pagar até</span>
-                          <input
-                            type="date"
-                            value={venc}
-                            onChange={(e) => setVenc(e.target.value)}
-                            className="h-10 rounded-lg border border-input bg-card px-2"
-                          />
-                        </label>
+                        <>
+                          <label className="text-sm flex items-center gap-2">
+                            <span className="font-medium">Vai pagar até</span>
+                            <input
+                              type="date"
+                              value={venc}
+                              onChange={(e) => setVenc(e.target.value)}
+                              className="h-11 rounded-lg border border-input bg-card px-2"
+                            />
+                          </label>
+                          {valorFiado > 0 && (
+                            <p className="text-sm font-semibold text-amber-700">
+                              {brl(valorFiado)} ficam como fiado de {clienteNome}
+                              {venc ? `, com vencimento em ${venc.split("-").reverse().join("/")}` : ""}.
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -247,7 +287,7 @@ export function PagamentoDialog({
           </ul>
         )}
 
-        <div className="rounded-xl border border-border p-3 space-y-1 text-base">
+        <div role="status" aria-live="polite" className="rounded-xl border border-border p-3 space-y-1 text-base">
           {jaPago > 0 && <Linha rotulo="Já pago" valor={brl(jaPago)} />}
           <Linha rotulo="Recebendo agora" valor={brl(soma)} />
           {falta > 0.005 ? (
@@ -255,11 +295,11 @@ export function PagamentoDialog({
           ) : excesso > 0.005 ? (
             <Linha rotulo={trocoOk ? "Troco" : "Passou do total"} valor={brl(excesso)} forte cor={trocoOk ? "text-green-700" : "text-rose-600"} />
           ) : (
-            <Linha rotulo="Tudo certo" valor="✓" forte cor="text-green-700" />
+            <Linha rotulo="Tudo certo" valor="✓ Confere" forte cor="text-green-700" />
           )}
         </div>
 
-        {erro && <p className="rounded-xl bg-rose-100 text-rose-800 px-3 py-2 font-semibold">{erro}</p>}
+        {erro && <p role="alert" className="rounded-xl bg-rose-100 text-rose-800 px-3 py-2 font-semibold">{erro}</p>}
 
         <Button
           size="lg"
@@ -282,9 +322,14 @@ export function PagamentoDialog({
                 ? "Fiado precisa de cliente. Volte e escolha o cliente."
                 : falta > 0.005
                   ? `Ainda falta ${brl(falta)}.`
-                  : "O valor passou do total e não há dinheiro para dar troco."}
+                  : pixPendente
+                    ? "Confira o PIX no app do banco e marque a caixinha."
+                    : "O valor passou do total e não há dinheiro para dar troco."}
           </p>
         )}
+        <Button type="button" variant="ghost" disabled={salvando} onClick={onFechar} className="w-full cursor-pointer text-muted-foreground">
+          Voltar sem receber
+        </Button>
       </DialogContent>
     </Dialog>
   );

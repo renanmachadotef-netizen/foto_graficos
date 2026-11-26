@@ -96,6 +96,7 @@ export function VendaRapida({
   const [escolhendoCliente, setEscolhendoCliente] = useState(false);
   const [pagando, setPagando] = useState(false);
   const [verPedidos, setVerPedidos] = useState(false);
+  const [trocarPor, setTrocarPor] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [comprovante, setComprovante] = useState<ComprovanteVenda | null>(null);
@@ -183,11 +184,10 @@ export function VendaRapida({
   }
 
   function mudarQtd(chave: string, delta: number) {
-    setItens((cur) =>
-      cur
-        .map((i) => (i.chave === chave ? { ...i, quantity: arred(i.quantity + delta) } : i))
-        .filter((i) => i.quantity > 0),
-    );
+    const atual = itens.find((i) => i.chave === chave);
+    // chegar a zero é tirar o item: passa pelo "Desfazer"
+    if (atual && arred(atual.quantity + delta) <= 0) return tirarItem(chave);
+    setItens((cur) => cur.map((i) => (i.chave === chave ? { ...i, quantity: arred(i.quantity + delta) } : i)));
   }
 
   function limpar() {
@@ -263,16 +263,27 @@ export function VendaRapida({
   async function salvarComoPedido() {
     setSalvando(true);
     setErro(null);
-    const valorSinal = Math.round((parseFloat(sinal.replace(",", ".")) || 0) * 100) / 100;
+    const valorSinal = arred(paraNumero(sinal));
     const r = await salvarVenda(payload(false, valorSinal > 0 ? [{ method: sinalForma, amount: valorSinal }] : []));
     setSalvando(false);
     if (!r.ok) return setErro(r.erro);
     setComprovante(r.comprovante);
   }
 
+  /** Se já há uma venda em andamento, pergunta antes de trocá-la pelo pedido escolhido. */
+  function pedirContinuar(id: string) {
+    if (itens.length > 0 && pedido?.id !== id) {
+      setVerPedidos(false);
+      setTrocarPor(id);
+      return;
+    }
+    continuarPedido(id);
+  }
+
   async function continuarPedido(id: string) {
     const p = await carregarPedido(id);
     if (!p) {
+      setVerPedidos(false);
       setErro("Não consegui abrir esse pedido (talvez já tenha sido fechado).");
       return;
     }
@@ -479,13 +490,15 @@ export function VendaRapida({
                 <Pencil className="size-4 text-muted-foreground" />
               </button>
 
-              <div className="flex flex-wrap gap-1.5">
+              <div role="group" aria-label="Quem está vendendo" className="flex flex-wrap items-center gap-1.5">
+                <span className="text-sm text-muted-foreground">Vendedor:</span>
                 {vendedores.map((v) => (
                   <button
                     key={v.id}
                     type="button"
+                    aria-pressed={vendedorId === v.id}
                     onClick={() => setVendedorId(v.id)}
-                    className={`rounded-full border px-3 py-1 text-sm font-medium cursor-pointer ${
+                    className={`min-h-11 rounded-full border px-4 text-sm font-medium cursor-pointer ${
                       vendedorId === v.id ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"
                     }`}
                   >
@@ -684,6 +697,8 @@ export function VendaRapida({
         <EditarItem
           key={editando.item?.chave ?? editando.produto?.id ?? "avulso"}
           alvo={editando}
+          precoCatalogo={editando.produto?.price ?? produtos.find((x) => x.id === editando.item?.productId)?.price ?? 0}
+          limiteDesconto={limiteDesconto}
           onFechar={() => setEditando(null)}
           onSalvar={(it) => {
             setItens((cur) => (cur.some((x) => x.chave === it.chave) ? cur.map((x) => (x.chave === it.chave ? it : x)) : [...cur, it]));
@@ -709,6 +724,8 @@ export function VendaRapida({
           jaPago={jaPago}
           numeroVenda={pedido?.numero ?? null}
           clienteBalcao={!cliente}
+          clienteNome={cliente?.name ?? null}
+          clienteDeve={cliente?.deve ?? 0}
           empresa={empresa}
           cidade={cidade}
           pixSicoob={pixSicoob}
@@ -720,7 +737,21 @@ export function VendaRapida({
         />
       )}
 
-      {verPedidos && <PedidosAbertos onFechar={() => setVerPedidos(false)} onContinuar={continuarPedido} />}
+      {verPedidos && <PedidosAbertos onFechar={() => setVerPedidos(false)} onContinuar={pedirContinuar} />}
+
+      <ConfirmarDialog
+        aberto={trocarPor !== null}
+        aoFechar={() => setTrocarPor(null)}
+        titulo="Trocar a venda em andamento?"
+        descricao="Você tem itens na venda atual. Se continuar o outro pedido, a venda atual será descartada."
+        rotuloConfirmar="Trocar pelo pedido"
+        perigo
+        aoConfirmar={() => {
+          const id = trocarPor;
+          setTrocarPor(null);
+          if (id) continuarPedido(id);
+        }}
+      />
 
       {comprovante && (
         <ComprovanteDialog
@@ -765,9 +796,19 @@ export function VendaRapida({
             aria-label="Ver os itens da venda"
           >
             <p className="text-sm text-muted-foreground underline underline-offset-2">Ver {qtdTexto(qtdItens)} item(ns)</p>
-            <p className="text-2xl font-bold tabular-nums">{brl(total)}</p>
+            <p className="text-2xl font-bold tabular-nums">{brl(restante || total)}</p>
+            {jaPago > 0 && <p className="text-xs font-medium text-muted-foreground">Falta receber (já pago {brl(jaPago)})</p>}
+            {passouLimite && <p className="text-xs font-semibold text-destructive">Desconto acima do limite</p>}
           </button>
-          <Button size="lg" disabled={passouLimite} onClick={() => setPagando(true)} className="h-12 cursor-pointer bg-success text-success-foreground hover:bg-success hover:brightness-110">
+          <Button
+            size="lg"
+            disabled={passouLimite}
+            onClick={() => {
+              setErro(null);
+              setPagando(true);
+            }}
+            className="h-12 cursor-pointer bg-success text-success-foreground hover:bg-success hover:brightness-110"
+          >
             <Wallet /> Cobrar
           </Button>
         </div>
@@ -803,10 +844,14 @@ function Chip({ ativo, onClick, children }: { ativo: boolean; onClick: () => voi
 
 function EditarItem({
   alvo,
+  precoCatalogo,
+  limiteDesconto,
   onFechar,
   onSalvar,
 }: {
   alvo: { item: ItemCarrinho | null; produto: ProdutoPdv | null };
+  precoCatalogo: number;
+  limiteDesconto: number | null;
   onFechar: () => void;
   onSalvar: (i: ItemCarrinho) => void;
 }) {
@@ -838,6 +883,14 @@ function EditarItem({
     if (!nome.trim()) return setErro("Escreva o nome do item.");
     if (!(q > 0)) return setErro("A quantidade precisa ser maior que zero.");
     if (porMetro && medidaSuspeita) return setErro("Medida acima de 20 m. As medidas são em metros: 1,20 e não 120.");
+    const novoPreco = arred(paraNumero(preco));
+    // o preço do item não pode furar o limite de desconto de quem não é gerente
+    if (precoCatalogo > 0 && limiteDesconto !== null) {
+      const minimo = arred(precoCatalogo * (1 - limiteDesconto / 100));
+      if (novoPreco + 0.005 < minimo) {
+        return setErro(`Preço abaixo do limite de desconto (${limiteDesconto.toLocaleString("pt-BR")}%). O mínimo é ${brl(minimo)}. Chame o gerente.`);
+      }
+    }
     const medidas = `${larg.replace(".", ",")} x ${alt.replace(".", ",")} m`;
     onSalvar({
       chave: base?.chave ?? novaChave(),
@@ -868,8 +921,8 @@ function EditarItem({
         >
           {(avulso || base) && (
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Nome</Label>
-              <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Serviço de arte" autoFocus={avulso} />
+              <Label htmlFor="pdv-item-nome" className="text-sm font-semibold">Nome</Label>
+              <Input id="pdv-item-nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Serviço de arte" autoFocus={avulso} />
             </div>
           )}
 
@@ -901,21 +954,21 @@ function EditarItem({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Quantidade{porMetro ? " (m²)" : ""}</Label>
-              <Input inputMode="decimal" value={qtd} onChange={(e) => setQtd(e.target.value)} autoFocus={!avulso && !porMetro} />
+              <Label htmlFor="pdv-item-qtd" className="text-sm font-semibold">Quantidade{porMetro ? " (m²)" : ""}</Label>
+              <Input id="pdv-item-qtd" inputMode="decimal" value={qtd} onChange={(e) => setQtd(e.target.value)} onFocus={(e) => e.currentTarget.select()} autoFocus={!avulso && !porMetro} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Preço{porMetro ? " por m²" : " cada"} (R$)</Label>
-              <Input inputMode="decimal" value={preco} onChange={(e) => setPreco(e.target.value)} />
+              <Label htmlFor="pdv-item-preco" className="text-sm font-semibold">Preço{porMetro ? " por m²" : " cada"} (R$)</Label>
+              <Input id="pdv-item-preco" inputMode="decimal" value={preco} onChange={(e) => setPreco(e.target.value)} onFocus={(e) => e.currentTarget.select()} />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold">Observação (opcional)</Label>
-            <Input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex.: 50x30 cm, cor azul…" />
+            <Label htmlFor="pdv-item-obs" className="text-sm font-semibold">Observação (opcional)</Label>
+            <Input id="pdv-item-obs" value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex.: 50x30 cm, cor azul…" />
           </div>
 
-          {erro && <p className="text-rose-600 font-semibold">{erro}</p>}
+          {erro && <p role="alert" className="text-rose-600 font-semibold">{erro}</p>}
           <Button size="lg" type="submit" className="w-full cursor-pointer">
             <Plus /> {base ? "Salvar" : "Colocar na venda"} • {brl(arred(paraNumero(qtd) * paraNumero(preco)))}
           </Button>
@@ -1014,12 +1067,12 @@ function EscolherCliente({
         ) : (
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Nome</Label>
-              <Input value={nomeNovo} onChange={(e) => setNomeNovo(e.target.value)} autoFocus />
+              <Label htmlFor="pdv-cli-nome" className="text-sm font-semibold">Nome</Label>
+              <Input id="pdv-cli-nome" value={nomeNovo} onChange={(e) => setNomeNovo(e.target.value)} autoFocus />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Telefone / WhatsApp (opcional)</Label>
-              <Input inputMode="tel" value={foneNovo} onChange={(e) => setFoneNovo(e.target.value)} placeholder="48 99999-9999" />
+              <Label htmlFor="pdv-cli-fone" className="text-sm font-semibold">Telefone / WhatsApp (opcional)</Label>
+              <Input id="pdv-cli-fone" inputMode="tel" value={foneNovo} onChange={(e) => setFoneNovo(e.target.value)} placeholder="48 99999-9999" />
             </div>
             {erro && <p className="text-rose-600 font-semibold">{erro}</p>}
             <div className="grid grid-cols-2 gap-2">
