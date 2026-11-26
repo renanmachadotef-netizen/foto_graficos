@@ -52,7 +52,7 @@ export function ComprovanteDialog({
             title={zap ? "Enviar pelo WhatsApp" : "Cliente sem telefone"}
             className="cursor-pointer"
           >
-            <MessageCircle /> {zap ? "WhatsApp" : "Sem fone"}
+            <MessageCircle /> {zap ? "WhatsApp" : "Sem telefone"}
           </Button>
         </div>
         <Button size="lg" onClick={onNova} className="w-full cursor-pointer">

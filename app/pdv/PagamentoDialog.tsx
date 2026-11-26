@@ -270,7 +270,7 @@ export function PagamentoDialog({
               venc,
             )
           }
-          className="w-full h-12 cursor-pointer bg-emerald-700 text-white hover:bg-emerald-800 hover:brightness-100"
+          className="w-full h-12 cursor-pointer bg-success text-success-foreground hover:bg-success hover:brightness-110"
         >
           {salvando ? <Loader2 className="animate-spin" /> : <Check />} Finalizar venda
         </Button>
@@ -320,6 +320,7 @@ function QrPix({
   );
   const [img, setImg] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [mostrarCodigo, setMostrarCodigo] = useState(false);
 
   useEffect(() => {
     let vivo = true;
@@ -335,7 +336,7 @@ function QrPix({
       setCopiado(true);
       setTimeout(() => setCopiado(false), 2500);
     } catch {
-      window.prompt("Copie o código PIX:", codigo);
+      setMostrarCodigo(true);
     }
   }
 
@@ -343,6 +344,16 @@ function QrPix({
     <div className="rounded-xl bg-white p-3 text-center space-y-2 border border-border">
       {img ? <img src={img} alt="QR Code PIX" className="mx-auto size-56" /> : <Loader2 className="mx-auto size-8 animate-spin text-muted-foreground" />}
       <p className="text-xs text-neutral-600">O valor {valor > 0 ? `de ${brl(valor)} ` : ""}já vai preenchido. Confirme no app do banco quando cair.</p>
+      {mostrarCodigo && (
+        <textarea
+          readOnly
+          value={codigo}
+          rows={3}
+          aria-label="Código PIX para copiar"
+          onFocus={(e) => e.currentTarget.select()}
+          className="w-full rounded-lg border border-border bg-white p-2 text-xs text-neutral-800 break-all"
+        />
+      )}
       <div className="flex gap-2 justify-center">
         <Button type="button" variant="outline" size="sm" onClick={copiar} className="cursor-pointer">
           <Copy /> {copiado ? "Copiado!" : "Copiar código"}

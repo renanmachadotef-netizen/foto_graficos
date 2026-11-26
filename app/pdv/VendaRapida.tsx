@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ConfirmarDialog } from "@/components/confirmar-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { normalizarBusca } from "@/lib/busca";
@@ -83,6 +84,7 @@ export function VendaRapida({
   const [vendedorId, setVendedorId] = useState(vendedorInicial);
   const [desconto, setDesconto] = useState("");
   const [descontoEmPct, setDescontoEmPct] = useState(false);
+  const [descontoAberto, setDescontoAberto] = useState(false);
   const [confirmaLimpar, setConfirmaLimpar] = useState(false);
   const [paraProducao, setParaProducao] = useState(true);
   const [prazo, setPrazo] = useState("");
@@ -197,7 +199,11 @@ export function VendaRapida({
     setParaProducao(true);
     setBusca("");
     setCategoria("TODAS");
-    setTimeout(() => campoBusca.current?.focus(), 50);
+    setDescontoAberto(false);
+    // no celular/tablet o teclado não deve abrir sozinho ao começar outra venda
+    if (typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches) {
+      setTimeout(() => campoBusca.current?.focus(), 50);
+    }
   }
 
   function payload(fechar: boolean, pagamentos: { method: string; amount: number }[], vencimentoFiado?: string) {
@@ -355,7 +361,7 @@ export function VendaRapida({
           <div className="relative">
             <div className="flex gap-2 overflow-x-auto pb-1 pr-8">
               <Chip ativo={categoria === "TODAS"} onClick={() => setCategoria("TODAS")}>
-                Todos ({produtos.length})
+                Todos
               </Chip>
               {categorias.map((c) => (
                 <Chip key={c} ativo={categoria === c} onClick={() => setCategoria(c)}>
@@ -386,7 +392,18 @@ export function VendaRapida({
                   onClick={() => adicionar(p)}
                   className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/60 active:bg-muted transition-colors cursor-pointer"
                 >
-                  <span className="min-w-0 flex-1 font-medium leading-snug truncate">{p.name}</span>
+                  {p.temFoto ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`/api/produto-foto/${p.id}`} alt="" loading="lazy" className="size-10 shrink-0 rounded-lg object-cover" />
+                  ) : (
+                    <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-bold text-muted-foreground">
+                      {(p.category || p.name).trim().charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="min-w-0 flex-1 leading-snug">
+                    <span className="block truncate font-medium">{p.name}</span>
+                    {p.category && <span className="block truncate text-xs text-muted-foreground">{p.category}</span>}
+                  </span>
                   <span className="text-sm text-muted-foreground shrink-0">{p.unit === "un" ? "" : `/${p.unit}`}</span>
                   <span className="text-lg font-bold tabular-nums shrink-0">{p.price > 0 ? brl(p.price) : "Sem preço"}</span>
                   <Plus className="size-5 text-primary shrink-0" />
@@ -403,7 +420,7 @@ export function VendaRapida({
         </section>
 
         {/* Carrinho */}
-        <aside className="lg:sticky lg:top-20 lg:self-start">
+        <aside id="carrinho" className="scroll-mt-4 lg:sticky lg:top-20 lg:self-start">
           <div className="rounded-2xl border border-border bg-card shadow-sm flex flex-col lg:max-h-[calc(100vh-7rem)]">
             <div className="p-4 border-b border-border space-y-3">
               <div className="flex items-center gap-2">
@@ -471,13 +488,13 @@ export function VendaRapida({
                     </div>
                     <div className="mt-1.5 flex items-center justify-between">
                       <div className="flex items-center gap-1">
-                        <button type="button" aria-label="Diminuir" onClick={() => mudarQtd(i.chave, Number.isInteger(i.quantity) ? -1 : -0.5)} className="size-10 rounded-xl bg-muted flex items-center justify-center cursor-pointer active:scale-90">
+                        <button type="button" aria-label="Diminuir" onClick={() => mudarQtd(i.chave, Number.isInteger(i.quantity) ? -1 : -0.5)} className="size-11 rounded-xl bg-muted flex items-center justify-center cursor-pointer active:scale-90">
                           <Minus className="size-5" />
                         </button>
                         <button type="button" onClick={() => setEditando({ item: i, produto: null })} className="min-w-12 text-center text-lg font-bold tabular-nums cursor-pointer">
                           {qtdTexto(i.quantity)}
                         </button>
-                        <button type="button" aria-label="Aumentar" onClick={() => mudarQtd(i.chave, Number.isInteger(i.quantity) ? 1 : 0.5)} className="size-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center cursor-pointer active:scale-90">
+                        <button type="button" aria-label="Aumentar" onClick={() => mudarQtd(i.chave, Number.isInteger(i.quantity) ? 1 : 0.5)} className="size-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center cursor-pointer active:scale-90">
                           <Plus className="size-5" />
                         </button>
                       </div>
@@ -505,6 +522,15 @@ export function VendaRapida({
                 <span className="text-muted-foreground font-medium">TOTAL</span>
                 <span className="text-4xl font-bold tabular-nums">{brl(total)}</span>
               </div>
+              {!descontoAberto && descontoNum === 0 && !carrinhoVazio && (
+                <button
+                  type="button"
+                  onClick={() => setDescontoAberto(true)}
+                  className="-mt-1 min-h-11 text-sm font-semibold text-foreground underline underline-offset-2 cursor-pointer"
+                >
+                  Dar desconto
+                </button>
+              )}
               {jaPago > 0 && (
                 <p className="text-sm font-medium text-emerald-700">
                   Já pago {brl(jaPago)} • falta {brl(restante)}
@@ -518,7 +544,7 @@ export function VendaRapida({
                   setErro(null);
                   setPagando(true);
                 }}
-                className="w-full h-14 text-lg cursor-pointer bg-emerald-700 text-white hover:bg-emerald-800 hover:brightness-100"
+                className="w-full h-14 text-lg cursor-pointer bg-success text-success-foreground hover:bg-success hover:brightness-110"
               >
                 <Wallet className="size-6" /> Cobrar {brl(restante || total)}
               </Button>
@@ -529,7 +555,11 @@ export function VendaRapida({
                 </p>
               )}
 
-              <details className="group rounded-xl border border-border">
+              <details
+                className="group rounded-xl border border-border"
+                open={descontoAberto || descontoNum > 0}
+                onToggle={(e) => setDescontoAberto(e.currentTarget.open)}
+              >
                 <summary className="flex cursor-pointer items-center justify-between px-3 py-3 text-sm font-semibold marker:content-none">
                   Desconto e produção
                   <span className="text-muted-foreground group-open:rotate-180 transition-transform" aria-hidden>
@@ -576,7 +606,7 @@ export function VendaRapida({
 
               <details className="group rounded-xl border border-border">
                 <summary className="flex cursor-pointer items-center justify-between px-3 py-3 text-sm font-semibold marker:content-none">
-                  Deixar como pedido em aberto
+                  Guardar como pedido (cliente paga depois)
                   <span className="text-muted-foreground group-open:rotate-180 transition-transform" aria-hidden>
                     ▾
                   </span>
@@ -606,8 +636,10 @@ export function VendaRapida({
                       ))}
                     </select>
                   </div>
-                  <p className="text-sm text-muted-foreground">O pedido fica guardado até o cliente pagar o resto. Precisa escolher o cliente.</p>
-                  <Button variant="outline" disabled={carrinhoVazio || salvando} onClick={salvarComoPedido} className="w-full h-11 cursor-pointer">
+                  <p className="text-sm text-muted-foreground">
+                    {cliente ? "O pedido fica guardado até o cliente pagar o resto." : "Escolha o cliente lá em cima para guardar o pedido."}
+                  </p>
+                  <Button variant="outline" disabled={carrinhoVazio || salvando || !cliente} onClick={salvarComoPedido} className="w-full h-11 cursor-pointer">
                     {salvando ? <Loader2 className="animate-spin" /> : <Save />} Salvar pedido em aberto
                   </Button>
                 </div>
@@ -673,11 +705,16 @@ export function VendaRapida({
       {/* barra fixa no celular */}
       {!carrinhoVazio && (
         <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border p-3 flex items-center gap-3">
-          <div className="flex-1">
-            <p className="text-sm text-muted-foreground">{qtdTexto(qtdItens)} item(ns)</p>
+          <button
+            type="button"
+            onClick={() => document.getElementById("carrinho")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="flex-1 text-left cursor-pointer"
+            aria-label="Ver os itens da venda"
+          >
+            <p className="text-sm text-muted-foreground underline underline-offset-2">Ver {qtdTexto(qtdItens)} item(ns)</p>
             <p className="text-2xl font-bold tabular-nums">{brl(total)}</p>
-          </div>
-          <Button size="lg" disabled={passouLimite} onClick={() => setPagando(true)} className="h-12 cursor-pointer bg-emerald-700 text-white hover:bg-emerald-800 hover:brightness-100">
+          </button>
+          <Button size="lg" disabled={passouLimite} onClick={() => setPagando(true)} className="h-12 cursor-pointer bg-success text-success-foreground hover:bg-success hover:brightness-110">
             <Wallet /> Cobrar
           </Button>
         </div>
@@ -699,6 +736,7 @@ function Chip({ ativo, onClick, children }: { ativo: boolean; onClick: () => voi
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={ativo}
       className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold cursor-pointer ${
         ativo ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"
       }`}
@@ -951,6 +989,22 @@ function EscolherCliente({
 function PedidosAbertos({ onFechar, onContinuar }: { onFechar: () => void; onContinuar: (id: string) => void }) {
   const [lista, setLista] = useState<PedidoAberto[] | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [cancelando, setCancelando] = useState<PedidoAberto | null>(null);
+  const [cancelErro, setCancelErro] = useState<string | null>(null);
+  const [cancelPendente, setCancelPendente] = useState(false);
+
+  async function confirmarCancelar() {
+    if (!cancelando) return;
+    setCancelPendente(true);
+    const r = await cancelarPedido(cancelando.id);
+    setCancelPendente(false);
+    if (!r.ok) setCancelErro(r.erro || "Não consegui cancelar.");
+    else {
+      setCancelando(null);
+      setMsg(null);
+      carregar();
+    }
+  }
 
   async function carregar() {
     setLista(await listarPedidosAbertos());
@@ -995,15 +1049,7 @@ function PedidosAbertos({ onFechar, onContinuar }: { onFechar: () => void; onCon
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={async () => {
-                      if (!window.confirm(`Cancelar o pedido #${p.numero}?`)) return;
-                      const r = await cancelarPedido(p.id);
-                      if (!r.ok) setMsg(r.erro || "Não consegui cancelar.");
-                      else {
-                        setMsg(null);
-                        carregar();
-                      }
-                    }}
+                    onClick={() => { setCancelErro(null); setCancelando(p); }}
                     className="cursor-pointer text-rose-600"
                   >
                     <Trash2 /> Cancelar
@@ -1013,6 +1059,17 @@ function PedidosAbertos({ onFechar, onContinuar }: { onFechar: () => void; onCon
             ))}
           </ul>
         )}
+        <ConfirmarDialog
+          aberto={cancelando !== null}
+          aoFechar={() => setCancelando(null)}
+          titulo={`Cancelar o pedido #${cancelando?.numero ?? ""}?`}
+          descricao={<>O pedido de <strong>{cancelando?.cliente}</strong> ({cancelando ? brl(cancelando.total) : ""}) será cancelado.</>}
+          rotuloConfirmar="Sim, cancelar pedido"
+          perigo
+          pendente={cancelPendente}
+          erro={cancelErro}
+          aoConfirmar={confirmarCancelar}
+        />
       </DialogContent>
     </Dialog>
   );

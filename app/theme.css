@@ -153,6 +153,8 @@
   --sidebar-accent-foreground: #1a1916;
   --sidebar-border: #e8e6dc;
   --sidebar-ring: #d97757;
+  --success: #047857;
+  --success-foreground: #ffffff;
 }
 
 .dark {
@@ -182,6 +184,8 @@
   --ink: #2a241f;
   --ink-2: #3a322c;
   --ink-fg: #f4ece4;
+  --success: #0f7a55;
+  --success-foreground: #ffffff;
   --color-emerald-50: oklch(26.2% 0.051 172.552);
   --color-emerald-100: oklch(37.8% 0.077 168.94);
   --color-emerald-200: oklch(43.2% 0.095 166.913);

@@ -34,7 +34,7 @@ export function AcoesOrcamento({ id, cliente, total }: { id: string; cliente: st
       <button
         type="button"
         onClick={() => { setErro(null); setQual("aprovar"); }}
-        className="flex h-11 items-center gap-1.5 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 cursor-pointer"
+        className="flex h-11 items-center gap-1.5 rounded-lg bg-success px-4 text-sm font-semibold text-success-foreground transition-colors hover:brightness-110 cursor-pointer"
       >
         <Check size={16} /> Aprovar orçamento
       </button>

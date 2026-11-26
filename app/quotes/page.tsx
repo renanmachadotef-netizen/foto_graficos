@@ -23,12 +23,12 @@ const ABAS = {
 type Aba = keyof typeof ABAS;
 
 const ETIQUETA: Record<string, { texto: string; cor: string; faixa: string }> = {
-  APPROVED: { texto: "APROVADO", cor: "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200", faixa: "bg-emerald-600" },
-  OPEN: { texto: "EM ABERTO", cor: "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200", faixa: "bg-emerald-600" },
-  REJECTED: { texto: "RECUSADO", cor: "bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200", faixa: "bg-red-600" },
-  CANCELLED: { texto: "CANCELADO", cor: "bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200", faixa: "bg-red-600" },
+  APPROVED: { texto: "APROVADO", cor: "bg-emerald-100 text-emerald-900", faixa: "bg-emerald-600" },
+  OPEN: { texto: "EM ABERTO", cor: "bg-emerald-100 text-emerald-900", faixa: "bg-emerald-600" },
+  REJECTED: { texto: "RECUSADO", cor: "bg-red-100 text-red-900", faixa: "bg-red-600" },
+  CANCELLED: { texto: "CANCELADO", cor: "bg-red-100 text-red-900", faixa: "bg-red-600" },
 };
-const ETIQUETA_PADRAO = { texto: "AGUARDANDO", cor: "bg-sky-100 text-sky-900 dark:bg-sky-950 dark:text-sky-200", faixa: "bg-sky-600" };
+const ETIQUETA_PADRAO = { texto: "AGUARDANDO", cor: "bg-sky-100 text-sky-900", faixa: "bg-sky-600" };
 
 export default async function QuotesListPage({
   searchParams,
@@ -81,7 +81,7 @@ export default async function QuotesListPage({
       </div>
 
       {aviso && (
-        <div role="status" className="flex items-center gap-2 rounded-xl border border-emerald-600/40 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+        <div role="status" className="flex items-center gap-2 rounded-xl border border-emerald-600/40 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
           <CheckCircle2 size={18} />
           {aviso === "aprovado"
             ? "Orçamento aprovado. A ordem de serviço foi criada e o valor entrou em contas a receber."
