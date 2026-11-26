@@ -253,7 +253,13 @@ export function VendaRapida({
   async function finalizar(pagamentos: { method: string; amount: number }[], vencimentoFiado: string) {
     setSalvando(true);
     setErro(null);
-    const r = await salvarVenda(payload(true, pagamentos, vencimentoFiado));
+    let r: Awaited<ReturnType<typeof salvarVenda>>;
+    try {
+      r = await salvarVenda(payload(true, pagamentos, vencimentoFiado));
+    } catch {
+      setSalvando(false);
+      return setErro(MSG_SEM_REDE);
+    }
     setSalvando(false);
     if (!r.ok) return setErro(r.erro);
     setPagando(false);
@@ -264,7 +270,13 @@ export function VendaRapida({
     setSalvando(true);
     setErro(null);
     const valorSinal = arred(paraNumero(sinal));
-    const r = await salvarVenda(payload(false, valorSinal > 0 ? [{ method: sinalForma, amount: valorSinal }] : []));
+    let r: Awaited<ReturnType<typeof salvarVenda>>;
+    try {
+      r = await salvarVenda(payload(false, valorSinal > 0 ? [{ method: sinalForma, amount: valorSinal }] : []));
+    } catch {
+      setSalvando(false);
+      return setErro(MSG_SEM_REDE);
+    }
     setSalvando(false);
     if (!r.ok) return setErro(r.erro);
     setComprovante(r.comprovante);
@@ -818,6 +830,9 @@ export function VendaRapida({
   );
 }
 
+const MSG_SEM_REDE =
+  "Sem conexão com o sistema. Confira em Vendas do dia se esta venda foi gravada antes de tentar de novo, para não lançar duas vezes.";
+
 /** Primeiro nome; se dois vendedores têm o mesmo, acrescenta a inicial do sobrenome. */
 function nomeCurto(nome: string, todos: { name: string }[]) {
   const partes = nome.trim().split(/\s+/);
@@ -900,7 +915,13 @@ function EditarItem({
       quantity: q,
       unitPrice: arred(paraNumero(preco)),
       unitCost: base?.unitCost ?? p?.cost ?? 0,
-      notes: porMetro && area > 0 && !obs ? (nPecas > 1 ? `${nPecas} peças de ${medidas}` : medidas) : obs,
+      // observação vazia ou gerada pelas medidas antigas ("1,20 x 0,80 m") acompanha as medidas novas
+      notes:
+        porMetro && area > 0 && (!obs || /^(\d+ peças de )?[\d.,]* x [\d.,]* m$/.test(obs.trim()))
+          ? nPecas > 1
+            ? `${nPecas} peças de ${medidas}`
+            : medidas
+          : obs,
       larg,
       alt,
       pecas,

@@ -118,7 +118,7 @@ export function PagamentoDialog({
   return (
     // Esc com pagamento já montado não apaga tudo sem querer: só o botão "Voltar" sai.
     <Dialog open disablePointerDismissal onOpenChange={(a) => !a && !salvando && linhas.length === 0 && onFechar()}>
-      <DialogContent className="sm:max-w-lg max-h-[94vh] overflow-y-auto">
+      <DialogContent showCloseButton={false} className="sm:max-w-lg max-h-[94vh] overflow-y-auto">
         <DialogTitle className="text-xl font-semibold">Receber pagamento</DialogTitle>
         <DialogDescription>Toque na forma de pagamento. Pode misturar (ex.: parte no PIX, parte no dinheiro).</DialogDescription>
 
@@ -198,7 +198,7 @@ export function PagamentoDialog({
                     ) : (
                       <p className="text-sm text-amber-700">
                         Falta cadastrar a chave PIX desta conta.{" "}
-                        <Link href="/settings" className="underline font-medium">
+                        <Link href="/settings" target="_blank" rel="noopener" className="underline font-medium">
                           Configurar agora
                         </Link>
                       </p>
