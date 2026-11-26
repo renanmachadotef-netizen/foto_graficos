@@ -99,6 +99,10 @@ export function VendaRapida({
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [comprovante, setComprovante] = useState<ComprovanteVenda | null>(null);
+  const [comprovanteSoVer, setComprovanteSoVer] = useState(false);
+  const [ultimoComprovante, setUltimoComprovante] = useState<ComprovanteVenda | null>(null);
+  const [removido, setRemovido] = useState<{ item: ItemCarrinho; pos: number } | null>(null);
+  const timerRemovido = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [totalAbertos, setTotalAbertos] = useState<number | null>(null);
   const campoBusca = useRef<HTMLInputElement>(null);
 
@@ -229,6 +233,23 @@ export function VendaRapida({
     };
   }
 
+  function tirarItem(chave: string) {
+    const pos = itens.findIndex((x) => x.chave === chave);
+    if (pos < 0) return;
+    setRemovido({ item: itens[pos], pos });
+    setItens((c) => c.filter((x) => x.chave !== chave));
+    if (timerRemovido.current) clearTimeout(timerRemovido.current);
+    timerRemovido.current = setTimeout(() => setRemovido(null), 6000);
+  }
+
+  function desfazerRemocao() {
+    if (!removido) return;
+    const { item, pos } = removido;
+    setItens((c) => (c.some((x) => x.chave === item.chave) ? c : [...c.slice(0, pos), item, ...c.slice(pos)]));
+    setRemovido(null);
+    if (timerRemovido.current) clearTimeout(timerRemovido.current);
+  }
+
   async function finalizar(pagamentos: { method: string; amount: number }[], vencimentoFiado: string) {
     setSalvando(true);
     setErro(null);
@@ -291,6 +312,16 @@ export function VendaRapida({
         <Link href="/vendas" className="inline-flex h-12 items-center gap-2 rounded-xl border border-border bg-card px-5 font-semibold hover:bg-muted">
           <History className="size-5" /> Vendas do dia
         </Link>
+        {ultimoComprovante && (
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => { setComprovanteSoVer(true); setComprovante(ultimoComprovante); }}
+            className="cursor-pointer"
+          >
+            Último comprovante
+          </Button>
+        )}
         <Button variant="outline" size="lg" onClick={() => setVerPedidos(true)} className="cursor-pointer">
           <ClipboardList /> Pedidos em aberto{totalAbertos ? ` (${totalAbertos})` : ""}
         </Button>
@@ -482,7 +513,7 @@ export function VendaRapida({
                           {i.unit !== "un" ? `/${i.unit}` : ""} <Pencil className="inline size-3" />
                         </p>
                       </button>
-                      <button type="button" aria-label="Tirar da venda" onClick={() => setItens((c) => c.filter((x) => x.chave !== i.chave))} className="text-rose-600 size-11 -mr-1 -mt-1 flex items-center justify-center rounded-xl hover:bg-muted cursor-pointer">
+                      <button type="button" aria-label="Tirar da venda" onClick={() => tirarItem(i.chave)} className="text-rose-600 size-11 -mr-1 -mt-1 flex items-center justify-center rounded-xl hover:bg-muted cursor-pointer">
                         <Trash2 className="size-5" />
                       </button>
                     </div>
@@ -695,11 +726,33 @@ export function VendaRapida({
         <ComprovanteDialog
           c={comprovante}
           empresa={empresa}
+          somenteVer={comprovanteSoVer}
           onNova={() => {
             setComprovante(null);
+            setUltimoComprovante(comprovante);
             limpar();
           }}
+          onFechar={() => {
+            setComprovante(null);
+            if (!comprovanteSoVer) {
+              setUltimoComprovante(comprovante);
+              limpar();
+            }
+            setComprovanteSoVer(false);
+          }}
         />
+      )}
+
+      {removido && (
+        <div
+          role="status"
+          className="fixed bottom-24 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-lg lg:bottom-6"
+        >
+          <span className="max-w-48 truncate">Tirou: {removido.item.name}</span>
+          <button type="button" onClick={desfazerRemocao} className="h-11 cursor-pointer underline underline-offset-2">
+            Desfazer
+          </button>
+        </div>
       )}
 
       {/* barra fixa no celular */}

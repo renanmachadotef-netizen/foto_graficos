@@ -11,10 +11,14 @@ export function ComprovanteDialog({
   c,
   empresa,
   onNova,
+  onFechar,
+  somenteVer = false,
 }: {
   c: ComprovanteVenda;
   empresa: string;
   onNova: () => void;
+  onFechar: () => void;
+  somenteVer?: boolean;
 }) {
   const zap = whatsLink(c);
 
@@ -55,9 +59,20 @@ export function ComprovanteDialog({
             <MessageCircle /> {zap ? "WhatsApp" : "Sem telefone"}
           </Button>
         </div>
-        <Button size="lg" onClick={onNova} className="w-full cursor-pointer">
-          <Plus /> Nova venda
-        </Button>
+        {somenteVer ? (
+          <Button size="lg" onClick={onFechar} className="w-full cursor-pointer">
+            Fechar
+          </Button>
+        ) : (
+          <>
+            <Button size="lg" onClick={onNova} className="w-full cursor-pointer">
+              <Plus /> Nova venda
+            </Button>
+            <Button variant="ghost" onClick={onFechar} className="w-full cursor-pointer text-muted-foreground">
+              Fechar (a venda já está registrada)
+            </Button>
+          </>
+        )}
 
         <Recibo c={c} empresa={empresa} />
       </DialogContent>
