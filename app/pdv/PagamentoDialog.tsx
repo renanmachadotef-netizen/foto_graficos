@@ -55,6 +55,7 @@ export function PagamentoDialog({
   jaPago,
   numeroVenda,
   clienteBalcao,
+  incerto,
   clienteNome,
   clienteDeve,
   empresa,
@@ -66,6 +67,7 @@ export function PagamentoDialog({
   onFechar,
   onConfirmar,
 }: {
+  incerto: boolean;
   total: number;
   jaPago: number;
   numeroVenda: number | null;
@@ -97,7 +99,10 @@ export function PagamentoDialog({
   // PIX só conta depois que o operador conferiu no app do banco
   const [pixConferido, setPixConferido] = useState<number[]>([]);
   const pixPendente = linhas.some((l) => l.method.startsWith("PIX") && paraNumero(l.valor) > 0 && !pixConferido.includes(l.id));
-  const podeFechar = falta <= 0.005 && trocoOk && linhas.length > 0 && !(temFiado && clienteBalcao) && !pixPendente;
+  // depois de uma falha de internet a venda pode ter sido gravada: o operador confere antes de tentar de novo
+  const [naoGravou, setNaoGravou] = useState(false);
+  const aguardaConferencia = incerto && !naoGravou;
+  const podeFechar = falta <= 0.005 && trocoOk && linhas.length > 0 && !(temFiado && clienteBalcao) && !pixPendente && !aguardaConferencia;
 
   function adicionar(method: string) {
     if (linhas.some((l) => l.method === method)) {
@@ -301,6 +306,18 @@ export function PagamentoDialog({
 
         {erro && <p role="alert" className="rounded-xl bg-rose-100 text-rose-800 px-3 py-2 font-semibold">{erro}</p>}
 
+        {incerto && (
+          <div className="space-y-2 rounded-xl border border-border bg-muted/60 p-3 text-sm">
+            <Link href="/vendas" target="_blank" rel="noopener" className="font-semibold underline underline-offset-2">
+              Abrir Vendas do dia em outra aba
+            </Link>
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 font-semibold">
+              <input type="checkbox" className="size-5" checked={naoGravou} onChange={(e) => setNaoGravou(e.target.checked)} />
+              Conferi: esta venda NÃO foi gravada
+            </label>
+          </div>
+        )}
+
         <Button
           size="lg"
           disabled={!podeFechar || salvando}
@@ -322,6 +339,8 @@ export function PagamentoDialog({
                 ? "Fiado precisa de cliente. Volte e escolha o cliente."
                 : falta > 0.005
                   ? `Ainda falta ${brl(falta)}.`
+                  : aguardaConferencia
+                    ? "Confira em Vendas do dia se a venda foi gravada e marque a caixinha."
                   : pixPendente
                     ? "Confira o PIX no app do banco e marque a caixinha."
                     : "O valor passou do total e não há dinheiro para dar troco."}

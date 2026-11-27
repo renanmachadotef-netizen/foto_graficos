@@ -97,6 +97,7 @@ export function VendaRapida({
   const [pagando, setPagando] = useState(false);
   const [verPedidos, setVerPedidos] = useState(false);
   const [trocarPor, setTrocarPor] = useState<string | null>(null);
+  const [redeIncerta, setRedeIncerta] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [comprovante, setComprovante] = useState<ComprovanteVenda | null>(null);
@@ -204,6 +205,7 @@ export function VendaRapida({
     setBusca("");
     setCategoria("TODAS");
     setDescontoAberto(false);
+    setRedeIncerta(false);
     // no celular/tablet o teclado não deve abrir sozinho ao começar outra venda
     if (typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches) {
       setTimeout(() => campoBusca.current?.focus(), 50);
@@ -258,10 +260,12 @@ export function VendaRapida({
       r = await salvarVenda(payload(true, pagamentos, vencimentoFiado));
     } catch {
       setSalvando(false);
+      setRedeIncerta(true); // a venda pode ter sido gravada: só libera de novo depois do operador conferir
       return setErro(MSG_SEM_REDE);
     }
     setSalvando(false);
     if (!r.ok) return setErro(r.erro);
+    setRedeIncerta(false);
     setPagando(false);
     setComprovante(r.comprovante);
   }
@@ -736,6 +740,7 @@ export function VendaRapida({
           jaPago={jaPago}
           numeroVenda={pedido?.numero ?? null}
           clienteBalcao={!cliente}
+          incerto={redeIncerta}
           clienteNome={cliente?.name ?? null}
           clienteDeve={cliente?.deve ?? 0}
           empresa={empresa}
@@ -874,7 +879,8 @@ function EditarItem({
   const p = alvo.produto;
   const avulso = !base && !p;
   const unidade = base?.unit ?? p?.unit ?? "un";
-  const porMetro = unidade === "m" || unidade === "m2";
+  const porMetro = unidade === "m2"; // largura x altura = área
+  const linear = unidade === "m"; // metro linear: digita só o comprimento
 
   const [nome, setNome] = useState(base?.name ?? p?.name ?? "");
   const [qtd, setQtd] = useState(base ? String(base.quantity).replace(".", ",") : "1");
@@ -975,11 +981,11 @@ function EditarItem({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="pdv-item-qtd" className="text-sm font-semibold">Quantidade{porMetro ? " (m²)" : ""}</Label>
+              <Label htmlFor="pdv-item-qtd" className="text-sm font-semibold">Quantidade{porMetro ? " (m²)" : linear ? " (metros)" : ""}</Label>
               <Input id="pdv-item-qtd" inputMode="decimal" value={qtd} onChange={(e) => setQtd(e.target.value)} onFocus={(e) => e.currentTarget.select()} autoFocus={!avulso && !porMetro} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pdv-item-preco" className="text-sm font-semibold">Preço{porMetro ? " por m²" : " cada"} (R$)</Label>
+              <Label htmlFor="pdv-item-preco" className="text-sm font-semibold">Preço{porMetro ? " por m²" : linear ? " por metro" : " cada"} (R$)</Label>
               <Input id="pdv-item-preco" inputMode="decimal" value={preco} onChange={(e) => setPreco(e.target.value)} onFocus={(e) => e.currentTarget.select()} />
             </div>
           </div>
