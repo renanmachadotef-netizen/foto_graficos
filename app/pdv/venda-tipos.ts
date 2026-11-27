@@ -42,6 +42,11 @@ export function paraNumero(txt: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Para medidas e metros: o ponto é decimal ("1.250" = 1,25), nunca milhar. */
+export function paraDecimal(txt: string): number {
+  return paraNumero(txt.includes(",") ? txt : txt.replace(".", ","));
+}
+
 export const texto2 = (n: number) => (Math.round(n * 100) / 100).toFixed(2).replace(".", ",");
 
 export function qtdTexto(n: number): string {

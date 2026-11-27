@@ -41,6 +41,7 @@ import { ComprovanteDialog } from "./ComprovanteDialog";
 import {
   arred,
   brl,
+  paraDecimal,
   paraNumero,
   qtdTexto,
   texto2,
@@ -153,6 +154,9 @@ export function VendaRapida({
   const descontoPct = subtotal > 0 ? (descontoNum / subtotal) * 100 : 0;
   const passouLimite = limiteDesconto !== null && descontoPct > limiteDesconto + 0.005;
   const total = arred(subtotal - descontoNum);
+  // desconto que come a venda inteira (ou mais) não é cortado em silêncio: trava o Cobrar
+  const descontoInvalido = subtotal > 0 && (descontoDigitado > subtotal + 0.005 || total <= 0);
+  const bloqueado = passouLimite || descontoInvalido;
   const maisVendidosLista = useMemo(
     () => maisVendidos.map((id) => produtos.find((p) => p.id === id)).filter((p): p is ProdutoPdv => !!p),
     [maisVendidos, produtos],
@@ -169,7 +173,8 @@ export function VendaRapida({
   const qtdItens = itens.reduce((s, i) => s + (Number.isInteger(i.quantity) ? i.quantity : 1), 0);
 
   function adicionar(p: ProdutoPdv) {
-    if (p.unit === "m" || p.unit === "m2") {
+    // sem preço no cadastro: pede o preço antes de colocar na venda (não entra a R$ 0,00)
+    if (p.unit === "m" || p.unit === "m2" || !(p.price > 0)) {
       setEditando({ item: null, produto: p });
       return;
     }
@@ -599,7 +604,7 @@ export function VendaRapida({
               {erro && <p className="rounded-xl bg-rose-100 text-rose-800 px-3 py-2 text-sm font-semibold">{erro}</p>}
               <Button
                 size="lg"
-                disabled={carrinhoVazio || salvando || passouLimite}
+                disabled={carrinhoVazio || salvando || bloqueado}
                 onClick={() => {
                   setErro(null);
                   setPagando(true);
@@ -612,6 +617,11 @@ export function VendaRapida({
               {passouLimite && (
                 <p className="text-center text-sm font-semibold text-destructive">
                   Desconto acima do limite de {limiteDesconto?.toLocaleString("pt-BR")}%. Diminua o desconto ou chame o gerente.
+                </p>
+              )}
+              {descontoInvalido && (
+                <p role="alert" className="text-center text-sm font-semibold text-destructive">
+                  O desconto ({brl(descontoDigitado)}) é igual ou maior que a venda ({brl(subtotal)}). Corrija o desconto para cobrar.
                 </p>
               )}
 
@@ -699,7 +709,7 @@ export function VendaRapida({
                   <p className="text-sm text-muted-foreground">
                     {cliente ? "O pedido fica guardado até o cliente pagar o resto." : "Escolha o cliente lá em cima para guardar o pedido."}
                   </p>
-                  <Button variant="outline" disabled={carrinhoVazio || salvando || !cliente} onClick={salvarComoPedido} className="w-full h-11 cursor-pointer">
+                  <Button variant="outline" disabled={carrinhoVazio || salvando || !cliente || descontoInvalido} onClick={salvarComoPedido} className="w-full h-11 cursor-pointer">
                     {salvando ? <Loader2 className="animate-spin" /> : <Save />} Salvar pedido em aberto
                   </Button>
                 </div>
@@ -816,10 +826,11 @@ export function VendaRapida({
             <p className="text-2xl font-bold tabular-nums">{brl(restante || total)}</p>
             {jaPago > 0 && <p className="text-xs font-medium text-muted-foreground">Falta receber (já pago {brl(jaPago)})</p>}
             {passouLimite && <p className="text-xs font-semibold text-destructive">Desconto acima do limite</p>}
+            {descontoInvalido && <p className="text-xs font-semibold text-destructive">Desconto maior que a venda</p>}
           </button>
           <Button
             size="lg"
-            disabled={passouLimite}
+            disabled={bloqueado}
             onClick={() => {
               setErro(null);
               setPagando(true);
@@ -890,21 +901,40 @@ function EditarItem({
   const [alt, setAlt] = useState(base?.alt ?? "");
   const [pecas, setPecas] = useState(base?.pecas ?? "1");
   const [erro, setErro] = useState<string | null>(null);
+  const [precoConfirmado, setPrecoConfirmado] = useState(false);
+  const semPreco = !base && !!p && !(p.price > 0); // produto sem preço no cadastro: o preço é o primeiro campo
+  // em metros e medidas o ponto é decimal ("1.250" = 1,25); nas demais quantidades é milhar
+  const numQtd = porMetro || linear ? paraDecimal : paraNumero;
 
   const nPecas = Math.max(1, Math.floor(paraNumero(pecas)) || 1);
-  const area = arred(paraNumero(larg) * paraNumero(alt) * nPecas * 1000) / 1000;
+  const larguraNum = paraDecimal(larg);
+  const alturaNum = paraDecimal(alt);
+  const area = arred(larguraNum * alturaNum * nPecas * 1000) / 1000;
   // medida que parece centímetro digitado no lugar de metro (ex.: 120 em vez de 1,20)
-  const medidaSuspeita = paraNumero(larg) > 20 || paraNumero(alt) > 20;
+  const medidaSuspeita = larguraNum > 20 || alturaNum > 20;
   useEffect(() => {
     if (porMetro && area > 0) setQtd(String(area).replace(".", ","));
   }, [area, porMetro]);
 
   function salvar() {
-    const q = paraNumero(qtd);
+    const q = numQtd(qtd);
     if (!nome.trim()) return setErro("Escreva o nome do item.");
     if (!(q > 0)) return setErro("A quantidade precisa ser maior que zero.");
+    if (q > 9999) return setErro("Quantidade acima de 9.999. Confira se não digitou a mais.");
     if (porMetro && medidaSuspeita) return setErro("Medida acima de 20 m. As medidas são em metros: 1,20 e não 120.");
     const novoPreco = arred(paraNumero(preco));
+    if (!(novoPreco > 0)) return setErro(novoPreco < 0 ? "O preço não pode ser negativo." : "Digite o preço do item. Ele não pode ficar em R$ 0,00.");
+    if (novoPreco > 100000) return setErro("Preço acima de R$ 100.000,00. Confira se não digitou a mais.");
+    // preço muito acima do normal: pede uma segunda confirmação (toque de novo em Salvar)
+    const suspeito = precoCatalogo > 0 ? novoPreco > precoCatalogo * 3 : novoPreco > 10000;
+    if (suspeito && !precoConfirmado) {
+      setPrecoConfirmado(true);
+      return setErro(
+        precoCatalogo > 0
+          ? `O preço ${brl(novoPreco)} é mais de 3 vezes o do cadastro (${brl(precoCatalogo)}). Se está certo, toque em Salvar de novo.`
+          : `O preço ${brl(novoPreco)} é muito alto. Se está certo, toque em Salvar de novo.`,
+      );
+    }
     // o preço do item não pode furar o limite de desconto de quem não é gerente
     if (precoCatalogo > 0 && limiteDesconto !== null) {
       const minimo = arred(precoCatalogo * (1 - limiteDesconto / 100));
@@ -972,7 +1002,7 @@ function EditarItem({
               </div>
               {medidaSuspeita && (
                 <p className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground">
-                  Isso dá mais de 20 m. Era {paraNumero(larg) > 20 ? qtdTexto(paraNumero(larg) / 100) : qtdTexto(paraNumero(alt) / 100)} m?
+                  Isso dá mais de 20 m. Era {larguraNum > 20 ? qtdTexto(larguraNum / 100) : qtdTexto(alturaNum / 100)} m?
                 </p>
               )}
               {area > 0 && <p className="text-lg font-bold tabular-nums">= {qtdTexto(area)} m²</p>}
@@ -982,11 +1012,22 @@ function EditarItem({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="pdv-item-qtd" className="text-sm font-semibold">Quantidade{porMetro ? " (m²)" : linear ? " (metros)" : ""}</Label>
-              <Input id="pdv-item-qtd" inputMode="decimal" value={qtd} onChange={(e) => setQtd(e.target.value)} onFocus={(e) => e.currentTarget.select()} autoFocus={!avulso && !porMetro} />
+              <Input id="pdv-item-qtd" inputMode="decimal" value={qtd} onChange={(e) => setQtd(e.target.value)} onFocus={(e) => e.currentTarget.select()} autoFocus={!avulso && !porMetro && !semPreco} />
+              {(porMetro || linear) && qtd.trim() && numQtd(qtd) > 0 && <p className="text-xs text-muted-foreground">Entendi: {qtdTexto(numQtd(qtd))}{porMetro ? " m²" : " m"}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="pdv-item-preco" className="text-sm font-semibold">Preço{porMetro ? " por m²" : linear ? " por metro" : " cada"} (R$)</Label>
-              <Input id="pdv-item-preco" inputMode="decimal" value={preco} onChange={(e) => setPreco(e.target.value)} onFocus={(e) => e.currentTarget.select()} />
+              <Input
+                id="pdv-item-preco"
+                inputMode="decimal"
+                value={preco}
+                onChange={(e) => {
+                  setPreco(e.target.value);
+                  setPrecoConfirmado(false);
+                }}
+                onFocus={(e) => e.currentTarget.select()}
+                autoFocus={semPreco && !porMetro}
+              />
             </div>
           </div>
 
@@ -997,7 +1038,7 @@ function EditarItem({
 
           {erro && <p role="alert" className="text-rose-600 font-semibold">{erro}</p>}
           <Button size="lg" type="submit" className="w-full cursor-pointer">
-            <Plus /> {base ? "Salvar" : "Colocar na venda"} • {brl(arred(paraNumero(qtd) * paraNumero(preco)))}
+            <Plus /> {base ? "Salvar" : "Colocar na venda"} • {brl(arred(numQtd(qtd) * paraNumero(preco)))}
           </Button>
         </form>
       </DialogContent>
